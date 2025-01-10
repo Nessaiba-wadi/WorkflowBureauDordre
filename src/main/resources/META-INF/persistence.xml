@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence xmlns="https://jakarta.ee/xml/ns/persistence"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="https://jakarta.ee/xml/ns/persistence https://jakarta.ee/xml/ns/persistence/persistence_3_0.xsd"
+             version="3.0">
+<persistence-unit name="default" transaction-type="RESOURCE_LOCAL">
+    <class>org.example.model.Utilisateur</class>
+    <properties>
+        <!-- URL de connexion -->
+        <property name="jakarta.persistence.jdbc.url" value="jdbc:sqlserver://localhost;databaseName=BureauDordreWorkflow"/>
+        <!-- Utilisateur et mot de passe SQL Server -->
+        <property name="jakarta.persistence.jdbc.user" value="root"/>
+        <property name="jakarta.persistence.jdbc.password" value="root"/>
+        <!-- Driver JDBC -->
+        <property name="jakarta.persistence.jdbc.driver" value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>
+        <!-- Hibernate: dialect pour SQL Server -->
+        <property name="hibernate.dialect" value="org.hibernate.dialect.SQLServerDialect"/>
+        <!-- Hibernate: options -->
+        <property name="hibernate.hbm2ddl.auto" value="update"/> <!-- Génération automatique -->
+        <property name="hibernate.show_sql" value="true"/>
+        <property name="hibernate.format_sql" value="true"/>
+    </properties>
+</persistence-unit>
+</persistence>
