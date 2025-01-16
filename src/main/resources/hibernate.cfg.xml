@@ -1,12 +1,21 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE hibernate-configuration PUBLIC "-//Hibernate/Hibernate Configuration DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-configuration-3.0.dtd">
-
 <hibernate-configuration>
-<session-factory>
-    <property name="hibernate.connection.driver_class">com.microsoft.sqlserver.jdbc.SQLServerDriver</property>
-    <property name="hibernate.connection.url">jdbc:sqlserver://localhost;databaseName=BureauDordreWorkflow</property>
-    <property name="hibernate.connection.username">root</property>
-    <property name="hibernate.connection.password">root</property>
-    <property name="hibernate.dialect">org.hibernate.dialect.SQLServerDialect</property>
-</session-factory>
+    <session-factory>
+        <property name="hibernate.connection.driver_class">com.microsoft.sqlserver.jdbc.SQLServerDriver</property>
+        <property name="hibernate.connection.url">jdbc:sqlserver://localhost;databaseName=BureauDordreWorkflow;encrypt=false;</property>
+        <property name="hibernate.connection.username">monUtilisateur</property>
+        <property name="hibernate.connection.password">password123@@</property>
+        <property name="hibernate.dialect">org.hibernate.dialect.SQLServerDialect</property>
+        <property name="hibernate.hbm2ddl.auto">create</property>
+        <property name="show_sql">true</property>
+        <property name="format_sql">true</property>
+
+        <mapping class="org.example.model.BureauOrdre"/>
+        <mapping class="org.example.model.Comptabilite"/>
+        <mapping class="org.example.model.Document"/>
+        <mapping class="org.example.model.Dossier"/>
+        <mapping class="org.example.model.Fournisseur"/>
+        <mapping class="org.example.model.Role"/>
+        <mapping class="org.example.model.Tresorerie"/>
+        <mapping class="org.example.model.Utilisateur"/>
+    </session-factory>
 </hibernate-configuration>

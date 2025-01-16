@@ -1,18 +1,38 @@
 package org.example.model;
 
 import java.util.Date;
+import javax.persistence.*;
+import java.util.List;
 
+@Entity
+@Table(name = "comptabilite")
 public class Comptabilite {
-    private int idComptabilité;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private int idComptabilite;
+
+    @Column(name = "dossier_id")
     private int dossierID;
+
+    @Temporal(TemporalType.DATE)
     private Date dateComptabilisation;
+
+    @Temporal(TemporalType.DATE)
     private Date dateTransmission;
+
     private String personneCollectrice;
+
+    @Column(length = 1000)
     private String commentaire;
 
+    @ManyToOne
+    @JoinColumn(name = "dossier_id", insertable = false, updatable = false)
+    private Dossier dossier;
+
+    public Comptabilite() {}
     //Constructeur
-    public Comptabilite(int idComptabilité, int dossierID, Date dateComptabilisation, Date dateTransmission, String personneCollectrice, String commentaire){
-        this.idComptabilité=idComptabilité;
+    public Comptabilite(int idComptabilite, int dossierID, Date dateComptabilisation, Date dateTransmission, String personneCollectrice, String commentaire){
+        this.idComptabilite=idComptabilite;
         this.dossierID=dossierID;
         this.dateComptabilisation=dateComptabilisation;
         this.dateTransmission=dateTransmission;
@@ -23,11 +43,11 @@ public class Comptabilite {
     //Getters & Setters
 
 
-    public int getIdComptabilité() {
-        return idComptabilité;
+    public int getIdComptabilite() {
+        return idComptabilite;
     }
-    public void setIdComptabilité(int idComptabilité) {
-        this.idComptabilité = idComptabilité;
+    public void setIdComptabilite(int idComptabilite) {
+        this.idComptabilite = idComptabilite;
     }
 
 

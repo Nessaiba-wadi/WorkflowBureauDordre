@@ -2,37 +2,67 @@ package org.example.model;
 
 import java.awt.*;
 import java.util.Date;
+import javax.persistence.*;
+import java.util.List;
 
+@Entity
+@Table(name = "bureau_ordre")
 public class BureauOrdre {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int idBureauOrdre;
+
+    @Column(name = "dossier_id")
     private int dossierID;
+
+    @Temporal(TemporalType.DATE)
     private Date dateReception;
+
     private String raisonSocialeGBM;
+
     private String directionBGMConcernee;
+
     private String souscripteur;
+
+    @Temporal(TemporalType.DATE)
     private Date dateRelanceBR;
+
     private String typeRelance;
+
+    @Temporal(TemporalType.DATE)
     private Date dateCompositionDossierComplet;
+
+    @Temporal(TemporalType.DATE)
     private Date dateTransmissionDCF;
+
     private String personneCollectrice;
+
     private boolean statut;
+
+    @ManyToOne
+    @JoinColumn(name = "dossier_id", insertable = false, updatable = false)
+    private Dossier dossier;
+
+    public BureauOrdre() {}
 
 
     //Constructeur
-    public BureauOrdre(int idBureauOrdre, int dossierID,Date dateReception,String raisonSocialeGBM,String directionBGMConcernee,String souscripteur,Date dateRelanceBR,String typeRelance,Date dateCompositionDossierComplet, Date dateTransmissionDCF, String personneCollectrice, boolean statut){
-        this.idBureauOrdre=idBureauOrdre;
-        this.dossierID=dossierID;
-        this.dateReception=dateReception;
-        this.raisonSocialeGBM=raisonSocialeGBM;
-        this.directionBGMConcernee=directionBGMConcernee;
-        this.souscripteur=souscripteur;
-        this.dateRelanceBR=dateRelanceBR;
-        this.typeRelance=typeRelance;
-        this.dateCompositionDossierComplet=dateCompositionDossierComplet;
-        this.dateTransmissionDCF=dateTransmissionDCF;
-        this.personneCollectrice=personneCollectrice;
-        this.statut=statut;
-
+    public BureauOrdre(int idBureauOrdre, int dossierID, Date dateReception, String raisonSocialeGBM,
+                       String directionBGMConcernee, String souscripteur, Date dateRelanceBR,
+                       String typeRelance, Date dateCompositionDossierComplet, Date dateTransmissionDCF,
+                       String personneCollectrice, boolean statut) {
+        this.idBureauOrdre = idBureauOrdre;
+        this.dossierID = dossierID;
+        this.dateReception = dateReception;
+        this.raisonSocialeGBM = raisonSocialeGBM;
+        this.directionBGMConcernee = directionBGMConcernee;
+        this.souscripteur = souscripteur;
+        this.dateRelanceBR = dateRelanceBR;
+        this.typeRelance = typeRelance;
+        this.dateCompositionDossierComplet = dateCompositionDossierComplet;
+        this.dateTransmissionDCF = dateTransmissionDCF;
+        this.personneCollectrice = personneCollectrice;
+        this.statut = statut;
     }
     //Getters & Setter
     public int getIdBureauOrdre(){

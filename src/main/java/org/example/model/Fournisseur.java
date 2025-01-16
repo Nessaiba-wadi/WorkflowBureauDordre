@@ -1,11 +1,27 @@
 package org.example.model;
+import javax.persistence.*;
+import java.util.List;
 
+
+@Entity
+@Table(name = "fournisseur")
 public class Fournisseur {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int idFournisseur;
+
     private String raisonSociale;
+
     private String adresse;
+
     private String telephone;
+
     private boolean statut;
+
+    @OneToMany(mappedBy = "fournisseur", cascade = CascadeType.ALL)
+    private List<Dossier> dossiers;
+
+    public Fournisseur() {}
 
     //Constructeur
     public Fournisseur(int idFournisseur, String raisonSociale, String adresse, String telephone, boolean statut){

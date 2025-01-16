@@ -1,15 +1,50 @@
 package org.example.model;
 
 import java.util.Date;
+import javax.persistence.*;
+import java.util.List;
 
+@Entity
+@Table(name = "dossier")
 public class Dossier {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int idDossier;
+
+    @Column(name = "fournisseur_id")
     private int fournisseurID;
+
+    @Column(name = "utilisateur_id")
     private int utilisateurID;
+
     private String numeroDossier;
+
+    @Temporal(TemporalType.DATE)
     private Date dateCreation;
+
     private boolean statut;
 
+    @ManyToOne
+    @JoinColumn(name = "fournisseur_id", insertable = false, updatable = false)
+    private Fournisseur fournisseur;
+
+    @ManyToOne
+    @JoinColumn(name = "utilisateur_id", insertable = false, updatable = false)
+    private Utilisateur utilisateur;
+
+    @OneToMany(mappedBy = "dossier", cascade = CascadeType.ALL)
+    private List<Document> documents;
+
+    @OneToMany(mappedBy = "dossier", cascade = CascadeType.ALL)
+    private List<BureauOrdre> bureauOrdres;
+
+    @OneToMany(mappedBy = "dossier", cascade = CascadeType.ALL)
+    private List<Comptabilite> comptabilites;
+
+    @OneToMany(mappedBy = "dossier", cascade = CascadeType.ALL)
+    private List<Tresorerie> tresoreries;
+
+    public Dossier() {}
     //Constructeur
     public Dossier (int idDossier, int fournisseurID, int utilisateurID, String numeroDossier, Date dateCreation, boolean statut){
         this.idDossier=idDossier;

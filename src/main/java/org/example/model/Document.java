@@ -1,14 +1,33 @@
 package org.example.model;
 
 import java.util.Date;
+import javax.persistence.*;
+import java.util.List;
 
+@Entity
+@Table(name = "document")
 public class Document {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int idDocument;
+
+    @Column(name = "dossier_id")
     private int dossierID;
+
     private String type;
+
     private String numero;
+
+    @Temporal(TemporalType.DATE)
     private Date dateCreation;
+
     private boolean statut;
+
+    @ManyToOne
+    @JoinColumn(name = "dossier_id", insertable = false, updatable = false)
+    private Dossier dossier;
+
+    public Document() {}
 
     //Constructeur
     public Document(int idDocument, int dossierID, String type, String numero, Date dateCreation, boolean statut){

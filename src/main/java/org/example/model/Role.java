@@ -1,47 +1,56 @@
 package org.example.model;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-@Entity //Indique que la classe est une entité JPA
 
-public class Role{
-    @Id //clé primaire de l'entité.
-    @GeneratedValue(strategy = GenerationType.IDENTITY) //la valeur de la clé primaire est générée automatiquement,
+import javax.persistence.*;
+import java.util.List;
+
+@Entity
+@Table(name = "roles")
+public class Role {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int idRole;
 
+    @Column(nullable = false)
     private String nom;
 
+    @Column(length = 255)
     private String description;
 
-    private boolean status;
+    @OneToMany(mappedBy = "role", fetch = FetchType.EAGER)
+    private List<Utilisateur> utilisateurs;
 
-    public Role() {}
-
-    public Role(int idRole, String nom, String description, boolean status){
-        this.idRole = idRole;
-        this.nom = nom;
-        this.description = description;
-        this.status = status;
+    // Constructeur par défaut requis par JPA
+    public Role() {
     }
 
-    public int getIdRole(){
+    // Constructeur avec ID
+    public Role(int roleId) {
+        this.idRole = roleId;
+    }
+
+    // Constructeur avec tous les champs sauf ID et utilisateurs
+    public Role(String nom, String description) {
+        this.nom = nom;
+        this.description = description;
+    }
+
+    public int getIdRole() {
         return idRole;
     }
 
-    public void setIdRole(int idRole){
+    public void setIdRole(int idRole) {
         this.idRole = idRole;
     }
 
-    public String getNom(){
+    public String getNom() {
         return nom;
     }
 
-    public void setNom(String nom){
+    public void setNom(String nom) {
         this.nom = nom;
     }
 
-    public String getDescription(){
+    public String getDescription() {
         return description;
     }
 
@@ -49,27 +58,11 @@ public class Role{
         this.description = description;
     }
 
-    public boolean isStatus() {
-        return status;
+    public List<Utilisateur> getUtilisateurs() {
+        return utilisateurs;
     }
 
-    public void setStatus(boolean status) {
-        this.status = status;
-    }
-
-    public void creerRole(){
-        System.out.println("creer un nouveau rôle.");
-    }
-
-    public void modifierRole(){
-        System.out.println("modifier le rôle d'un utilisateur");
-    }
-
-    public void supprimerRole(){
-        System.out.println("supprimer un rôle");
-    }
-
-    public String obtenirPermissions(){
-        return "Liste des permissions associées au rôle";
+    public void setUtilisateurs(List<Utilisateur> utilisateurs) {
+        this.utilisateurs = utilisateurs;
     }
 }

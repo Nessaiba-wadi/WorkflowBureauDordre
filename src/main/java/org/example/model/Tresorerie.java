@@ -1,16 +1,37 @@
 package org.example.model;
 
 import java.util.Date;
+import javax.persistence.*;
+import java.util.List;
 
+@Entity
+@Table(name = "tresorerie")
 public class Tresorerie {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int idTresorerie;
+
+    @Column(name = "dossier_id")
     private int dossierID;
+
+    @Temporal(TemporalType.DATE)
     private Date datePreparationReglement;
+
     private String modeReglement;
+
     private String numeroCheque;
+
+    @Temporal(TemporalType.DATE)
     private Date dateTransmissionBO;
+
+    @Column(length = 1000)
     private String commentaire;
 
+    @ManyToOne
+    @JoinColumn(name = "dossier_id", insertable = false, updatable = false)
+    private Dossier dossier;
+
+    public Tresorerie() {}
     //Constructeur
 
     public Tresorerie(int idTresorerie, int dossierID, Date datePreparationReglement,String modeReglement, String numeroCheque, Date dateTransmissionBO, String commentaire){
