@@ -5,28 +5,12 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 public class DBConnection {
-    public static void main(String[] args) {
-        // Paramètres de connexion mis à jour
-        String url = "jdbc:sqlserver://localhost:1433;databaseName=BureauDordreWorkflow;encrypt=true;trustServerCertificate=true;";
-        String user = "monUtilisateur";  // Utilisateur SQL Server
-        String password = "password123@@";  // Mot de passe
+    private static final String URL = "jdbc:sqlserver://localhost:1433;databaseName=BureauDordreWorkflow;encrypt=true;trustServerCertificate=true;";
+    private static final String USER = "monUtilisateur";
+    private static final String PASSWORD = "password123@@";
 
-        try {
-            // Charger le driver JDBC
-            Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
-
-            // Établir la connexion
-            Connection conn = DriverManager.getConnection(url, user, password);
-            System.out.println("Connexion réussie à la base de données !");
-
-            // Fermer la connexion
-            conn.close();
-        } catch (ClassNotFoundException e) {
-            System.out.println("Pilote JDBC introuvable !");
-            e.printStackTrace();
-        } catch (SQLException e) {
-            System.out.println("Erreur de connexion !");
-            e.printStackTrace();
-        }
+    public static Connection getConnection() throws SQLException, ClassNotFoundException {
+        Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
+        return DriverManager.getConnection(URL, USER, PASSWORD);
     }
 }

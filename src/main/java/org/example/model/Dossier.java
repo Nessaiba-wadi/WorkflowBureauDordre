@@ -1,8 +1,8 @@
 package org.example.model;
 
 import java.util.Date;
-import javax.persistence.*;
 import java.util.List;
+import jakarta.persistence.*;
 
 @Entity
 @Table(name = "dossier")
@@ -11,11 +11,13 @@ public class Dossier {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int idDossier;
 
-    @Column(name = "fournisseur_id")
-    private int fournisseurID;
+    @ManyToOne
+    @JoinColumn(name = "fournisseur_id", nullable = false)
+    private Fournisseur fournisseur;
 
-    @Column(name = "utilisateur_id")
-    private int utilisateurID;
+    @ManyToOne
+    @JoinColumn(name = "utilisateur_id", nullable = false)
+    private Utilisateur utilisateur;
 
     private String numeroDossier;
 
@@ -23,14 +25,6 @@ public class Dossier {
     private Date dateCreation;
 
     private boolean statut;
-
-    @ManyToOne
-    @JoinColumn(name = "fournisseur_id", insertable = false, updatable = false)
-    private Fournisseur fournisseur;
-
-    @ManyToOne
-    @JoinColumn(name = "utilisateur_id", insertable = false, updatable = false)
-    private Utilisateur utilisateur;
 
     @OneToMany(mappedBy = "dossier", cascade = CascadeType.ALL)
     private List<Document> documents;
@@ -45,65 +39,76 @@ public class Dossier {
     private List<Tresorerie> tresoreries;
 
     public Dossier() {}
-    //Constructeur
-    public Dossier (int idDossier, int fournisseurID, int utilisateurID, String numeroDossier, Date dateCreation, boolean statut){
-        this.idDossier=idDossier;
-        this.fournisseurID=fournisseurID;
-        this.utilisateurID=utilisateurID;
-        this.numeroDossier=numeroDossier;
-        this.dateCreation=dateCreation;
-        this.statut=statut;
+
+    // Constructeur
+    public Dossier(int idDossier, Fournisseur fournisseur, Utilisateur utilisateur, String numeroDossier, Date dateCreation, boolean statut) {
+        this.idDossier = idDossier;
+        this.fournisseur = fournisseur;
+        this.utilisateur = utilisateur;
+        this.numeroDossier = numeroDossier;
+        this.dateCreation = dateCreation;
+        this.statut = statut;
     }
 
-    //Getters & Setters
-    public int getIdDossier(){
+    // Getters & Setters
+    public int getIdDossier() {
         return idDossier;
     }
-    public void setIdDossier(int idDossier){
-        this.idDossier=idDossier;
-    }
-    public int getFournisseurID(){
-        return fournisseurID;
+
+    public void setIdDossier(int idDossier) {
+        this.idDossier = idDossier;
     }
 
-    public void setFournisseurID(int fournisseurID) {
-        this.fournisseurID = fournisseurID;
-    }
-    public int getUtilisateurID(){
-        return utilisateurID;
-    }
-    public void setUtilisateurID(int utilisateurID){
-        this.utilisateurID=utilisateurID;
+    public Fournisseur getFournisseur() {
+        return fournisseur;
     }
 
-    public String getNumeroDossier(){
+    public void setFournisseur(Fournisseur fournisseur) {
+        this.fournisseur = fournisseur;
+    }
+
+    public Utilisateur getUtilisateur() {
+        return utilisateur;
+    }
+
+    public void setUtilisateur(Utilisateur utilisateur) {
+        this.utilisateur = utilisateur;
+    }
+
+    public String getNumeroDossier() {
         return numeroDossier;
     }
-    public void setNumeroDossier(String numeroDossier){
-        this.numeroDossier=numeroDossier;
-    }
-    public Date getDateCreation(){
-        return dateCreation;
-    }
-    public void setDateCreation(Date dateCreation){
-        this.dateCreation=dateCreation;
-    }
-    public boolean isStatut(){
-        return statut;
-    }
-    public void setStatut(boolean statut){
-        this.statut=statut;
+
+    public void setNumeroDossier(String numeroDossier) {
+        this.numeroDossier = numeroDossier;
     }
 
-    //methodes
-    public void creerDossier(){
-        System.out.println("Dossier crée");
+    public Date getDateCreation() {
+        return dateCreation;
     }
-    public void modifierDossier(){
+
+    public void setDateCreation(Date dateCreation) {
+        this.dateCreation = dateCreation;
+    }
+
+    public boolean isStatut() {
+        return statut;
+    }
+
+    public void setStatut(boolean statut) {
+        this.statut = statut;
+    }
+
+    // Méthodes
+    public void creerDossier() {
+        System.out.println("Dossier créé");
+    }
+
+    public void modifierDossier() {
         System.out.println("Dossier modifié");
     }
 
-    public void supprimerDossier(){
+    public void supprimerDossier() {
         System.out.println("Dossier supprimé");
     }
 }

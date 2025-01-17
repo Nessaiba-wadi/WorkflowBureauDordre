@@ -1,13 +1,18 @@
 package org.example.model;
 
-import javax.persistence.*;
+import com.fasterxml.jackson.annotation.*;
+import jakarta.persistence.*;
 
-@Entity // Indique que cette classe est une entité (table)
-@Table(name = "utilisateurs") // Nom de la table
+@Entity
+@Table(name = "utilisateurs")
+@JsonIdentityInfo(
+        generator = ObjectIdGenerators.PropertyGenerator.class,
+        property = "idUtilisateur"
+)
 public class Utilisateur {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY) // Auto-incrémentée
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int idUtilisateur;
 
     @Column(name = "nom", nullable = false)
@@ -23,7 +28,8 @@ public class Utilisateur {
     private String motDePasse;
 
     @ManyToOne
-    @JoinColumn(name = "role_id") // Foreign key for the role
+    @JoinColumn(name = "role_id", nullable = false)
+    @JsonBackReference
     private Role role;
 
     @Column(name = "statut", nullable = false)
@@ -32,19 +38,25 @@ public class Utilisateur {
     public Utilisateur() {
     }
 
-    // Constructeur avec tous les attributs
-    public Utilisateur(int idUtilisateur, String nom, String prenom, String email, String motDePasse, int roleId, boolean statut) {
+    // Constructeur complet
+    public Utilisateur(int idUtilisateur, String nom, String prenom, String email, String motDePasse, Role role, boolean statut) {
         this.idUtilisateur = idUtilisateur;
         this.nom = nom;
         this.prenom = prenom;
         this.email = email;
         this.motDePasse = motDePasse;
-        this.role = new Role(roleId); // Assuming a constructor in Role to set id
+        this.role = role;
         this.statut = statut;
     }
 
-    public Utilisateur(String nom, String prenom, String email, String motDePasse, int role, boolean statut) {
-
+    // Constructeur simplifié
+    public Utilisateur(String nom, String prenom, String email, String motDePasse, Role role, boolean statut) {
+        this.nom = nom;
+        this.prenom = prenom;
+        this.email = email;
+        this.motDePasse = motDePasse;
+        this.role = role;
+        this.statut = statut;
     }
 
     // Getters & Setters
@@ -104,9 +116,9 @@ public class Utilisateur {
         this.statut = statut;
     }
 
-    // methodes
+    // Méthodes
     public void creerUtilisateur() {
-        System.out.println("créer un nouvel utilisateur");
+        System.out.println("Créer un nouvel utilisateur");
     }
 
     public void modifierUtilisateur() {
@@ -127,7 +139,6 @@ public class Utilisateur {
     }
 
     public String obtenirRole() {
-        // Assuming a getter method for name in Role class
-        return "Rôle associé à l'utilisateur : " + (role != null ? role.getNom() : "");
+        return "Rôle associé à l'utilisateur : " + (role != null ? role.getNom() : "Aucun rôle");
     }
 }

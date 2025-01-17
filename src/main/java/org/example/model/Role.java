@@ -1,11 +1,13 @@
 package org.example.model;
 
-import javax.persistence.*;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import jakarta.persistence.*;
 import java.util.List;
 
 @Entity
 @Table(name = "roles")
 public class Role {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int idRole;
@@ -17,6 +19,7 @@ public class Role {
     private String description;
 
     @OneToMany(mappedBy = "role", fetch = FetchType.EAGER)
+    @JsonManagedReference
     private List<Utilisateur> utilisateurs;
 
     // Constructeur par défaut requis par JPA
@@ -24,8 +27,8 @@ public class Role {
     }
 
     // Constructeur avec ID
-    public Role(int roleId) {
-        this.idRole = roleId;
+    public Role(int idRole) {
+        this.idRole = idRole;
     }
 
     // Constructeur avec tous les champs sauf ID et utilisateurs
@@ -34,6 +37,7 @@ public class Role {
         this.description = description;
     }
 
+    // Getters & Setters
     public int getIdRole() {
         return idRole;
     }

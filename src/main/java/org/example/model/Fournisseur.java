@@ -1,7 +1,7 @@
 package org.example.model;
-import javax.persistence.*;
-import java.util.List;
 
+import jakarta.persistence.*;
+import java.util.List;
 
 @Entity
 @Table(name = "fournisseur")
@@ -23,59 +23,78 @@ public class Fournisseur {
 
     public Fournisseur() {}
 
-    //Constructeur
-    public Fournisseur(int idFournisseur, String raisonSociale, String adresse, String telephone, boolean statut){
-        this.idFournisseur=idFournisseur;
-        this.raisonSociale=raisonSociale;
-        this.adresse=adresse;
-        this.telephone=telephone;
-        this.statut=statut;
+    // Constructeur
+    public Fournisseur(int idFournisseur, String raisonSociale, String adresse, String telephone, boolean statut) {
+        this.idFournisseur = idFournisseur;
+        this.raisonSociale = raisonSociale;
+        this.adresse = adresse;
+        this.telephone = telephone;
+        this.statut = statut;
     }
-    //Getters & Setters
-    public int getIdFournisseur(){
+
+    // Getters & Setters
+    public int getIdFournisseur() {
         return idFournisseur;
     }
-    public void setIdFournisseur(int idFournisseur){
-        this.idFournisseur=idFournisseur;
+
+    public void setIdFournisseur(int idFournisseur) {
+        this.idFournisseur = idFournisseur;
     }
 
-    public String getRaisonSociale(){
+    public String getRaisonSociale() {
         return raisonSociale;
     }
-    public void setRaisonSociale(String raisonSociale){
-        this.raisonSociale=raisonSociale;
+
+    public void setRaisonSociale(String raisonSociale) {
+        this.raisonSociale = raisonSociale;
     }
-    public String getAdresse(){
+
+    public String getAdresse() {
         return adresse;
     }
-    public void setAdresse(String adresse){
-        this.adresse=adresse;
+
+    public void setAdresse(String adresse) {
+        this.adresse = adresse;
     }
-    public String getTelephone(){
+
+    public String getTelephone() {
         return telephone;
     }
-    public void setTelephone(String telephone){
-        this.telephone=telephone;
+
+    public void setTelephone(String telephone) {
+        this.telephone = telephone;
     }
-    public boolean isStatut(){
+
+    public boolean isStatut() {
         return statut;
     }
-    public void setStatut(boolean statut){
-        this.statut=statut;
+
+    public void setStatut(boolean statut) {
+        this.statut = statut;
     }
 
-    //methodes
-    public void creerFournisseur(){
-        System.out.println("Fournisseur crée.");
+    public List<Dossier> getDossiers() {
+        return dossiers;
     }
-    public void modifierFournisseur(){
+
+    public void setDossiers(List<Dossier> dossiers) {
+        this.dossiers = dossiers;
+    }
+
+    // Méthodes
+    public void creerFournisseur() {
+        System.out.println("Fournisseur créé.");
+    }
+
+    public void modifierFournisseur() {
         System.out.println("Fournisseur modifié.");
     }
-    public void supprimerFournisseur(){
+
+    public void supprimerFournisseur() {
         System.out.println("Fournisseur supprimé.");
     }
-    public void obtenirDossier(){
-        System.out.println("Liste des dossieres associés au fournisseur.");
-    }
 
+    public void obtenirDossier() {
+        System.out.println("Liste des dossiers associés au fournisseur.");
+    }
 }
