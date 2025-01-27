@@ -3,6 +3,10 @@ package org.example.model;
 import com.fasterxml.jackson.annotation.*;
 import jakarta.persistence.*;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Size;
+
 @Entity
 @Table(name = "utilisateurs")
 @JsonIdentityInfo(
@@ -16,15 +20,21 @@ public class Utilisateur {
     private int idUtilisateur;
 
     @Column(name = "nom", nullable = false)
+    @NotBlank(message = "Le nom est requis")
     private String nom;
 
     @Column(name = "prenom", nullable = false)
+    @NotBlank(message = "Le prénom est requis")
     private String prenom;
 
     @Column(name = "email", unique = true, nullable = false)
+    @NotBlank(message = "L'e-mail est requis")
+    @Email(message = "Le format de l'e-mail est invalide")
     private String email;
 
     @Column(name = "mot_de_passe", nullable = false)
+    @NotBlank(message = "Le mot de passe est requis")
+    @Size(min = 8, message = "Le mot de passe doit contenir au moins 8 caractères")
     private String motDePasse;
 
     @ManyToOne
@@ -34,6 +44,7 @@ public class Utilisateur {
 
     @Column(name = "statut", nullable = false)
     private boolean statut;
+
 
     public Utilisateur() {
     }
@@ -116,28 +127,12 @@ public class Utilisateur {
         this.statut = statut;
     }
 
-    // Méthodes
-    public void creerUtilisateur() {
-        System.out.println("Créer un nouvel utilisateur");
-    }
-
-    public void modifierUtilisateur() {
-        System.out.println("Modifier les informations de l'utilisateur");
-    }
-
-    public void supprimerUtilisateur() {
-        System.out.println("Supprimer l'utilisateur");
-    }
-
-    public boolean authentifier(String email, String motDePasse) {
-        return this.email.equals(email) && this.motDePasse.equals(motDePasse);
-    }
-
+    // Méthode pour changer le mot de passe
     public void changerMotDePasse(String nouveauMotDePasse) {
         this.motDePasse = nouveauMotDePasse;
-        System.out.println("Mot de passe modifié avec succès.");
     }
 
+    // Méthode pour obtenir le rôle
     public String obtenirRole() {
         return "Rôle associé à l'utilisateur : " + (role != null ? role.getNom() : "Aucun rôle");
     }

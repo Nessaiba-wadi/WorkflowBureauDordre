@@ -43,4 +43,14 @@ public class RoleController {
     public Role findByNom(@PathVariable String nom) {
         return roleService.findByNom(nom);
     }
+
+    @PostMapping("/{id}/desactiver")
+    public Role desactiverRole(@PathVariable Integer id) {
+        return roleService.desactiverRole(id);
+    }
+
+    @PostMapping("/{id}/activer")
+    public Role activerRole(@PathVariable Integer id) {
+        return roleService.activerRole(id);
+    }
 }

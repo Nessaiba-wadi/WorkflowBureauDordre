@@ -18,23 +18,28 @@ public class Role {
     @Column(length = 255)
     private String description;
 
+    @Column(nullable = false)
+    private boolean statut = true; // Par défaut, le rôle est actif
+
     @OneToMany(mappedBy = "role", fetch = FetchType.EAGER)
     @JsonManagedReference
     private List<Utilisateur> utilisateurs;
 
-    // Constructeur par défaut requis par JPA
+    // Constructeur sans arguments requis par JPA
     public Role() {
     }
 
-    // Constructeur avec ID
-    public Role(int idRole) {
-        this.idRole = idRole;
-    }
-
-    // Constructeur avec tous les champs sauf ID et utilisateurs
+    // Constructeur avec nom et description
     public Role(String nom, String description) {
         this.nom = nom;
         this.description = description;
+    }
+
+    // Constructeur avec tous les champs sauf ID et utilisateurs
+    public Role(String nom, String description, boolean statut) {
+        this.nom = nom;
+        this.description = description;
+        this.statut = statut;
     }
 
     // Getters & Setters
@@ -60,6 +65,14 @@ public class Role {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public boolean isStatut() {
+        return statut;
+    }
+
+    public void setStatut(boolean statut) {
+        this.statut = statut;
     }
 
     public List<Utilisateur> getUtilisateurs() {
