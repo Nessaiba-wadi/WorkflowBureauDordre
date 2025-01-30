@@ -5,6 +5,7 @@ import org.example.model.Role;
 import org.example.repository.UtilisateurRepository;
 import org.example.repository.RoleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -25,6 +26,7 @@ public class UtilisateurService {
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
     private static final Pattern PASSWORD_PATTERN = Pattern.compile("^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=])(?=\\S+$).{8,}$");
     private static final Pattern NAME_PATTERN = Pattern.compile("^[a-zA-Z]+$");
+    private static final Pattern PHONE_PATTERN = Pattern.compile("^(\\+\\d{1,3}[- ]?)?\\d{10}$");
 
     public static class UtilisateurNonTrouveException extends RuntimeException {
         public UtilisateurNonTrouveException(String message) {
@@ -46,12 +48,6 @@ public class UtilisateurService {
 
     public static class RoleNonTrouveException extends RuntimeException {
         public RoleNonTrouveException(String message) {
-            super(message);
-        }
-    }
-
-    public static class RoleInactifException extends RuntimeException {
-        public RoleInactifException(String message) {
             super(message);
         }
     }
@@ -91,9 +87,13 @@ public class UtilisateurService {
             super(message);
         }
     }
-
+    public static class TelephoneDejaUtiliseException extends RuntimeException {
+        public TelephoneDejaUtiliseException(String message) {
+            super(message);
+        }
+    }
     public Utilisateur creerUtilisateur(Utilisateur utilisateur) {
-        if (utilisateur.getNom() == null || utilisateur.getPrenom() == null || utilisateur.getEmail() == null || utilisateur.getMotDePasse() == null || utilisateur.getRole() == null) {
+        if (utilisateur.getNom() == null || utilisateur.getPrenom() == null || utilisateur.getEmail() == null || utilisateur.getMotDePasse() == null || utilisateur.getTelephone() == null || utilisateur.getRole() == null) {
             throw new ChampsRequisManquantsException("Tous les champs requis doivent être remplis.");
         }
 
@@ -103,6 +103,11 @@ public class UtilisateurService {
 
         if (!EMAIL_PATTERN.matcher(utilisateur.getEmail()).matches()) {
             throw new FormatEmailInvalideException("Le format de l'e-mail est invalide. L'e-mail doit être de la forme 'nom@domaine.com'.");
+        }
+
+        // Validation du numéro de téléphone
+        if (!PHONE_PATTERN.matcher(utilisateur.getTelephone()).matches()) {
+            throw new FormatEmailInvalideException("Le format du numéro de téléphone est invalide. Le numéro doit être de la forme '+1234567890' ou '0123456789'.");
         }
 
         if (utilisateurRepository.findByEmail(utilisateur.getEmail()) != null) {
@@ -116,18 +121,29 @@ public class UtilisateurService {
         Role role = roleRepository.findById(utilisateur.getRole().getIdRole())
                 .orElseThrow(() -> new RoleNonTrouveException("Rôle non trouvé avec l'ID : " + utilisateur.getRole().getIdRole()));
 
-        if (!role.isStatut()) {
-            throw new RoleInactifException("Le rôle est inactif.");
-        }
+
 
         utilisateur.setStatut(true);
         utilisateur.setMotDePasse(passwordEncoder.encode(utilisateur.getMotDePasse()));
 
-        return utilisateurRepository.save(utilisateur);
+
+        try {
+            return utilisateurRepository.save(utilisateur);
+        } catch (DataIntegrityViolationException e) {
+            // Si la violation de contrainte concerne le numéro de téléphone
+            throw new TelephoneDejaUtiliseException("Le numéro de téléphone est déjà utilisé.");
+        }
     }
 
     public Utilisateur getUtilisateurById(Integer id) {
-        return utilisateurRepository.findById(id).orElseThrow(() -> new UtilisateurNonTrouveException("Utilisateur non trouvé avec l'ID : " + id));
+        Utilisateur utilisateur = utilisateurRepository.findById(id)
+                .orElseThrow(() -> new UtilisateurNonTrouveException("Utilisateur non trouvé "));
+
+        if (!utilisateur.isStatut()) {
+            throw new UtilisateurInactifException("L'utilisateur est inactif.");
+        }
+
+        return utilisateur;
     }
 
     public Utilisateur authentifier(String email, String motDePasse) {

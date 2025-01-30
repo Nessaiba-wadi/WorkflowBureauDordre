@@ -27,27 +27,8 @@ public class RoleService {
         return roleRepository.save(role);
     }
 
-    public void deleteRole(Integer id) {
-        roleRepository.deleteById(id);
-    }
-
     public Role findByNom(String nom) {
         return roleRepository.findByNom(nom);
     }
 
-    // Désactiver un rôle
-    public Role desactiverRole(Integer id) {
-        Role role = roleRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Rôle non trouvé avec l'ID : " + id));
-        role.setStatut(false);
-        return roleRepository.save(role);
-    }
-
-    // Activer un rôle
-    public Role activerRole(Integer id) {
-        Role role = roleRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Rôle non trouvé avec l'ID : " + id));
-        role.setStatut(true);
-        return roleRepository.save(role);
-    }
 }

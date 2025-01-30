@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 @Entity
@@ -32,6 +33,10 @@ public class Utilisateur {
     @Email(message = "Le format de l'e-mail est invalide")
     private String email;
 
+    @Column(name = "telephone", nullable = false, unique = true)
+    @NotBlank(message = "Le numéro de téléphone est requis")
+    @Pattern(regexp = "^(\\+\\d{1,3}[- ]?)?\\d{10}$", message = "Le format du numéro de téléphone est invalide")
+    private String telephone;
     @Column(name = "mot_de_passe", nullable = false)
     @NotBlank(message = "Le mot de passe est requis")
     @Size(min = 8, message = "Le mot de passe doit contenir au moins 8 caractères")
@@ -50,21 +55,23 @@ public class Utilisateur {
     }
 
     // Constructeur complet
-    public Utilisateur(int idUtilisateur, String nom, String prenom, String email, String motDePasse, Role role, boolean statut) {
+    public Utilisateur(int idUtilisateur, String nom, String prenom, String email, String telephone, String motDePasse, Role role, boolean statut) {
         this.idUtilisateur = idUtilisateur;
         this.nom = nom;
         this.prenom = prenom;
         this.email = email;
+        this.telephone = telephone;
         this.motDePasse = motDePasse;
         this.role = role;
         this.statut = statut;
     }
 
     // Constructeur simplifié
-    public Utilisateur(String nom, String prenom, String email, String motDePasse, Role role, boolean statut) {
+    public Utilisateur(String nom, String prenom, String email, String telephone, String motDePasse, Role role, boolean statut) {
         this.nom = nom;
         this.prenom = prenom;
         this.email = email;
+        this.telephone = telephone;
         this.motDePasse = motDePasse;
         this.role = role;
         this.statut = statut;
@@ -102,7 +109,13 @@ public class Utilisateur {
     public void setEmail(String email) {
         this.email = email;
     }
+    public String getTelephone() {
+        return telephone;
+    }
 
+    public void setTelephone(String telephone) {
+        this.telephone = telephone;
+    }
     public String getMotDePasse() {
         return motDePasse;
     }

@@ -14,6 +14,7 @@ public class RoleController {
     @Autowired
     private RoleService roleService;
 
+
     @PostMapping
     public Role creerRole(@RequestBody Role role) {
         return roleService.creerRole(role);
@@ -34,23 +35,10 @@ public class RoleController {
         return roleService.updateRole(role);
     }
 
-    @DeleteMapping("/{id}")
-    public void deleteRole(@PathVariable Integer id) {
-        roleService.deleteRole(id);
-    }
 
     @GetMapping("/nom/{nom}")
     public Role findByNom(@PathVariable String nom) {
         return roleService.findByNom(nom);
     }
 
-    @PostMapping("/{id}/desactiver")
-    public Role desactiverRole(@PathVariable Integer id) {
-        return roleService.desactiverRole(id);
-    }
-
-    @PostMapping("/{id}/activer")
-    public Role activerRole(@PathVariable Integer id) {
-        return roleService.activerRole(id);
-    }
 }
