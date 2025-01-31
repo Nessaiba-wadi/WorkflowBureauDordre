@@ -72,7 +72,7 @@ public class UtilisateurController {
     }
 
     //Modifier un utilisateur
-    @PutMapping("/{id}")
+    @PutMapping("/modifier-utilisateur/{id}")
     public ResponseEntity<?> modifierUtilisateur(@PathVariable Integer id, @RequestBody Utilisateur utilisateur) {
         try {
             Utilisateur utilisateurModifie = utilisateurService.modifierUtilisateur(id, utilisateur);
