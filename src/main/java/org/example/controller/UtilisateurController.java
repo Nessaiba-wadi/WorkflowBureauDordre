@@ -1,5 +1,6 @@
 package org.example.controller;
 
+import org.antlr.v4.runtime.Token;
 import org.example.model.Utilisateur;
 import org.example.service.UtilisateurService;
 import org.example.service.UtilisateurService.UtilisateurNonTrouveException;
@@ -57,10 +58,9 @@ public class UtilisateurController {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.CONFLICT);
         }catch (UtilisateurService.UtilisateurInactifException e){
             return new ResponseEntity<>(e.getMessage(), HttpStatus.CONFLICT);
-        }catch(Exception e){
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
+
     @PostMapping("/authentifier")
     public ResponseEntity<String> authentifier(@RequestParam String email, @RequestParam String motDePasse) {
         try {
@@ -68,6 +68,48 @@ public class UtilisateurController {
             return new ResponseEntity<>("Authentification réussie pour l'utilisateur : " + utilisateur.getEmail(), HttpStatus.OK);
         } catch (RuntimeException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.UNAUTHORIZED);
+        }
+    }
+
+    //Modifier un utilisateur
+    @PutMapping("/{id}")
+    public ResponseEntity<?> modifierUtilisateur(@PathVariable Integer id, @RequestBody Utilisateur utilisateur) {
+        try {
+            Utilisateur utilisateurModifie = utilisateurService.modifierUtilisateur(id, utilisateur);
+            return new ResponseEntity<>("Utilisateur modifié avec succès", HttpStatus.OK);
+        } catch (UtilisateurNonTrouveException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+        } catch (UtilisateurService.NomPrenomInvalideException | UtilisateurService.FormatEmailInvalideException |
+                 UtilisateurService.EmailDejaUtiliseException | UtilisateurService.TelephoneDejaUtiliseException |
+                 UtilisateurService.RoleNonTrouveException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Une erreur est survenue lors de la modification", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    //modifier le mot de passe
+    @PutMapping("/modifier-mot-de-passe/{id}")
+    public ResponseEntity<?> modifierMotDePasse(
+            @PathVariable Integer id,
+            @RequestBody Map<String, String> passwordData) {
+        try {
+            String ancienMotDePasse = passwordData.get("ancienMotDePasse");
+            String nouveauMotDePasse = passwordData.get("nouveauMotDePasse");
+
+            if (ancienMotDePasse == null || nouveauMotDePasse == null) {
+                return new ResponseEntity<>("Les deux mots de passe sont requis", HttpStatus.BAD_REQUEST);
+            }
+
+            utilisateurService.modifierMotDePasse(id, ancienMotDePasse, nouveauMotDePasse);
+            return new ResponseEntity<>("Mot de passe modifié avec succès", HttpStatus.OK);
+        } catch (UtilisateurService.UtilisateurNonTrouveException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+        } catch (UtilisateurService.MotDePasseIncorrectException |
+                 UtilisateurService.MotDePasseTropCourtException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Une erreur est survenue lors de la modification du mot de passe",
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }
