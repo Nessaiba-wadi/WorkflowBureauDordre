@@ -112,4 +112,20 @@ public class UtilisateurController {
                     HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+    //désactiver un utilisateur
+    @PutMapping("/desactiver/{id}")
+    public ResponseEntity<?> desactiverUtilisateur(@PathVariable Integer id) {
+        try {
+            utilisateurService.desactiverUtilisateur(id);
+            return new ResponseEntity<>("Utilisateur désactivé avec succès", HttpStatus.OK);
+        } catch (UtilisateurService.UtilisateurNonTrouveException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+        } catch (UtilisateurService.UtilisateurInactifException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Une erreur est survenue lors de la désactivation de l'utilisateur",
+                    HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 }

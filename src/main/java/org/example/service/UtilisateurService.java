@@ -256,4 +256,22 @@ public class UtilisateurService {
         // Enregistrer les modifications dans la base de données
         utilisateurRepository.save(utilisateur);
     }
+
+    //Désactiver un utilisateur
+    public void desactiverUtilisateur(Integer id) {
+        // Récupérer l'utilisateur
+        Utilisateur utilisateur = utilisateurRepository.findById(id)
+                .orElseThrow(() -> new UtilisateurNonTrouveException("Utilisateur non trouvé avec l'ID : " + id));
+
+        // Vérifier si l'utilisateur n'est pas déjà désactivé
+        if (!utilisateur.isStatut()) {
+            throw new UtilisateurInactifException("L'utilisateur est déjà inactif.");
+        }
+
+        // Changer le statut à false
+        utilisateur.setStatut(false);
+
+        // Sauvegarder les modifications
+        utilisateurRepository.save(utilisateur);
+    }
 }
