@@ -257,7 +257,7 @@ public class UtilisateurService {
         utilisateurRepository.save(utilisateur);
     }
 
-    //Désactiver un utilisateur
+    //Désactiver un utilisateur (par les admins)
     public void desactiverUtilisateur(Integer id) {
         // Récupérer l'utilisateur
         Utilisateur utilisateur = utilisateurRepository.findById(id)

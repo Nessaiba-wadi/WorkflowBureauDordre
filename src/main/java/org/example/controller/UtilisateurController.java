@@ -113,7 +113,7 @@ public class UtilisateurController {
         }
     }
 
-    //désactiver un utilisateur
+    //désactiver un utilisateur (par les admins)
     @PutMapping("/desactiver/{id}")
     public ResponseEntity<?> desactiverUtilisateur(@PathVariable Integer id) {
         try {
