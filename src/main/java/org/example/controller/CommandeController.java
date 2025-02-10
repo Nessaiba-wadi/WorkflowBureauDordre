@@ -56,7 +56,7 @@ public class CommandeController {
             if (file != null && !file.isEmpty()) {
                 String contentType = file.getContentType();
                 if (!isValidFileType(contentType)) {
-                    return ResponseEntity.badRequest().body("Invalid file type. Only PDF and Word documents are allowed.");
+                    return ResponseEntity.badRequest().body("Type de fichier invalide. Seuls les documents PDF et Word sont acceptés.");
                 }
             }
 
@@ -64,7 +64,7 @@ public class CommandeController {
 
             if (commandeService.existsByNumeroBC(commande.getNumeroBC())) {
                 return ResponseEntity.badRequest()
-                        .body("A command with the BC number '" + commande.getNumeroBC() + "' already exists.");
+                        .body("Une commande avec le numéro BC'" + commande.getNumeroBC() + "' existe déjà.");
             }
 
             Commande nouvelleCommande = commandeService.creerCommande(commande, utilisateur);
@@ -83,54 +83,54 @@ public class CommandeController {
                 commandeService.updateCommande(nouvelleCommande);
             }
 
-            return ResponseEntity.ok("Command created successfully.");
+            return ResponseEntity.ok("Commande créée avec succès.");
 
         } catch (Exception e) {
             return ResponseEntity.status(500)
-                    .body("An error occurred while creating the command: " + e.getMessage());
+                    .body("Une erreur est survenue lors de la création de la commande: " + e.getMessage());
         }
     }
 
     private String validateCommande(Commande commande) {
         if (commande.getNumeroBC() == null || commande.getNumeroBC().trim().isEmpty()) {
-            return "The BC number is required.";
+            return "Le numéro BC est obligatoire.";
         }
 
         if (!isValidString(commande.getRaisonSocialeFournisseur())) {
-            return "The supplier's legal name must contain only letters and spaces.";
+            return "La raison sociale du fournisseur ne peut contenir que des lettres et des espaces.";
         }
         if (!isValidString(commande.getRaisonSocialeGBM())) {
-            return "GBM's legal name must contain only letters and spaces.";
+            return "La raison sociale de GBM ne peut contenir que des lettres et des espaces.";
         }
         if (!isValidString(commande.getDirectionGBM())) {
-            return "GBM's direction must contain only letters and spaces.";
+            return "La direction de GBM ne peut contenir que des lettres et des espaces.";
         }
         if (!isValidString(commande.getSouscripteur())) {
-            return "The subscriber must contain only letters and spaces.";
+            return "Le souscripteur ne peut contenir que des lettres et des espaces.";
         }
         if (!isValidString(commande.getPersonnesCollectrice())) {
-            return "The collector's name must contain only letters and spaces.";
+            return "Le nom de la personne collectrice ne peut contenir que des lettres et des espaces.";
         }
         if (commande.getTypeDocument() == null || commande.getTypeDocument().trim().isEmpty()) {
-            return "The document type is required.";
+            return "Le type de document est obligatoire.";
         }
 
         if (commande.getDateRelanceBR() == null) {
-            return "The BR reminder date is required.";
+            return "La date de relance du BR est obligatoire.";
         }
         if (commande.getDateTransmission() == null) {
-            return "The transmission date is required.";
+            return "La date de transmission est obligatoire.";
         }
         LocalDate now = LocalDate.now();
         if (commande.getDateRelanceBR().isBefore(now)) {
-            return "The BR reminder date cannot be earlier than today.";
+            return "La date de relance du BR ne peut pas être antérieure à la date du jour.";
         }
         if (commande.getDateTransmission().isBefore(now)) {
-            return "The transmission date cannot be earlier than today.";
+            return "La date de transmission ne peut pas être antérieure à la date du jour.";
         }
 
         if (commande.getTypeRelance() == null) {
-            return "The reminder type is required (MAIL or TELEPHONE).";
+            return "Le type de relance est obligatoire (MAIL ou TÉLÉPHONE).";
         }
 
         return null;
