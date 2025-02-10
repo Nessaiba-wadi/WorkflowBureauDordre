@@ -24,7 +24,7 @@ public class CommandeService {
         return commandeRepository.save(commande);
     }
 
-    private boolean isBureauOrdre(Utilisateur utilisateur) {
+    public boolean isBureauOrdre(Utilisateur utilisateur) {
         return utilisateur != null &&
                 utilisateur.getRole() != null &&
                 ROLE_BUREAU_ORDRE.equals(utilisateur.getRole().getNom());
