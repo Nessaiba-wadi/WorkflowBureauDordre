@@ -11,6 +11,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.Map;
+
+
+@CrossOrigin(origins = {"http://127.0.0.1:8080", "http://localhost:8080"})
 @RestController
 @RequestMapping("/utilisateurs")
 public class UtilisateurController {
@@ -62,12 +65,18 @@ public class UtilisateurController {
     }
 
     @PostMapping("/authentifier")
-    public ResponseEntity<String> authentifier(@RequestParam String email, @RequestParam String motDePasse) {
+    public ResponseEntity<?> authentifier(@RequestParam String email, @RequestParam String motDePasse) {
         try {
             Utilisateur utilisateur = utilisateurService.authentifier(email, motDePasse);
-            return new ResponseEntity<>("Authentification réussie pour l'utilisateur : " + utilisateur.getEmail(), HttpStatus.OK);
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "Authentification réussie");
+            response.put("nom", utilisateur.getNom());
+            response.put("prenom", utilisateur.getPrenom());
+            response.put("role", utilisateur.getRole().getNom());
+            return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.UNAUTHORIZED);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(e.getMessage());
         }
     }
 

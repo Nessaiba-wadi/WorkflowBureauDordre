@@ -1,0 +1,18 @@
+.login-container {
+    max-width: 400px;
+    margin: 100px auto;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    background-color: white;
+}
+.form-floating {
+    margin-bottom: 1rem;
+}
+.btn-primary {
+    width: 100%;
+    padding: 10px;
+}
+body {
+    background-color: #f8f9fa;
+}
