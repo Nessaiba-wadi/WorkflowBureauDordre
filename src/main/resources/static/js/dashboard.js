@@ -1,4 +1,3 @@
-// js/dashboard.js - Pour les pages après connexion
 document.addEventListener('DOMContentLoaded', function() {
     const userInfo = JSON.parse(sessionStorage.getItem('userInfo'));
     console.log('UserInfo:', userInfo);
