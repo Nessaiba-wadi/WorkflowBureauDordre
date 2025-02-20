@@ -58,7 +58,7 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
 });
 
 
-// Ajouter ce script à votre fichier login.js
+// icon de mot de passe
 
 document.addEventListener('DOMContentLoaded', function() {
     const togglePassword = document.querySelector('.toggle-password');
