@@ -1,18 +1,456 @@
-.login-container {
-    max-width: 400px;
-    margin: 100px auto;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    background-color: white;
+/* Variables des couleurs */
+:root {
+    --primary-blue: #0066cc;
+    --light-blue: #e6f3ff;
+    --accent-blue: #3399ff;
+    --white: #ffffff;
+    --gray-100: #f8f9fa;
+    --gray-200: #e9ecef;
+    --text-dark: #2c3e50;
 }
-.form-floating {
-    margin-bottom: 1rem;
+
+/* Reset et styles de base */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
-.btn-primary {
-    width: 100%;
-    padding: 10px;
-}
+
 body {
-    background-color: #f8f9fa;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: var(--gray-100);
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* Page de connexion */
+.login-page {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, var(--light-blue), var(--white));
+}
+
+/* Conteneur principal */
+.login-container {
+    display: flex;
+    background: var(--white);
+    border-radius: 30px;
+    box-shadow: 0 20px 60px rgba(0, 102, 204, 0.1);
+    width: 1000px;
+    height: 600px;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Panneau gauche */
+.left-panel {
+    flex: 1;
+    background: linear-gradient(135deg, var(--primary-blue), var(--accent-blue));
+    padding: 60px;
+    display: flex;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.welcome-text {
+    color: var(--white);
+    position: relative;
+    z-index: 2;
+}
+
+.welcome-text h1 {
+    font-size: 2.5em;
+    margin-bottom: 20px;
+    font-weight: 300;
+}
+
+.logo-container {
+    margin: 30px 0;
+}
+
+.logo {
+    max-width: 200px;
+    filter: brightness(0) invert(1);
+    animation: logoFloat 3s ease-in-out infinite;
+}
+
+.slogan {
+    font-size: 1.2em;
+    opacity: 0.9;
+    margin-top: 20px;
+}
+
+/* Panneau droit */
+.right-panel {
+    flex: 1;
+    padding: 60px;
+    background: var(--white);
+    display: flex;
+    flex-direction: column;
+}
+
+/* En-tête du formulaire */
+.login-header {
+    margin-bottom: 40px;
+    text-align: left;
+}
+
+.login-header h2 {
+    color: var(--text-dark);
+    font-size: 32px;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.login-header p {
+    color: #666;
+    font-size: 16px;
+}
+
+/* Style des champs de formulaire */
+.form-group {
+    margin-bottom: 30px;
+}
+
+.input-container {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.input-container .form-control {
+    width: 100%;
+    padding: 15px 45px 15px 15px;
+    border: none;
+    border-bottom: 2px solid var(--gray-200);
+    background: transparent;
+    font-size: 16px;
+    transition: all 0.3s ease;
+}
+
+.input-container label {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #999;
+    font-size: 16px;
+    transition: all 0.3s ease;
+    pointer-events: none;
+}
+
+.input-container .form-control:focus ~ label,
+.input-container .form-control:valid ~ label {
+    top: -10px;
+    font-size: 12px;
+    color: var(--primary-blue);
+}
+
+.input-icon {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #999;
+    transition: all 0.3s ease;
+}
+
+.input-line {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: var(--primary-blue);
+    transition: all 0.3s ease;
+}
+
+.form-control:focus ~ .input-line {
+    width: 100%;
+}
+
+.form-control:focus ~ .input-icon {
+    color: var(--primary-blue);
+}
+
+/* Options du formulaire */
+.form-options {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.remember-me {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #666;
+    cursor: pointer;
+}
+
+/* Bouton de connexion */
+.login-btn {
+    width: 100%;
+    padding: 15px;
+    border: none;
+    border-radius: 12px;
+    background: var(--primary-blue);
+    color: var(--white);
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    overflow: hidden;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.login-btn .btn-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    position: relative;
+    z-index: 1;
+}
+
+.login-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(0, 102, 204, 0.2);
+}
+
+.login-btn:hover .btn-content i {
+    transform: translateX(5px);
+}
+
+/* Footer du formulaire */
+.login-footer {
+    margin-top: 30px;
+    text-align: center;
+    color: #666;
+}
+
+.create-account {
+    color: var(--primary-blue);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    margin-top: 10px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.create-account:hover {
+    color: var(--accent-blue);
+}
+
+.create-account i {
+    transition: transform 0.3s ease;
+}
+
+.create-account:hover i {
+    transform: translateX(5px);
+}
+
+/* Animations des oiseaux */
+.animated-birds {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+}
+
+.bird {
+    position: absolute;
+    width: 15px;
+    height: 15px;
+    background: rgba(255, 255, 255, 0.2);
+    clip-path: polygon(0% 50%, 50% 0%, 100% 50%, 50% 100%);
+    animation: birdFly 20s linear infinite;
+}
+
+.bird:nth-child(1) {
+    top: 20%;
+    left: -15px;
+    animation-delay: 0s;
+}
+
+.bird:nth-child(2) {
+    top: 40%;
+    left: -15px;
+    animation-delay: 5s;
+}
+
+.bird:nth-child(3) {
+    top: 60%;
+    left: -15px;
+    animation-delay: 10s;
+}
+
+@keyframes birdFly {
+    0% {
+        transform: translateX(0) translateY(0) rotate(0deg);
+    }
+    25% {
+        transform: translateX(250%) translateY(-50px) rotate(15deg);
+    }
+    50% {
+        transform: translateX(500%) translateY(0) rotate(0deg);
+    }
+    75% {
+        transform: translateX(250%) translateY(50px) rotate(-15deg);
+    }
+    100% {
+        transform: translateX(0) translateY(0) rotate(0deg);
+    }
+}
+
+@keyframes logoFloat {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+/* Formes d'arrière-plan */
+.background-shapes {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.shape {
+    position: absolute;
+    border-radius: 50%;
+    opacity: 0.1;
+}
+
+.shape-1 {
+    width: 300px;
+    height: 300px;
+    background: var(--primary-blue);
+    top: -150px;
+    right: -150px;
+    animation: shapeFloat 15s infinite alternate;
+}
+
+.shape-2 {
+    width: 200px;
+    height: 200px;
+    background: var(--accent-blue);
+    bottom: -100px;
+    left: -100px;
+    animation: shapeFloat 20s infinite alternate-reverse;
+}
+
+@keyframes shapeFloat {
+    0% {
+        transform: translate(0, 0) rotate(0deg);
+    }
+    100% {
+        transform: translate(50px, 50px) rotate(360deg);
+    }
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .login-container {
+        width: 90%;
+        height: auto;
+        flex-direction: column;
+    }
+
+    .left-panel {
+        padding: 40px;
+        min-height: 300px;
+    }
+
+    .right-panel {
+        padding: 40px;
+    }
+}
+
+@media (max-width: 576px) {
+    .login-container {
+        margin: 20px;
+        border-radius: 20px;
+    }
+
+    .left-panel {
+        padding: 30px;
+        min-height: 200px;
+    }
+
+    .right-panel {
+        padding: 30px;
+    }
+
+    .login-header h2 {
+        font-size: 24px;
+    }
+}
+
+/* Ajouter ces styles à votre CSS existant */
+
+/* Style du bouton toggle mot de passe */
+.toggle-password {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 5px;
+    color: #999;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+}
+
+.toggle-password:hover {
+    color: var(--primary-blue);
+}
+
+.toggle-password:focus {
+    outline: none;
+    color: var(--primary-blue);
+}
+
+/* Déplacer l'icône du cadenas pour faire place au bouton toggle */
+.input-container .input-icon {
+    right: 45px;
+}
+
+/* Animation de l'icône */
+.toggle-password i {
+    transition: all 0.3s ease;
+}
+
+.toggle-password.show i {
+    transform: scale(1.1);
+}
+
+/* Ajuster le padding du champ mot de passe pour éviter le chevauchement */
+.input-container input[type="password"],
+.input-container input[type="text"] {
+    padding-right: 75px;
+}
+
+/* Style hover/focus pour le conteneur */
+.input-container:hover .toggle-password,
+.input-container:focus-within .toggle-password {
+    color: var(--primary-blue);
 }
