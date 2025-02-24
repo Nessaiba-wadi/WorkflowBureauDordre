@@ -1,5 +1,6 @@
 package org.example.service;
 
+import jakarta.transaction.Transactional;
 import org.example.model.Commande;
 import org.example.model.Utilisateur;
 import org.example.repository.CommandeRepository;
@@ -15,6 +16,7 @@ public class CommandeService {
 
     private static final String ROLE_BUREAU_ORDRE = "Bureau d'ordre";
 
+    @Transactional
     public Commande creerCommande(Commande commande, Utilisateur utilisateur) {
         if (!isBureauOrdre(utilisateur)) {
             throw new IllegalStateException("Accès refusé: Seuls les utilisateurs du Bureau d'ordre peuvent créer des commandes");

@@ -25,6 +25,8 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
+
+@CrossOrigin(origins = {"http://127.0.0.1:8080", "http://localhost:8080"})
 @RestController
 @RequestMapping("/BO/commandes")
 public class CommandeController {
@@ -56,13 +58,6 @@ public class CommandeController {
                 return ResponseEntity.badRequest().body(validationError);
             }
 
-            if (file != null && !file.isEmpty()) {
-                String contentType = file.getContentType();
-                if (!isValidFileType(contentType)) {
-                    return ResponseEntity.badRequest().body("Type de fichier invalide. Seuls les documents PDF et Word sont acceptés.");
-                }
-            }
-
             Utilisateur utilisateur = utilisateurService.getUtilisateurById(utilisateurId);
 
             if (commandeService.existsByNumeroBC(commande.getNumeroBC())) {
@@ -89,7 +84,7 @@ public class CommandeController {
             return ResponseEntity.ok("Commande créée avec succès.");
 
         } catch (Exception e) {
-            return ResponseEntity.status(500)
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Une erreur est survenue lors de la création de la commande: " + e.getMessage());
         }
     }

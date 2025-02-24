@@ -1,3 +1,5 @@
+const API_BASE_URL = 'http://localhost:8082';
+
 document.addEventListener('DOMContentLoaded', async function() {
     const userInfo = JSON.parse(sessionStorage.getItem('userInfo'));
     if (!userInfo) {
@@ -6,19 +8,17 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 
     try {
-        // Appel à l'API pour récupérer les détails de l'utilisateur
-        const response = await fetch(`/utilisateurs/${userInfo.id}`);
+        // Modifiez l'URL pour inclure l'URL de base
+        const response = await fetch(`${API_BASE_URL}/utilisateurs/${userInfo.id}`);
         if (!response.ok) {
             throw new Error('Erreur lors de la récupération des détails utilisateur');
         }
         const userDetails = await response.json();
 
-        // Mise à jour des informations dans le dropdown
         document.getElementById('userName').textContent = `${userDetails.prenom} ${userDetails.nom}`;
         document.getElementById('userRole').textContent = `Role: ${userDetails.role}`;
     } catch (error) {
         console.error('Erreur:', error);
-        // En cas d'erreur, on utilise les données de base du sessionStorage
         document.getElementById('userName').textContent = `${userInfo.prenom} ${userInfo.nom}`;
         document.getElementById('userRole').textContent = `Role: ${userInfo.role}`;
     }
@@ -41,6 +41,7 @@ function initializeForm() {
 
 async function handleSubmit(e) {
     e.preventDefault();
+    console.log('Formulaire soumis');
 
     if (!this.checkValidity()) {
         e.stopPropagation();
@@ -49,7 +50,7 @@ async function handleSubmit(e) {
     }
 
     try {
-        const formData = new FormData();
+        const userInfo = JSON.parse(sessionStorage.getItem('userInfo'));
         const commandeData = {
             raisonSocialeFournisseur: document.getElementById('raisonSocialeFournisseur').value,
             raisonSocialeGBM: document.getElementById('raisonSocialeGBM').value,
@@ -64,7 +65,7 @@ async function handleSubmit(e) {
             dossierComplet: document.getElementById('dossierComplet').checked
         };
 
-        const userInfo = JSON.parse(sessionStorage.getItem('userInfo'));
+        const formData = new FormData();
         formData.append('commandeData', JSON.stringify(commandeData));
         formData.append('utilisateurId', userInfo.id);
 
@@ -73,21 +74,22 @@ async function handleSubmit(e) {
             formData.append('file', fileInput.files[0]);
         }
 
-        const response = await fetch('/BO/commandes', {
+        const response = await fetch(`${API_BASE_URL}/BO/commandes`, {
             method: 'POST',
-            body: formData
+            body: formData,
+            credentials: 'include'
         });
-
-        const responseData = await response.text();
 
         if (response.ok) {
             alert('Commande créée avec succès!');
             this.reset();
             this.classList.remove('was-validated');
         } else {
-            alert(responseData);
+            const errorData = await response.text();
+            throw new Error(errorData || 'Erreur lors de la création de la commande');
         }
     } catch (error) {
+        console.error('Erreur:', error);
         alert('Erreur: ' + error.message);
     }
 }

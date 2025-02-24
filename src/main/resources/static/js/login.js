@@ -9,8 +9,6 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
         button.innerHTML = 'Connexion...';
         button.disabled = true;
 
-        console.log('Email:', email);
-        console.log('Mot de passe:', password);
 
         const response = await fetch('http://localhost:8082/utilisateurs/authentifier', {
             method: 'POST',

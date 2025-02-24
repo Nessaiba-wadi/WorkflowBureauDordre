@@ -67,14 +67,17 @@ public class UtilisateurController {
     @PostMapping("/authentifier")
     public ResponseEntity<?> authentifier(@RequestParam String email, @RequestParam String motDePasse) {
         try {
+            System.out.println("Tentative d'authentification pour : " + email);
             Utilisateur utilisateur = utilisateurService.authentifier(email, motDePasse);
             Map<String, String> response = new HashMap<>();
             response.put("message", "Authentification réussie");
             response.put("nom", utilisateur.getNom());
             response.put("prenom", utilisateur.getPrenom());
             response.put("role", utilisateur.getRole().getNom());
+            System.out.println("Authentification réussie pour : " + email);
             return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
+            System.out.println("Erreur d'authentification : " + e.getMessage());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(e.getMessage());
         }
