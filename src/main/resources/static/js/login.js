@@ -24,11 +24,13 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
 
         if (response.ok) {
             sessionStorage.setItem('userInfo', JSON.stringify({
+                id: data.id,
                 nom: data.nom,
                 prenom: data.prenom,
                 role: data.role
             }));
-            console.log('Données stockées dans sessionStorage:', sessionStorage.getItem('userInfo'));
+            console.log('Données stockées:', sessionStorage.getItem('userInfo'));
+
 
             switch(data.role.toLowerCase()) {
                 case 'comptable':

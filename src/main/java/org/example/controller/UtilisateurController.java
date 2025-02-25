@@ -71,6 +71,7 @@ public class UtilisateurController {
             Utilisateur utilisateur = utilisateurService.authentifier(email, motDePasse);
             Map<String, String> response = new HashMap<>();
             response.put("message", "Authentification réussie");
+            response.put("id", String.valueOf(utilisateur.getIdUtilisateur())); // Conversion directe
             response.put("nom", utilisateur.getNom());
             response.put("prenom", utilisateur.getPrenom());
             response.put("role", utilisateur.getRole().getNom());
