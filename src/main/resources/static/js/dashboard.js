@@ -8,7 +8,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 
     try {
-        // Modifiez l'URL pour inclure l'URL de base
         const response = await fetch(`${API_BASE_URL}/utilisateurs/${userInfo.id}`);
         if (!response.ok) {
             throw new Error('Erreur lors de la récupération des détails utilisateur');
@@ -16,15 +15,68 @@ document.addEventListener('DOMContentLoaded', async function() {
         const userDetails = await response.json();
 
         document.getElementById('userName').textContent = `${userDetails.prenom} ${userDetails.nom}`;
-        document.getElementById('userId').textContent = `${userInfo.id}`; // Affiche l'ID
+        document.getElementById('userId').textContent = `${userInfo.id}`;
     } catch (error) {
         console.error('Erreur:', error);
         document.getElementById('userName').textContent = `${userInfo.prenom} ${userInfo.nom}`;
-        document.getElementById('userId').textContent = `${userInfo.id}`; // Affiche l'ID
+        document.getElementById('userId').textContent = `${userInfo.id}`;
     }
 
     initializeForm();
+
+    if (!document.querySelector('.custom-toast-container')) {
+        const toastContainer = document.createElement('div');
+        toastContainer.className = 'custom-toast-container';
+        document.body.appendChild(toastContainer);
+    }
 });
+
+function showToast(message, type = 'success', duration = 3000) {
+    const toastContainer = document.querySelector('.custom-toast-container');
+
+    const toast = document.createElement('div');
+    toast.className = `custom-toast custom-toast-${type}`;
+
+    const iconMap = {
+        'success': '<i class="fas fa-check-circle text-success"></i>',
+        'error': '<i class="fas fa-exclamation-circle text-danger"></i>',
+        'info': '<i class="fas fa-info-circle text-info"></i>',
+        'warning': '<i class="fas fa-exclamation-triangle text-warning"></i>'
+    };
+
+    const titleMap = {
+        'success': 'Succès',
+        'error': 'Erreur',
+        'info': 'Information',
+        'warning': 'Avertissement'
+    };
+
+    toast.innerHTML = `
+        <div class="custom-toast-header">
+            <div>
+                ${iconMap[type]} <strong class="me-auto">${titleMap[type]}</strong>
+            </div>
+            <button type="button" class="btn-close btn-close-white btn-sm" onclick="closeToast(this)"></button>
+        </div>
+        <div class="custom-toast-body">${message}</div>
+    `;
+
+    toastContainer.appendChild(toast);
+
+    setTimeout(() => {
+        closeToast(toast.querySelector('.btn-close'));
+    }, duration);
+
+    return toast;
+}
+
+function closeToast(closeButton) {
+    const toast = closeButton.closest('.custom-toast');
+    toast.classList.add('hide');
+    setTimeout(() => {
+        toast.remove();
+    }, 300);
+}
 
 function deconnexion() {
     sessionStorage.clear();
@@ -32,23 +84,18 @@ function deconnexion() {
 }
 
 function openUserSettings() {
-    // Implémentation à venir
-    alert('Fonctionnalité en cours de développement');
+    showToast('Fonctionnalité en cours de développement', 'info');
 }
 
 function initializeForm() {
     const form = document.getElementById('commandeForm');
     if (!form) return;
 
-    // Définir les dates minimales pour les champs de date
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('dateRelanceBR').min = today;
     document.getElementById('dateTransmission').min = today;
 
-    // Ajouter un écouteur d'événement pour la soumission du formulaire
     form.addEventListener('submit', handleSubmit);
-
-    // Activer la validation Bootstrap
     form.classList.add('was-validated');
 }
 
@@ -71,7 +118,6 @@ async function handleSubmit(event) {
         submitButton.disabled = true;
         submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Envoi en cours...';
 
-        // Récupérer les valeurs du formulaire
         const commandeData = {
             raisonSocialeFournisseur: document.getElementById('raisonSocialeFournisseur').value,
             raisonSocialeGBM: document.getElementById('raisonSocialeGBM').value,
@@ -86,18 +132,15 @@ async function handleSubmit(event) {
             dossierComplet: document.getElementById('dossierComplet').checked
         };
 
-        // Créer un objet FormData pour l'envoi multipart
         const formData = new FormData();
         formData.append('commande', JSON.stringify(commandeData));
         formData.append('utilisateurId', userInfo.id);
 
-        // Ajouter le fichier s'il existe
         const fichierInput = document.getElementById('fichier');
         if (fichierInput.files.length > 0) {
             formData.append('fichier', fichierInput.files[0]);
         }
 
-        // Envoyer la requête à l'API
         const response = await fetch(`${API_BASE_URL}/BO/commandes`, {
             method: 'POST',
             body: formData
@@ -110,16 +153,14 @@ async function handleSubmit(event) {
 
         const commande = await response.json();
 
-        // Afficher un message de succès
-        alert('Commande créée avec succès !');
+        showToast('Commande créée avec succès !', 'success');
 
-        // Réinitialiser le formulaire
         form.reset();
         form.classList.remove('was-validated');
 
     } catch (error) {
         console.error('Erreur:', error);
-        alert(`Erreur: ${error.message}`);
+        showToast(`Erreur: ${error.message}`, 'error');
     } finally {
         const submitButton = form.querySelector('button[type="submit"]');
         submitButton.disabled = false;
@@ -127,7 +168,6 @@ async function handleSubmit(event) {
     }
 }
 
-// Charger les commandes de l'utilisateur (cette fonction pourra être utilisée ultérieurement)
 async function chargerCommandes() {
     try {
         const userInfo = JSON.parse(sessionStorage.getItem('userInfo'));
@@ -141,11 +181,11 @@ async function chargerCommandes() {
         }
 
         const commandes = await response.json();
-        // À implémenter: affichage des commandes dans l'interface
         console.log('Commandes chargées:', commandes);
+        showToast('Commandes chargées avec succès', 'info');
 
     } catch (error) {
         console.error('Erreur:', error);
-        alert(`Erreur lors du chargement des commandes: ${error.message}`);
+        showToast(`Erreur lors du chargement des commandes: ${error.message}`, 'error');
     }
 }
