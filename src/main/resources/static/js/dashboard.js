@@ -96,13 +96,14 @@ function initializeForm() {
     document.getElementById('dateTransmission').min = today;
 
     form.addEventListener('submit', handleSubmit);
-    form.classList.add('was-validated');
 }
 
 async function handleSubmit(event) {
     event.preventDefault();
-
     const form = event.target;
+
+    form.classList.add('was-validated');
+
     if (!form.checkValidity()) {
         event.stopPropagation();
         return;
