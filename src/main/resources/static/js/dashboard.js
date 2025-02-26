@@ -16,11 +16,11 @@ document.addEventListener('DOMContentLoaded', async function() {
         const userDetails = await response.json();
 
         document.getElementById('userName').textContent = `${userDetails.prenom} ${userDetails.nom}`;
-        document.getElementById('userRole').textContent = `Role: ${userDetails.role}`;
+        document.getElementById('userId').textContent = `${userInfo.id}`; // Affiche l'ID
     } catch (error) {
         console.error('Erreur:', error);
         document.getElementById('userName').textContent = `${userInfo.prenom} ${userInfo.nom}`;
-        document.getElementById('userRole').textContent = `Role: ${userInfo.role}`;
+        document.getElementById('userId').textContent = `${userInfo.id}`; // Affiche l'ID
     }
 
     initializeForm();
@@ -31,26 +31,47 @@ function deconnexion() {
     window.location.href = '../../templates/login.html';
 }
 
+function openUserSettings() {
+    // Implémentation à venir
+    alert('Fonctionnalité en cours de développement');
+}
+
 function initializeForm() {
     const form = document.getElementById('commandeForm');
+    if (!form) return;
+
+    // Définir les dates minimales pour les champs de date
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('dateRelanceBR').min = today;
     document.getElementById('dateTransmission').min = today;
+
+    // Ajouter un écouteur d'événement pour la soumission du formulaire
     form.addEventListener('submit', handleSubmit);
+
+    // Activer la validation Bootstrap
+    form.classList.add('was-validated');
 }
 
-async function handleSubmit(e) {
-    e.preventDefault();
-    console.log('Formulaire soumis');
+async function handleSubmit(event) {
+    event.preventDefault();
 
-    if (!this.checkValidity()) {
-        e.stopPropagation();
-        this.classList.add('was-validated');
+    const form = event.target;
+    if (!form.checkValidity()) {
+        event.stopPropagation();
         return;
     }
 
     try {
         const userInfo = JSON.parse(sessionStorage.getItem('userInfo'));
+        if (!userInfo || !userInfo.id) {
+            throw new Error('Informations utilisateur non disponibles. Veuillez vous reconnecter.');
+        }
+
+        const submitButton = form.querySelector('button[type="submit"]');
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Envoi en cours...';
+
+        // Récupérer les valeurs du formulaire
         const commandeData = {
             raisonSocialeFournisseur: document.getElementById('raisonSocialeFournisseur').value,
             raisonSocialeGBM: document.getElementById('raisonSocialeGBM').value,
@@ -65,31 +86,66 @@ async function handleSubmit(e) {
             dossierComplet: document.getElementById('dossierComplet').checked
         };
 
+        // Créer un objet FormData pour l'envoi multipart
         const formData = new FormData();
-        formData.append('commandeData', JSON.stringify(commandeData));
+        formData.append('commande', JSON.stringify(commandeData));
         formData.append('utilisateurId', userInfo.id);
 
-        const fileInput = document.getElementById('fichier');
-        if (fileInput.files.length > 0) {
-            formData.append('file', fileInput.files[0]);
+        // Ajouter le fichier s'il existe
+        const fichierInput = document.getElementById('fichier');
+        if (fichierInput.files.length > 0) {
+            formData.append('fichier', fichierInput.files[0]);
         }
 
+        // Envoyer la requête à l'API
         const response = await fetch(`${API_BASE_URL}/BO/commandes`, {
             method: 'POST',
-            body: formData,
-            credentials: 'include'
+            body: formData
         });
 
-        if (response.ok) {
-            alert('Commande créée avec succès!');
-            this.reset();
-            this.classList.remove('was-validated');
-        } else {
-            const errorData = await response.text();
-            throw new Error(errorData || 'Erreur lors de la création de la commande');
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Erreur lors de la création de la commande');
         }
+
+        const commande = await response.json();
+
+        // Afficher un message de succès
+        alert('Commande créée avec succès !');
+
+        // Réinitialiser le formulaire
+        form.reset();
+        form.classList.remove('was-validated');
+
     } catch (error) {
         console.error('Erreur:', error);
-        alert('Erreur: ' + error.message);
+        alert(`Erreur: ${error.message}`);
+    } finally {
+        const submitButton = form.querySelector('button[type="submit"]');
+        submitButton.disabled = false;
+        submitButton.innerHTML = '<i class="fas fa-save"></i> Enregistrer';
+    }
+}
+
+// Charger les commandes de l'utilisateur (cette fonction pourra être utilisée ultérieurement)
+async function chargerCommandes() {
+    try {
+        const userInfo = JSON.parse(sessionStorage.getItem('userInfo'));
+        if (!userInfo || !userInfo.id) {
+            throw new Error('Informations utilisateur non disponibles');
+        }
+
+        const response = await fetch(`${API_BASE_URL}/BO/commandes/utilisateur/${userInfo.id}`);
+        if (!response.ok) {
+            throw new Error('Erreur lors du chargement des commandes');
+        }
+
+        const commandes = await response.json();
+        // À implémenter: affichage des commandes dans l'interface
+        console.log('Commandes chargées:', commandes);
+
+    } catch (error) {
+        console.error('Erreur:', error);
+        alert(`Erreur lors du chargement des commandes: ${error.message}`);
     }
 }

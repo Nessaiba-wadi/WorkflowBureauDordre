@@ -1,51 +1,50 @@
 package org.example.service;
-
 import jakarta.transaction.Transactional;
 import org.example.model.Commande;
 import org.example.model.Utilisateur;
 import org.example.repository.CommandeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.LocalDateTime;
 import java.util.List;
-
+import java.util.UUID;
 @Service
 public class CommandeService {
-
     @Autowired
     private CommandeRepository commandeRepository;
-
-    private static final String ROLE_BUREAU_ORDRE = "Bureau d'ordre";
-
+    @Value("${file.upload-dir}")
+    private String uploadDir;
     @Transactional
-    public Commande creerCommande(Commande commande, Utilisateur utilisateur) {
-        if (!isBureauOrdre(utilisateur)) {
-            throw new IllegalStateException("Accès refusé: Seuls les utilisateurs du Bureau d'ordre peuvent créer des commandes");
+    public Commande createCommande(Commande commande, Utilisateur utilisateur, MultipartFile fichier) throws IOException {
+        // Vérifier si le numéro BC existe déjà
+        if (commandeRepository.existsByNumeroBC(commande.getNumeroBC())) {
+            throw new RuntimeException("Une commande avec ce numéro BC existe déjà");
         }
-
+        // Associer l'utilisateur
         commande.setUtilisateur(utilisateur);
+
+        // Gérer le fichier si présent
+        if (fichier != null && !fichier.isEmpty()) {
+            String fileName = UUID.randomUUID().toString() + "_" + fichier.getOriginalFilename();
+            Path uploadPath = Paths.get(uploadDir);
+
+            if (!Files.exists(uploadPath)) {
+                Files.createDirectories(uploadPath);
+            }
+
+            Files.copy(fichier.getInputStream(), uploadPath.resolve(fileName));
+            commande.setFichierJoint(fileName);
+        }
+        // Sauvegarder la commande
         return commandeRepository.save(commande);
     }
-
-    public boolean isBureauOrdre(Utilisateur utilisateur) {
-        return utilisateur != null &&
-                utilisateur.getRole() != null &&
-                ROLE_BUREAU_ORDRE.equals(utilisateur.getRole().getNom());
-    }
-
     public List<Commande> getCommandesByUtilisateur(Utilisateur utilisateur) {
         return commandeRepository.findByUtilisateur(utilisateur);
-    }
-
-    public boolean existsByNumeroBC(String numeroBC) {
-        return commandeRepository.existsByNumeroBC(numeroBC);
-    }
-
-    public Commande updateCommande(Commande commande) {
-        return commandeRepository.save(commande);
-    }
-
-    public Commande getCommandeById(int id) {
-        return commandeRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Commande non trouvée avec l'ID : " + id));
     }
 }
