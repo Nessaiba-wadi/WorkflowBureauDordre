@@ -17,13 +17,20 @@
 }
 
 body {
+    overflow-y: auto;
+    overflow-x: hidden;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background: var(--gray-100);
     height: 100%;
     /* Supprimer overflow: hidden pour permettre le défilement */
     font-size: 14px; /* Réduire la taille de police de base */
 }
-
+body {
+    background-color: #f8f9fa;
+    min-height: 100vh;
+    /* Permettre le défilement vertical */
+    overflow-y: auto;
+}
 /* Page de connexion */
 .login-page {
     position: relative;
@@ -465,12 +472,7 @@ body {
     --light-blue: #e6f0ff;
 }
 
-body {
-    background-color: #f8f9fa;
-    min-height: 100vh;
-    /* Permettre le défilement vertical */
-    overflow-y: auto;
-}
+
 
 /* Navbar styling */
 .navbar {
@@ -755,16 +757,12 @@ html {
 /* Sidebar */
 .sidebar {
     position: fixed;
-    top: 60px; /* Commence sous la navbar */
+    top: 60px; /* Doit correspondre à la hauteur de votre navbar */
     left: 0;
-    height: calc(100vh - 60px);
-    width: 240px;
-    background-color: #f8f9fa;
-    color: #212529;
-    display: flex;
-    flex-direction: column;
-    box-shadow: 1px 0 10px rgba(0, 0, 0, 0.1);
-    z-index: 1000;
+    bottom: 0;
+    width: 250px; /* Ajustez selon la largeur souhaitée */
+    overflow-y: auto;
+    z-index: 1020;
 }
 
 .sidebar-body {
@@ -805,27 +803,27 @@ html {
     width: 100%;
 }
 
-/* Pour les écrans mobiles */
+
+/* Style pour le contenu principal */
+.main-content {
+    margin-left: 250px; /* Doit correspondre à la largeur de votre sidebar */
+    padding: 20px;
+    height: calc(100vh - 60px); /* 100% de la hauteur moins la navbar */
+    overflow-y: visible; /* Permet le défilement si le contenu est trop long */
+}
+
+/* Pour les écrans plus petits, ajuster le menu */
 @media (max-width: 992px) {
     .sidebar {
-        transform: translateX(-240px);
+        transform: translateX(-100%);
         transition: transform 0.3s ease;
     }
 
-    .sidebar.open {
+    .sidebar.show {
         transform: translateX(0);
     }
 
-    .content-wrapper {
-        padding-left: 0;
-    }
-
-    .menu-toggle {
-        display: block;
-        background-color: transparent;
-        color: white;
-        border: none;
-        cursor: pointer;
-        padding: 0;
+    .main-content {
+        margin-left: 0;
     }
 }
