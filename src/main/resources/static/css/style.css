@@ -19,8 +19,9 @@
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background: var(--gray-100);
-    height: 100vh;
-    overflow: hidden;
+    height: 100%;
+    /* Supprimer overflow: hidden pour permettre le défilement */
+    font-size: 14px; /* Réduire la taille de police de base */
 }
 
 /* Page de connexion */
@@ -38,10 +39,10 @@ body {
 .login-container {
     display: flex;
     background: var(--white);
-    border-radius: 30px;
-    box-shadow: 0 20px 60px rgba(0, 102, 204, 0.1);
-    width: 1000px;
-    height: 600px;
+    border-radius: 25px; /* Légèrement réduit */
+    box-shadow: 0 15px 45px rgba(0, 102, 204, 0.1);
+    width: 900px; /* Réduit de 1000px à 900px */
+    height: 540px; /* Réduit de 600px à 540px */
     position: relative;
     overflow: hidden;
 }
@@ -50,7 +51,7 @@ body {
 .left-panel {
     flex: 1;
     background: linear-gradient(135deg, var(--primary-blue), var(--accent-blue));
-    padding: 60px;
+    padding: 50px; /* Réduit de 60px à 50px */
     display: flex;
     align-items: center;
     position: relative;
@@ -64,31 +65,31 @@ body {
 }
 
 .welcome-text h1 {
-    font-size: 2.5em;
-    margin-bottom: 20px;
+    font-size: 2.2em; /* Réduit de 2.5em */
+    margin-bottom: 16px; /* Réduit de 20px */
     font-weight: 300;
 }
 
 .logo-container {
-    margin: 30px 0;
+    margin: 25px 0; /* Réduit de 30px */
 }
 
 .logo {
-    max-width: 200px;
+    max-width: 180px; /* Réduit de 200px */
     filter: brightness(0) invert(1);
     animation: logoFloat 3s ease-in-out infinite;
 }
 
 .slogan {
-    font-size: 1.2em;
+    font-size: 1.1em; /* Réduit de 1.2em */
     opacity: 0.9;
-    margin-top: 20px;
+    margin-top: 16px; /* Réduit de 20px */
 }
 
 /* Panneau droit */
 .right-panel {
     flex: 1;
-    padding: 60px;
+    padding: 50px; /* Réduit de 60px */
     background: var(--white);
     display: flex;
     flex-direction: column;
@@ -96,49 +97,49 @@ body {
 
 /* En-tête du formulaire */
 .login-header {
-    margin-bottom: 40px;
+    margin-bottom: 35px; /* Réduit de 40px */
     text-align: left;
 }
 
 .login-header h2 {
     color: var(--text-dark);
-    font-size: 32px;
+    font-size: 28px; /* Réduit de 32px */
     font-weight: 600;
-    margin-bottom: 10px;
+    margin-bottom: 8px; /* Réduit de 10px */
 }
 
 .login-header p {
     color: #666;
-    font-size: 16px;
+    font-size: 14px; /* Réduit de 16px */
 }
 
 /* Style des champs de formulaire */
 .form-group {
-    margin-bottom: 30px;
+    margin-bottom: 25px; /* Réduit de 30px */
 }
 
 .input-container {
     position: relative;
-    margin-bottom: 20px;
+    margin-bottom: 16px; /* Réduit de 20px */
 }
 
 .input-container .form-control {
     width: 100%;
-    padding: 15px 45px 15px 15px;
+    padding: 12px 40px 12px 12px; /* Réduit de 15px 45px 15px 15px */
     border: none;
     border-bottom: 2px solid var(--gray-200);
     background: transparent;
-    font-size: 16px;
+    font-size: 14px; /* Réduit de 16px */
     transition: all 0.3s ease;
 }
 
 .input-container label {
     position: absolute;
-    left: 15px;
+    left: 12px; /* Réduit de 15px */
     top: 50%;
     transform: translateY(-50%);
     color: #999;
-    font-size: 16px;
+    font-size: 14px; /* Réduit de 16px */
     transition: all 0.3s ease;
     pointer-events: none;
 }
@@ -146,13 +147,13 @@ body {
 .input-container .form-control:focus ~ label,
 .input-container .form-control:valid ~ label {
     top: -10px;
-    font-size: 12px;
+    font-size: 11px; /* Réduit de 12px */
     color: var(--primary-blue);
 }
 
 .input-icon {
     position: absolute;
-    right: 15px;
+    right: 12px; /* Réduit de 15px */
     top: 50%;
     transform: translateY(-50%);
     color: #999;
@@ -182,26 +183,27 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 30px;
+    margin-bottom: 25px; /* Réduit de 30px */
 }
 
 .remember-me {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px; /* Réduit de 8px */
     color: #666;
     cursor: pointer;
+    font-size: 13px; /* Ajouté pour réduire la taille */
 }
 
 /* Bouton de connexion */
 .login-btn {
     width: 100%;
-    padding: 15px;
+    padding: 12px; /* Réduit de 15px */
     border: none;
-    border-radius: 12px;
+    border-radius: 10px; /* Réduit de 12px */
     background: var(--primary-blue);
     color: var(--white);
-    font-size: 16px;
+    font-size: 14px; /* Réduit de 16px */
     font-weight: 500;
     cursor: pointer;
     overflow: hidden;
@@ -213,14 +215,14 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
+    gap: 8px; /* Réduit de 10px */
     position: relative;
     z-index: 1;
 }
 
 .login-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 10px 20px rgba(0, 102, 204, 0.2);
+    box-shadow: 0 8px 16px rgba(0, 102, 204, 0.2); /* Réduit de 0 10px 20px */
 }
 
 .login-btn:hover .btn-content i {
@@ -229,9 +231,10 @@ body {
 
 /* Footer du formulaire */
 .login-footer {
-    margin-top: 30px;
+    margin-top: 25px; /* Réduit de 30px */
     text-align: center;
     color: #666;
+    font-size: 13px; /* Ajouté pour réduire la taille */
 }
 
 .create-account {
@@ -240,8 +243,8 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 5px;
-    margin-top: 10px;
+    gap: 4px; /* Réduit de 5px */
+    margin-top: 8px; /* Réduit de 10px */
     font-weight: 500;
     transition: all 0.3s ease;
 }
@@ -269,8 +272,8 @@ body {
 
 .bird {
     position: absolute;
-    width: 15px;
-    height: 15px;
+    width: 12px; /* Réduit de 15px */
+    height: 12px; /* Réduit de 15px */
     background: rgba(255, 255, 255, 0.2);
     clip-path: polygon(0% 50%, 50% 0%, 100% 50%, 50% 100%);
     animation: birdFly 20s linear infinite;
@@ -278,19 +281,19 @@ body {
 
 .bird:nth-child(1) {
     top: 20%;
-    left: -15px;
+    left: -12px; /* Ajusté */
     animation-delay: 0s;
 }
 
 .bird:nth-child(2) {
     top: 40%;
-    left: -15px;
+    left: -12px; /* Ajusté */
     animation-delay: 5s;
 }
 
 .bird:nth-child(3) {
     top: 60%;
-    left: -15px;
+    left: -12px; /* Ajusté */
     animation-delay: 10s;
 }
 
@@ -299,13 +302,13 @@ body {
         transform: translateX(0) translateY(0) rotate(0deg);
     }
     25% {
-        transform: translateX(250%) translateY(-50px) rotate(15deg);
+        transform: translateX(250%) translateY(-40px) rotate(15deg); /* Réduit de -50px */
     }
     50% {
         transform: translateX(500%) translateY(0) rotate(0deg);
     }
     75% {
-        transform: translateX(250%) translateY(50px) rotate(-15deg);
+        transform: translateX(250%) translateY(40px) rotate(-15deg); /* Réduit de 50px */
     }
     100% {
         transform: translateX(0) translateY(0) rotate(0deg);
@@ -317,7 +320,7 @@ body {
         transform: translateY(0);
     }
     50% {
-        transform: translateY(-10px);
+        transform: translateY(-8px); /* Réduit de -10px */
     }
 }
 
@@ -336,20 +339,20 @@ body {
 }
 
 .shape-1 {
-    width: 300px;
-    height: 300px;
+    width: 250px; /* Réduit de 300px */
+    height: 250px; /* Réduit de 300px */
     background: var(--primary-blue);
-    top: -150px;
-    right: -150px;
+    top: -125px; /* Ajusté */
+    right: -125px; /* Ajusté */
     animation: shapeFloat 15s infinite alternate;
 }
 
 .shape-2 {
-    width: 200px;
-    height: 200px;
+    width: 160px; /* Réduit de 200px */
+    height: 160px; /* Réduit de 200px */
     background: var(--accent-blue);
-    bottom: -100px;
-    left: -100px;
+    bottom: -80px; /* Ajusté */
+    left: -80px; /* Ajusté */
     animation: shapeFloat 20s infinite alternate-reverse;
 }
 
@@ -358,7 +361,7 @@ body {
         transform: translate(0, 0) rotate(0deg);
     }
     100% {
-        transform: translate(50px, 50px) rotate(360deg);
+        transform: translate(40px, 40px) rotate(360deg); /* Réduit de 50px, 50px */
     }
 }
 
@@ -371,47 +374,45 @@ body {
     }
 
     .left-panel {
-        padding: 40px;
-        min-height: 300px;
+        padding: 35px; /* Réduit de 40px */
+        min-height: 250px; /* Réduit de 300px */
     }
 
     .right-panel {
-        padding: 40px;
+        padding: 35px; /* Réduit de 40px */
     }
 }
 
 @media (max-width: 576px) {
     .login-container {
-        margin: 20px;
-        border-radius: 20px;
+        margin: 16px; /* Réduit de 20px */
+        border-radius: 16px; /* Réduit de 20px */
     }
 
     .left-panel {
-        padding: 30px;
-        min-height: 200px;
+        padding: 25px; /* Réduit de 30px */
+        min-height: 160px; /* Réduit de 200px */
     }
 
     .right-panel {
-        padding: 30px;
+        padding: 25px; /* Réduit de 30px */
     }
 
     .login-header h2 {
-        font-size: 24px;
+        font-size: 20px; /* Réduit de 24px */
     }
 }
-
-/* Ajouter ces styles à votre CSS existant */
 
 /* Style du bouton toggle mot de passe */
 .toggle-password {
     position: absolute;
-    right: 15px;
+    right: 12px; /* Réduit de 15px */
     top: 50%;
     transform: translateY(-50%);
     background: none;
     border: none;
     cursor: pointer;
-    padding: 5px;
+    padding: 4px; /* Réduit de 5px */
     color: #999;
     transition: all 0.3s ease;
     display: flex;
@@ -431,7 +432,7 @@ body {
 
 /* Déplacer l'icône du cadenas pour faire place au bouton toggle */
 .input-container .input-icon {
-    right: 45px;
+    right: 40px; /* Réduit de 45px */
 }
 
 /* Animation de l'icône */
@@ -446,7 +447,7 @@ body {
 /* Ajuster le padding du champ mot de passe pour éviter le chevauchement */
 .input-container input[type="password"],
 .input-container input[type="text"] {
-    padding-right: 75px;
+    padding-right: 65px; /* Réduit de 75px */
 }
 
 /* Style hover/focus pour le conteneur */
@@ -454,8 +455,6 @@ body {
 .input-container:focus-within .toggle-password {
     color: var(--primary-blue);
 }
-
-
 
 /*  Style d'un BO */
 
@@ -469,47 +468,52 @@ body {
 body {
     background-color: #f8f9fa;
     min-height: 100vh;
+    /* Permettre le défilement vertical */
+    overflow-y: auto;
 }
 
 /* Navbar styling */
 .navbar {
     background-color: var(--primary-blue);
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    padding: 0.5rem 1rem;
+    padding: 0.4rem 0.8rem; /* Réduit de 0.5rem 1rem */
 }
 
 .navbar-brand img {
     filter: brightness(0) invert(1);
+    height: 30px; /* Ajouté pour réduire la taille */
 }
 
 .navbar-text {
     color: white;
-    font-size: 1.2rem;
+    font-size: 1rem; /* Réduit de 1.2rem */
     font-weight: 500;
 }
 
 /* Form styling */
 .card {
     border: none;
-    border-radius: 10px;
+    border-radius: 8px; /* Réduit de 10px */
     overflow: hidden;
-    margin-bottom: 2rem;
+    margin-bottom: 1.6rem; /* Réduit de 2rem */
 }
 
 .card-header {
     background-color: var(--primary-blue);
     border-bottom: none;
-    padding: 1.5rem;
+    padding: 1.2rem; /* Réduit de 1.5rem */
 }
 
 .form-control:focus {
     border-color: var(--primary-blue);
-    box-shadow: 0 0 0 0.2rem rgba(0,102,204,0.25);
+    box-shadow: 0 0 0 0.15rem rgba(0,102,204,0.25); /* Réduit de 0.2rem */
 }
 
 .btn-primary {
     background-color: var(--primary-blue);
     border-color: var(--primary-blue);
+    padding: 0.375rem 0.75rem; /* Ajouté pour réduire la taille */
+    font-size: 0.875rem; /* Ajouté pour réduire la taille */
 }
 
 .btn-primary:hover {
@@ -521,6 +525,7 @@ body {
 .btn-transparent {
     background: transparent;
     border: none;
+    font-size: 0.875rem; /* Ajouté pour réduire la taille */
 }
 
 .btn-transparent:hover {
@@ -528,24 +533,25 @@ body {
 }
 
 .dropdown-menu {
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    border-radius: 6px; /* Réduit de 8px */
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1); /* Réduit de 10px */
+    font-size: 0.875rem; /* Ajouté pour réduire la taille */
 }
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
     .navbar-text {
-        font-size: 1rem;
+        font-size: 0.875rem; /* Réduit de 1rem */
     }
 
     .card-header {
-        padding: 1rem;
+        padding: 0.8rem; /* Réduit de 1rem */
     }
 }
 
 /* Additional dropdown styling */
 .dropdown-item {
-    padding: 0.5rem 1rem;
+    padding: 0.4rem 0.8rem; /* Réduit de 0.5rem 1rem */
     display: flex;
     align-items: center;
 }
@@ -555,20 +561,20 @@ body {
 }
 
 .dropdown-item-text {
-    padding: 0.5rem 1rem;
+    padding: 0.4rem 0.8rem; /* Réduit de 0.5rem 1rem */
     color: #6c757d;
 }
 
 .me-2 {
-    margin-right: 0.5rem;
+    margin-right: 0.4rem; /* Réduit de 0.5rem */
 }
 
 /* User profile button */
 .btn-transparent {
     display: flex;
     align-items: center;
-    padding: 0.5rem 1rem;
-    border-radius: 6px;
+    padding: 0.4rem 0.8rem; /* Réduit de 0.5rem 1rem */
+    border-radius: 5px; /* Réduit de 6px */
     transition: background-color 0.2s;
 }
 
@@ -577,9 +583,8 @@ body {
 }
 
 .fa-user-circle {
-    font-size: 1.2rem;
+    font-size: 1rem; /* Réduit de 1.2rem */
 }
-
 
 /* Toast's style*/
 /* Styles généraux */
@@ -600,19 +605,19 @@ body {
 /* Toast personnalisé */
 .custom-toast-container {
     position: fixed;
-    top: 20px;
-    right: 20px;
+    top: 16px; /* Réduit de 20px */
+    right: 16px; /* Réduit de 20px */
     z-index: 9999;
 }
 
 .custom-toast {
-    min-width: 280px;
-    max-width: 350px;
+    min-width: 240px; /* Réduit de 280px */
+    max-width: 300px; /* Réduit de 350px */
     background-color: white;
     color: #333;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    margin-bottom: 10px;
+    border-radius: 6px; /* Réduit de 8px */
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15); /* Réduit de 4px 12px */
+    margin-bottom: 8px; /* Réduit de 10px */
     overflow: hidden;
     animation: slideIn 0.3s ease forwards;
 }
@@ -625,17 +630,18 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 12px 15px;
+    padding: 10px 12px; /* Réduit de 12px 15px */
     border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    font-size: 13px; /* Ajouté pour réduire la taille */
 }
 
 .custom-toast-body {
-    padding: 12px 15px;
-    font-size: 14px;
+    padding: 10px 12px; /* Réduit de 12px 15px */
+    font-size: 13px; /* Réduit de 14px */
 }
 
 .custom-toast-success {
-    border-left: 4px solid #28a745;
+    border-left: 3px solid #28a745; /* Réduit de 4px */
 }
 
 .custom-toast-success .custom-toast-header {
@@ -643,7 +649,7 @@ body {
 }
 
 .custom-toast-error {
-    border-left: 4px solid #dc3545;
+    border-left: 3px solid #dc3545; /* Réduit de 4px */
 }
 
 .custom-toast-error .custom-toast-header {
@@ -651,7 +657,7 @@ body {
 }
 
 .custom-toast-info {
-    border-left: 4px solid #17a2b8;
+    border-left: 3px solid #17a2b8; /* Réduit de 4px */
 }
 
 .custom-toast-info .custom-toast-header {
@@ -659,7 +665,7 @@ body {
 }
 
 .custom-toast-warning {
-    border-left: 4px solid #ffc107;
+    border-left: 3px solid #ffc107; /* Réduit de 4px */
 }
 
 .custom-toast-warning .custom-toast-header {
@@ -685,5 +691,141 @@ body {
     to {
         transform: translateX(100%);
         opacity: 0;
+    }
+}
+
+/* Pour rendre tous les éléments globalement plus petits */
+html {
+    font-size: 14px; /* Réduit la taille de base de 16px à 14px */
+}
+
+/* Garantir que le contenu de la page est scrollable */
+.container-fluid, .container {
+    max-height: none;
+    overflow-y: visible;
+}
+
+/* Réduire l'espace entre les éléments */
+.my-4 {
+    margin-top: 1rem !important;
+    margin-bottom: 1rem !important;
+}
+
+.mb-4 {
+    margin-bottom: 1rem !important;
+}
+
+.p-4 {
+    padding: 1rem !important;
+}
+
+/*Nessaiba*/
+.top-navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background-color: #004d98;
+    color: white;
+    display: flex;
+    z-index: 1100;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.top-navbar .container-fluid {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 0 15px;
+}
+
+.top-navbar .navbar-text {
+    font-size: 1.2rem;
+    font-weight: 500;
+}
+
+.top-navbar .btn-transparent {
+    background: transparent;
+    border: none;
+    color: white;
+}
+
+/* Sidebar */
+.sidebar {
+    position: fixed;
+    top: 60px; /* Commence sous la navbar */
+    left: 0;
+    height: calc(100vh - 60px);
+    width: 240px;
+    background-color: #f8f9fa;
+    color: #212529;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 1px 0 10px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+}
+
+.sidebar-body {
+    flex: 1;
+    overflow-y: auto;
+    padding-top: 1rem;
+}
+
+.sidebar-nav {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sidebar-item {
+    margin-bottom: 0.25rem;
+}
+
+.sidebar-link {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    color: #495057;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.sidebar-link:hover, .sidebar-link.active {
+    color: #004d98;
+    background-color: #e9ecef;
+    border-left: 3px solid #004d98;
+}
+
+/* Main content padding */
+.content-wrapper {
+    padding-left: 240px;
+    padding-top: 60px; /* Pour tenir compte de la navbar */
+    width: 100%;
+}
+
+/* Pour les écrans mobiles */
+@media (max-width: 992px) {
+    .sidebar {
+        transform: translateX(-240px);
+        transition: transform 0.3s ease;
+    }
+
+    .sidebar.open {
+        transform: translateX(0);
+    }
+
+    .content-wrapper {
+        padding-left: 0;
+    }
+
+    .menu-toggle {
+        display: block;
+        background-color: transparent;
+        color: white;
+        border: none;
+        cursor: pointer;
+        padding: 0;
     }
 }

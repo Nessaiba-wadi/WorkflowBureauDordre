@@ -1,0 +1,205 @@
+<!-- templates/BO/navmenu.html -->
+<!-- Navbar supérieur -->
+<nav class="top-navbar">
+    <div class="container-fluid">
+        <div class="d-flex align-items-center">
+            <button class="menu-toggle d-lg-none me-3" onclick="toggleMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <a class="navbar-brand" href="#">
+                <img src="/../static/images/logo.png" alt="SBM Logo" height="40">
+            </a>
+        </div>
+        <div class="navbar-text">
+            Bureau d'Ordre - Gestion des Commandes
+        </div>
+        <div class="user-menu">
+            <div class="dropdown">
+                <button class="btn btn-transparent dropdown-toggle text-white d-flex align-items-center" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fas fa-user-circle me-2"></i>
+                    <span id="userName">Chargement...</span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                    <li>
+                        <a class="dropdown-item" href="#" onclick="openUserSettings()">
+                            <i class="fas fa-cog me-2"></i>
+                            Paramètres
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" href="#" onclick="deconnexion()">
+                            <i class="fas fa-sign-out-alt me-2"></i>
+                            Déconnexion
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- Sidebar pour la navigation -->
+<div class="sidebar">
+    <div class="sidebar-body">
+        <ul class="sidebar-nav">
+            <li class="sidebar-item">
+                <a class="sidebar-link" href="#">
+                    <i class="fas fa-tachometer-alt me-2"></i>Tableau de bord
+                </a>
+            </li>
+            <li class="sidebar-item">
+                <a class="sidebar-link" href="commandes.html">
+                    <i class="fas fa-clipboard-list me-2"></i>Commandes
+                </a>
+            </li>
+            <li class="sidebar-item">
+                <a class="sidebar-link" href="index.html">
+                    <i class="fas fa-plus-circle me-2"></i>Nouvelle Commande
+                </a>
+            </li>
+            <li class="sidebar-item">
+                <a class="sidebar-link" href="parametres.html">
+                    <i class="fas fa-cog me-2"></i>Paramètres
+                </a>
+            </li>
+        </ul>
+    </div>
+</div>
+
+<!-- CSS à ajouter dans votre fichier de style -->
+<style>
+    /* Navbar supérieur */
+    .top-navbar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 60px;
+        background-color: #004d98;
+        color: white;
+        display: flex;
+        z-index: 1100;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .top-navbar .container-fluid {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        padding: 0 15px;
+    }
+
+    .top-navbar .navbar-text {
+        font-size: 1.2rem;
+        font-weight: 500;
+    }
+
+    .top-navbar .btn-transparent {
+        background: transparent;
+        border: none;
+        color: white;
+    }
+
+    /* Sidebar */
+    .sidebar {
+        position: fixed;
+        top: 60px; /* Commence sous la navbar */
+        left: 0;
+        height: calc(100vh - 60px);
+        width: 240px;
+        background-color: #f8f9fa;
+        color: #212529;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 1px 0 10px rgba(0, 0, 0, 0.1);
+        z-index: 1000;
+    }
+
+    .sidebar-body {
+        flex: 1;
+        overflow-y: auto;
+        padding-top: 1rem;
+    }
+
+    .sidebar-nav {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .sidebar-item {
+        margin-bottom: 0.25rem;
+    }
+
+    .sidebar-link {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem 1rem;
+        color: #495057;
+        text-decoration: none;
+        transition: all 0.2s ease;
+    }
+
+    .sidebar-link:hover, .sidebar-link.active {
+        color: #004d98;
+        background-color: #e9ecef;
+        border-left: 3px solid #004d98;
+    }
+
+    /* Main content padding */
+    .content-wrapper {
+        padding-left: 240px;
+        padding-top: 60px; /* Pour tenir compte de la navbar */
+        width: 100%;
+    }
+
+    /* Pour les écrans mobiles */
+    @media (max-width: 992px) {
+        .sidebar {
+            transform: translateX(-240px);
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar.open {
+            transform: translateX(0);
+        }
+
+        .content-wrapper {
+            padding-left: 0;
+        }
+
+        .menu-toggle {
+            display: block;
+            background-color: transparent;
+            color: white;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+        }
+    }
+</style>
+
+<script>
+    // Toggle menu for mobile
+    function toggleMenu() {
+        document.querySelector('.sidebar').classList.toggle('open');
+    }
+
+    // Synchroniser l'affichage du nom d'utilisateur
+    document.addEventListener('DOMContentLoaded', function() {
+        const userName = document.getElementById('userName');
+        const userNameMobile = document.getElementById('userNameMobile');
+        if (userName && userNameMobile) {
+            userNameMobile.textContent = userName.textContent;
+        }
+
+        // Marquer la page active dans le menu
+        const currentPath = window.location.pathname;
+        document.querySelectorAll('.sidebar-link').forEach(link => {
+            if (link.getAttribute('href') === currentPath) {
+                link.classList.add('active');
+            }
+        });
+    });
+</script>

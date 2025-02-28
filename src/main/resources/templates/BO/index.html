@@ -9,16 +9,23 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 </head>
 <body>
-<nav class="navbar navbar-expand-lg navbar-dark">
+
+
+<nav class="top-navbar">
     <div class="container-fluid">
-        <a class="navbar-brand" href="#">
-            <img src="/../static/images/logo.png" alt="SBM Logo" height="40">
-        </a>
-        <div class="navbar-text flex-grow-1 text-center">
+        <div class="d-flex align-items-center">
+            <button class="menu-toggle d-lg-none me-3" onclick="toggleMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <a class="navbar-brand" href="#">
+                <img src="/../static/images/logo.png" alt="SBM Logo" height="40">
+            </a>
+        </div>
+        <div class="navbar-text">
             Bureau d'Ordre - Gestion des Commandes
         </div>
-        <div class="d-flex align-items-center">
-            <div class="dropdown me-3">
+        <div class="user-menu">
+            <div class="dropdown">
                 <button class="btn btn-transparent dropdown-toggle text-white d-flex align-items-center" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                     <i class="fas fa-user-circle me-2"></i>
                     <span id="userName">Chargement...</span>
@@ -41,6 +48,35 @@
         </div>
     </div>
 </nav>
+
+<!-- Sidebar pour la navigation -->
+<div class="sidebar">
+    <div class="sidebar-body">
+        <ul class="sidebar-nav">
+            <li class="sidebar-item">
+                <a class="sidebar-link" href="#">
+                    <i class="fas fa-tachometer-alt me-2"></i>Tableau de bord
+                </a>
+            </li>
+            <li class="sidebar-item">
+                <a class="sidebar-link" href="commandes.html">
+                    <i class="fas fa-clipboard-list me-2"></i>Commandes
+                </a>
+            </li>
+            <li class="sidebar-item">
+                <a class="sidebar-link" href="index.html">
+                    <i class="fas fa-plus-circle me-2"></i>Nouvelle Commande
+                </a>
+            </li>
+            <li class="sidebar-item">
+                <a class="sidebar-link" href="parametres.html">
+                    <i class="fas fa-cog me-2"></i>Paramètres
+                </a>
+            </li>
+        </ul>
+    </div>
+</div>
+
 <hr>
 <p>
     id : <small id="userId" class="fs-3"></small>

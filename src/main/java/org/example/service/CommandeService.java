@@ -18,10 +18,15 @@ import java.util.UUID;
 public class CommandeService {
     @Autowired
     private CommandeRepository commandeRepository;
-    @Value("${file.upload-dir}")
+    @Value("${file.upload-dir}") // Chemin injecté depuis application.properties
     private String uploadDir;
     @Transactional
     public Commande createCommande(Commande commande, Utilisateur utilisateur, MultipartFile fichier) throws IOException {
+
+        String roleUploadDir = "uploads/BO" ; // Adaptez selon votre structure de rôles
+        Path uploadPath = Paths.get(roleUploadDir).toAbsolutePath().normalize();
+        //Path uploadPath = Paths.get(uploadDir).toAbsolutePath().normalize();
+
         // Vérifier si le numéro BC existe déjà
         if (commandeRepository.existsByNumeroBC(commande.getNumeroBC())) {
             throw new RuntimeException("Une commande avec ce numéro BC existe déjà");
@@ -31,8 +36,7 @@ public class CommandeService {
 
         // Gérer le fichier si présent
         if (fichier != null && !fichier.isEmpty()) {
-            String fileName = UUID.randomUUID().toString() + "_" + fichier.getOriginalFilename();
-            Path uploadPath = Paths.get(uploadDir);
+            String fileName = UUID.randomUUID().toString();
 
             if (!Files.exists(uploadPath)) {
                 Files.createDirectories(uploadPath);

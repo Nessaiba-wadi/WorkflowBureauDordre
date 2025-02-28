@@ -130,7 +130,7 @@ async function handleSubmit(event) {
             typeRelance: document.getElementById('typeRelance').value,
             dateTransmission: document.getElementById('dateTransmission').value,
             personnesCollectrice: document.getElementById('personnesCollectrice').value,
-            dossierComplet: document.getElementById('dossierComplet').checked
+            dossierComplet: document.getElementById('dossierComplet').checked.toString()
         };
 
         const formData = new FormData();
@@ -168,7 +168,6 @@ async function handleSubmit(event) {
         submitButton.innerHTML = '<i class="fas fa-save"></i> Enregistrer';
     }
 }
-
 async function chargerCommandes() {
     try {
         const userInfo = JSON.parse(sessionStorage.getItem('userInfo'));
@@ -190,3 +189,25 @@ async function chargerCommandes() {
         showToast(`Erreur lors du chargement des commandes: ${error.message}`, 'error');
     }
 }
+
+/* Nessaiba */
+function toggleMenu() {
+    document.querySelector('.sidebar').classList.toggle('open');
+}
+
+// Synchroniser l'affichage du nom d'utilisateur
+document.addEventListener('DOMContentLoaded', function() {
+    const userName = document.getElementById('userName');
+    const userNameMobile = document.getElementById('userNameMobile');
+    if (userName && userNameMobile) {
+        userNameMobile.textContent = userName.textContent;
+    }
+
+    // Marquer la page active dans le menu
+    const currentPath = window.location.pathname;
+    document.querySelectorAll('.sidebar-link').forEach(link => {
+        if (link.getAttribute('href') === currentPath) {
+            link.classList.add('active');
+        }
+    });
+});
