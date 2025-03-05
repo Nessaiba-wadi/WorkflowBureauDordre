@@ -827,3 +827,15 @@ html {
         margin-left: 0;
     }
 }
+/* Toast */
+.toast-container {
+    position: fixed !important;
+    top: 70px !important; /* Ajustez cette valeur en fonction de la hauteur de votre navbar */
+    right: 20px !important;
+    z-index: 1080 !important;
+}
+
+/* Assurez-vous que les toasts s'empilent verticalement */
+.toast-container .toast {
+    margin-bottom: 10px;
+}

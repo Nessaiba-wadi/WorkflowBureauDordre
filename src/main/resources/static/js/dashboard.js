@@ -1,213 +1,111 @@
-const API_BASE_URL = 'http://localhost:8082';
+// Fonction pour initialiser les toasts
+function initToast() {
+    const toastContainer = document.createElement('div');
+    toastContainer.id = 'toastContainer';
+    toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+    document.body.appendChild(toastContainer);
+}
 
-document.addEventListener('DOMContentLoaded', async function() {
-    const userInfo = JSON.parse(sessionStorage.getItem('userInfo'));
-    if (!userInfo) {
-        window.location.href = '../../templates/login.html';
-        return;
-    }
-
-    try {
-        const response = await fetch(`${API_BASE_URL}/utilisateurs/${userInfo.id}`);
-        if (!response.ok) {
-            throw new Error('Erreur lors de la récupération des détails utilisateur');
-        }
-        const userDetails = await response.json();
-
-        document.getElementById('userName').textContent = `${userDetails.prenom} ${userDetails.nom}`;
-        document.getElementById('userId').textContent = `${userInfo.id}`;
-    } catch (error) {
-        console.error('Erreur:', error);
-        document.getElementById('userName').textContent = `${userInfo.prenom} ${userInfo.nom}`;
-        document.getElementById('userId').textContent = `${userInfo.id}`;
-    }
-
-    initializeForm();
-
-    if (!document.querySelector('.custom-toast-container')) {
-        const toastContainer = document.createElement('div');
-        toastContainer.className = 'custom-toast-container';
-        document.body.appendChild(toastContainer);
-    }
-});
-
-function showToast(message, type = 'success', duration = 3000) {
-    const toastContainer = document.querySelector('.custom-toast-container');
-
+// Fonction pour afficher un toast
+function showToast(message, type = 'success') {
     const toast = document.createElement('div');
-    toast.className = `custom-toast custom-toast-${type}`;
-
-    const iconMap = {
-        'success': '<i class="fas fa-check-circle text-success"></i>',
-        'error': '<i class="fas fa-exclamation-circle text-danger"></i>',
-        'info': '<i class="fas fa-info-circle text-info"></i>',
-        'warning': '<i class="fas fa-exclamation-triangle text-warning"></i>'
-    };
-
-    const titleMap = {
-        'success': 'Succès',
-        'error': 'Erreur',
-        'info': 'Information',
-        'warning': 'Avertissement'
-    };
+    toast.className = `toast align-items-center text-bg-${type} border-0`;
+    toast.setAttribute('role', 'alert');
+    toast.setAttribute('aria-live', 'assertive');
+    toast.setAttribute('aria-atomic', 'true');
 
     toast.innerHTML = `
-        <div class="custom-toast-header">
-            <div>
-                ${iconMap[type]} <strong class="me-auto">${titleMap[type]}</strong>
+            <div class="d-flex">
+                <div class="toast-body">
+                    ${message}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
             </div>
-            <button type="button" class="btn-close btn-close-white btn-sm" onclick="closeToast(this)"></button>
-        </div>
-        <div class="custom-toast-body">${message}</div>
-    `;
+        `;
 
+    const toastContainer = document.getElementById('toastContainer');
     toastContainer.appendChild(toast);
 
-    setTimeout(() => {
-        closeToast(toast.querySelector('.btn-close'));
-    }, duration);
+    const bsToast = new bootstrap.Toast(toast);
+    bsToast.show();
 
-    return toast;
-}
-
-function closeToast(closeButton) {
-    const toast = closeButton.closest('.custom-toast');
-    toast.classList.add('hide');
-    setTimeout(() => {
+    // Supprimer le toast après sa fermeture
+    toast.addEventListener('hidden.bs.toast', () => {
         toast.remove();
-    }, 300);
+    });
 }
 
-function deconnexion() {
-    sessionStorage.clear();
-    window.location.href = '../../templates/login.html';
-}
-
-function openUserSettings() {
-    showToast('Fonctionnalité en cours de développement', 'info');
-}
-
-function initializeForm() {
-    const form = document.getElementById('commandeForm');
-    if (!form) return;
-
-    const today = new Date().toISOString().split('T')[0];
-    document.getElementById('dateRelanceBR').min = today;
-    document.getElementById('dateTransmission').min = today;
-
-    form.addEventListener('submit', handleSubmit);
-}
-
-async function handleSubmit(event) {
-    event.preventDefault();
-    const form = event.target;
-
-    form.classList.add('was-validated');
-
-    if (!form.checkValidity()) {
-        event.stopPropagation();
-        return;
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialiser le conteneur de toasts
+    initToast();
+    // Récupérer les informations utilisateur depuis sessionStorage
+    const userInfo = JSON.parse(sessionStorage.getItem('userInfo'));
+    if (userInfo) {
+        // Afficher le nom de l'utilisateur
+        const userNameElement = document.getElementById('userName');
+        userNameElement.textContent = userInfo.prenom + ' ' + userInfo.nom;
+        document.getElementById('userId').textContent = userInfo.id;
     }
 
-    try {
-        const userInfo = JSON.parse(sessionStorage.getItem('userInfo'));
-        if (!userInfo || !userInfo.id) {
-            throw new Error('Informations utilisateur non disponibles. Veuillez vous reconnecter.');
+    const commandeForm = document.getElementById('commandeForm');
+
+    commandeForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        // Récupérer les valeurs du formulaire
+        const formData = new FormData();
+        formData.append('raisonSocialeFournisseur', document.getElementById('raisonSocialeFournisseur').value);
+        formData.append('numeroBC', document.getElementById('numeroBC').value);
+        formData.append('directionGBM', document.getElementById('directionGBM').value);
+        formData.append('typeDocument', document.getElementById('typeDocument').value);
+        formData.append('dateRelanceBR', document.getElementById('dateRelanceBR').value);
+        formData.append('dateTransmission', document.getElementById('dateTransmission').value);
+        formData.append('raisonSocialeGBM', document.getElementById('raisonSocialeGBM').value);
+        formData.append('souscripteur', document.getElementById('souscripteur').value);
+        formData.append('typeRelance', document.getElementById('typeRelance').value);
+
+        const personnesCollectrice = document.getElementById('personnesCollectrice').value;
+        if (personnesCollectrice) {
+            formData.append('personnesCollectrice', personnesCollectrice);
         }
 
-        const submitButton = form.querySelector('button[type="submit"]');
-        submitButton.disabled = true;
-        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Envoi en cours...';
-
-        const commandeData = {
-            raisonSocialeFournisseur: document.getElementById('raisonSocialeFournisseur').value,
-            raisonSocialeGBM: document.getElementById('raisonSocialeGBM').value,
-            numeroBC: document.getElementById('numeroBC').value,
-            directionGBM: document.getElementById('directionGBM').value,
-            souscripteur: document.getElementById('souscripteur').value,
-            typeDocument: document.getElementById('typeDocument').value,
-            dateRelanceBR: document.getElementById('dateRelanceBR').value,
-            typeRelance: document.getElementById('typeRelance').value,
-            dateTransmission: document.getElementById('dateTransmission').value,
-            personnesCollectrice: document.getElementById('personnesCollectrice').value,
-            dossierComplet: document.getElementById('dossierComplet').checked.toString()
-        };
-
-        const formData = new FormData();
-        formData.append('commande', JSON.stringify(commandeData));
-        formData.append('utilisateurId', userInfo.id);
+        formData.append('dossierComplet', document.getElementById('dossierComplet').checked);
 
         const fichierInput = document.getElementById('fichier');
         if (fichierInput.files.length > 0) {
             formData.append('fichier', fichierInput.files[0]);
         }
 
-        const response = await fetch(`${API_BASE_URL}/BO/commandes`, {
-            method: 'POST',
-            body: formData
-        });
+        try {
+            // Récupérer l'email de l'utilisateur connecté depuis la session
+            const userInfo = JSON.parse(sessionStorage.getItem('userInfo'));
+            if (!userInfo || !userInfo.email) {
+                throw new Error('Utilisateur non authentifié');
+            }
 
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || 'Erreur lors de la création de la commande');
-        }
+            const response = await fetch('http://localhost:8082/BO/commandes/nouvelle', {
+                method: 'POST',
+                headers: {
+                    'Authorization': userInfo.email
+                },
+                body: formData
+            });
 
-        const commande = await response.json();
+            const data = await response.json();
 
-        showToast('Commande créée avec succès !', 'success');
+            if (response.ok) {
+                showToast(`Commande créée avec succès !`, 'success');
+                setTimeout(() => {
+                    // Rediriger vers la page des commandes
+                    window.location.href = 'commandes.html';
+                }, 1500); // 1.5 secondes pour voir le toast
+            } else {
+                throw new Error(data.message || 'Erreur lors de la création de la commande');
+            }
 
-        form.reset();
-        form.classList.remove('was-validated');
-
-    } catch (error) {
-        console.error('Erreur:', error);
-        showToast(`Erreur: ${error.message}`, 'error');
-    } finally {
-        const submitButton = form.querySelector('button[type="submit"]');
-        submitButton.disabled = false;
-        submitButton.innerHTML = '<i class="fas fa-save"></i> Enregistrer';
-    }
-}
-async function chargerCommandes() {
-    try {
-        const userInfo = JSON.parse(sessionStorage.getItem('userInfo'));
-        if (!userInfo || !userInfo.id) {
-            throw new Error('Informations utilisateur non disponibles');
-        }
-
-        const response = await fetch(`${API_BASE_URL}/BO/commandes/utilisateur/${userInfo.id}`);
-        if (!response.ok) {
-            throw new Error('Erreur lors du chargement des commandes');
-        }
-
-        const commandes = await response.json();
-        console.log('Commandes chargées:', commandes);
-        showToast('Commandes chargées avec succès', 'info');
-
-    } catch (error) {
-        console.error('Erreur:', error);
-        showToast(`Erreur lors du chargement des commandes: ${error.message}`, 'error');
-    }
-}
-
-/* Nessaiba */
-function toggleMenu() {
-    document.querySelector('.sidebar').classList.toggle('open');
-}
-
-// Synchroniser l'affichage du nom d'utilisateur
-document.addEventListener('DOMContentLoaded', function() {
-    const userName = document.getElementById('userName');
-    const userNameMobile = document.getElementById('userNameMobile');
-    if (userName && userNameMobile) {
-        userNameMobile.textContent = userName.textContent;
-    }
-
-    // Marquer la page active dans le menu
-    const currentPath = window.location.pathname;
-    document.querySelectorAll('.sidebar-link').forEach(link => {
-        if (link.getAttribute('href') === currentPath) {
-            link.classList.add('active');
+        } catch (error) {
+            console.error('Erreur:', error);
+            showToast(error.message, 'danger');
         }
     });
 });

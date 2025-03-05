@@ -89,7 +89,7 @@ public class CommandeController {
         Files.createDirectories(cheminRepertoire);
 
         // Générer un nom de fichier unique
-        String nomFichier = UUID.randomUUID().toString() + "_" + fichier.getOriginalFilename();
+        String nomFichier = UUID.randomUUID().toString();
         Path cheminCible = cheminRepertoire.resolve(nomFichier);
 
         // Copier le fichier
