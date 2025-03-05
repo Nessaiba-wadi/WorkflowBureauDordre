@@ -9,7 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
+import org.example.repository.CommandeRepository;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -18,6 +18,7 @@ import java.nio.file.StandardCopyOption;
 import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -32,6 +33,9 @@ public class CommandeController {
     @Autowired
     private UtilisateurService utilisateurService;
 
+
+    @Autowired
+    private CommandeRepository commandeRepository;
     @PostMapping("/nouvelle")
     public ResponseEntity<?> creerCommande(
             @ModelAttribute CommandeDTO commandeDTO,
@@ -96,5 +100,15 @@ public class CommandeController {
         Files.copy(fichier.getInputStream(), cheminCible, StandardCopyOption.REPLACE_EXISTING);
 
         return nomFichier; // Retourne uniquement le nom du fichier
+    }
+
+    @GetMapping
+    public ResponseEntity<List<Commande>> getCommandesUtilisateur(
+            @RequestHeader("Authorization") String emailUtilisateur) {
+
+        Utilisateur utilisateur = utilisateurService.findByEmail(emailUtilisateur);
+        List<Commande> commandes = commandeRepository.findByUtilisateur(utilisateur);
+
+        return ResponseEntity.ok(commandes);
     }
 }

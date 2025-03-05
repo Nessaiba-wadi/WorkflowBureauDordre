@@ -1,105 +1,167 @@
-async function chargerCommandes() {
-    try {
-        const userInfo = JSON.parse(sessionStorage.getItem('userInfo'));
-        if (!userInfo || !userInfo.id) {
-            throw new Error('Informations utilisateur non disponibles');
-        }
-
-        const response = await fetch(`${API_BASE_URL}/BO/commandes/utilisateur/${userInfo.id}`);
-        if (!response.ok) {
-            throw new Error('Erreur lors du chargement des commandes');
-        }
-
-        const commandes = await response.json();
-        afficherCommandes(commandes);
-
-    } catch (error) {
-        console.error('Erreur:', error);
-        showToast(`Erreur lors du chargement: ${error.message}`, 'error');
-        document.getElementById('loadingRow').innerHTML =
-            '<td colspan="8" class="text-center text-danger py-3">Erreur de chargement</td>';
-    }
-}
-
-function afficherCommandes(commandes) {
-    const tbody = document.getElementById('commandesBody');
-    tbody.innerHTML = '';
-
-    if (commandes.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="8" class="text-center text-muted py-4">
-                    Aucune commande trouvée
-                </td>
-            </tr>`;
-        return;
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialiser le conteneur de toasts
+    function initToast() {
+        const toastContainer = document.createElement('div');
+        toastContainer.id = 'toastContainer';
+        toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+        document.body.appendChild(toastContainer);
     }
 
-    commandes.forEach(commande => {
-        const row = document.createElement('tr');
+    // Fonction pour afficher un toast
+    function showToast(message, type = 'success') {
+        const toast = document.createElement('div');
+        toast.className = `toast align-items-center text-bg-${type} border-0`;
+        toast.setAttribute('role', 'alert');
+        toast.setAttribute('aria-live', 'assertive');
+        toast.setAttribute('aria-atomic', 'true');
 
-        // Formatage des dates
-        const formatDate = (dateString) =>
-            dateString ? new Date(dateString).toLocaleDateString('fr-FR') : 'N/A';
-
-        // Badge d'état
-        let badgeClass = 'secondary';
-        if (commande.etatCommande === 'Terminé') badgeClass = 'success';
-        if (commande.etatCommande === 'En cours') badgeClass = 'warning';
-        if (commande.etatCommande === 'Urgent') badgeClass = 'danger';
-
-        row.innerHTML = `
-            <td>${formatDate(commande.dateReception)}</td>
-            <td>${commande.raisonSocialeFournisseur}</td>
-            <td>${commande.raisonSocialeGBM}</td>
-            <td>${commande.numeroBC}</td>
-            <td>${commande.directionGBM}</td>
-            <td>${commande.souscripteur}</td>
-            <td>${commande.typeDocument}</td>
-            <td>
-                <span class="badge bg-${badgeClass}">
-                    ${commande.etatCommande}
-                </span>
-            </td>
-            <td>
-                ${commande.fichierJoint ? `
-                <a href="${API_BASE_URL}/BO/commandes/fichier/${commande.fichierJoint}" class="btn btn-sm btn-outline-primary" download>
-                    <i class="fas fa-download"></i>
-                </a>
-                ` : ''}
-                <a href="details.html?id=${commande.id}" class="btn btn-sm btn-outline-info">
-                    <i class="fas fa-eye"></i>
-                </a>
-            </td>
+        toast.innerHTML = `
+            <div class="d-flex">
+                <div class="toast-body">
+                    ${message}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
         `;
 
-        tbody.appendChild(row);
-    });
-}
-function afficherDetails(commande) {
-    const modalContent = `
-        <div class="modal fade" id="detailModal">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header bg-primary text-white">
-                        <h5 class="modal-title">Détails complet de la commande</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <dl class="row">
-                            ${Object.entries(commande).map(([key, value]) => `
-                                <dt class="col-sm-4">${key}</dt>
-                                <dd class="col-sm-8">${value || 'Non renseigné'}</dd>
-                            `).join('')}
-                        </dl>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
+        const toastContainer = document.getElementById('toastContainer');
+        toastContainer.appendChild(toast);
 
-    document.body.insertAdjacentHTML('beforeend', modalContent);
-    new bootstrap.Modal(document.getElementById('detailModal')).show();
-}
-// Appeler au chargement de la page
-document.addEventListener('DOMContentLoaded', chargerCommandes);
+        const bsToast = new bootstrap.Toast(toast);
+        bsToast.show();
+
+        // Supprimer le toast après sa fermeture
+        toast.addEventListener('hidden.bs.toast', () => {
+            toast.remove();
+        });
+    }
+
+    // Fonction pour formater la date
+    function formatDate(dateString) {
+        if (!dateString) return 'N/A';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('fr-FR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        });
+    }
+
+    // Fonction pour déterminer l'état de la commande
+    function getEtatCommande(commande) {
+        // Logique pour déterminer l'état de la commande
+        // Vous pouvez personnaliser cette logique selon vos besoins
+        if (commande.dossierComplet) {
+            return '<span class="badge bg-success">Complet</span>';
+        }
+        return '<span class="badge bg-warning">En cours</span>';
+    }
+
+    // Fonction pour charger les commandes
+    async function chargerCommandes() {
+        try {
+            // Récupérer les informations utilisateur depuis sessionStorage
+            const userInfo = JSON.parse(sessionStorage.getItem('userInfo'));
+            if (!userInfo || !userInfo.email) {
+                throw new Error('Utilisateur non authentifié');
+            }
+
+            // Charger les commandes de l'utilisateur
+            const response = await fetch('http://localhost:8082/BO/commandes', {
+                method: 'GET',
+                headers: {
+                    'Authorization': userInfo.email
+                }
+            });
+
+            const commandes = await response.json();
+
+            // Sélectionner le corps du tableau
+            const commandesBody = document.getElementById('commandesBody');
+
+            // Supprimer la ligne de chargement
+            const loadingRow = document.getElementById('loadingRow');
+            if (loadingRow) {
+                loadingRow.remove();
+            }
+
+            // Vérifier s'il y a des commandes
+            if (commandes.length === 0) {
+                commandesBody.innerHTML = `
+                    <tr>
+                        <td colspan="9" class="text-center text-muted py-4">
+                            Aucune commande trouvée
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            // Générer les lignes du tableau
+            const rows = commandes.map(commande => `
+                <tr>
+                    <td>${formatDate(commande.dateModification)}</td>
+                    <td>${commande.raisonSocialeFournisseur || 'N/A'}</td>
+                    <td>${commande.raisonSocialeGBM || 'N/A'}</td>
+                    <td>${commande.numeroBC || 'N/A'}</td>
+                    <td>${commande.directionGBM || 'N/A'}</td>
+                    <td>${commande.souscripteur || 'N/A'}</td>
+                    <td>${commande.typeDocument || 'N/A'}</td>
+                    <td>${getEtatCommande(commande)}</td>
+                    <td>
+                        <div class="btn-group" role="group">
+                            <button class="btn btn-sm btn-info" onclick="voirDetailsCommande(${commande.idCommande})">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn btn-sm btn-warning" onclick="modifierCommande(${commande.idCommande})">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+
+            // Insérer les lignes dans le tableau
+            commandesBody.innerHTML = rows;
+
+        } catch (error) {
+            console.error('Erreur lors du chargement des commandes:', error);
+
+            // Afficher un message d'erreur dans le tableau
+            const commandesBody = document.getElementById('commandesBody');
+            commandesBody.innerHTML = `
+                <tr>
+                    <td colspan="9" class="text-center text-danger py-4">
+                        Erreur de chargement des commandes : ${error.message}
+                    </td>
+                </tr>
+            `;
+
+            // Afficher un toast d'erreur
+            showToast(error.message, 'danger');
+        }
+    }
+
+    // Fonctions fictives pour les actions (à implémenter)
+    window.voirDetailsCommande = function(idCommande) {
+        showToast(`Voir les détails de la commande ${idCommande}`, 'info');
+        // Logique pour afficher les détails de la commande
+    }
+
+    window.modifierCommande = function(idCommande) {
+        showToast(`Modifier la commande ${idCommande}`, 'warning');
+        // Logique pour modifier la commande
+    }
+
+    // Initialiser les toasts et charger les commandes
+    initToast();
+    chargerCommandes();
+
+    // Récupérer et afficher le nom de l'utilisateur
+    const userInfo = JSON.parse(sessionStorage.getItem('userInfo'));
+    if (userInfo) {
+        const userNameElement = document.getElementById('userName');
+        userNameElement.textContent = userInfo.prenom + ' ' + userInfo.nom;
+        document.getElementById('userId').textContent = userInfo.id;
+    }
+});
