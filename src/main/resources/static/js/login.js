@@ -18,18 +18,16 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
             body: `email=${encodeURIComponent(email)}&motDePasse=${encodeURIComponent(password)}`
         });
 
-        console.log('Réponse du serveur:', response);
         const data = await response.json();
-        console.log('Données reçues:', data);
 
         if (response.ok) {
             sessionStorage.setItem('userInfo', JSON.stringify({
                 id: data.id,
                 nom: data.nom,
                 prenom: data.prenom,
-                role: data.role
+                role: data.role,
+                email: email
             }));
-            console.log('Données stockées:', sessionStorage.getItem('userInfo'));
 
 
             switch(data.role.toLowerCase()) {

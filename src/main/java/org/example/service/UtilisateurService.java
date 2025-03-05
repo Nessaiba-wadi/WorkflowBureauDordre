@@ -95,7 +95,13 @@ public class UtilisateurService {
             super(message);
         }
     }
-
+    public Utilisateur findByEmail(String email) {
+        Utilisateur utilisateur = utilisateurRepository.findByEmail(email);
+        if (utilisateur == null) {
+            throw new UtilisateurNonTrouveException("Utilisateur non  avec l'email : " + email);
+        }
+        return utilisateur;
+    }
     public Utilisateur creerUtilisateur(Utilisateur utilisateur) {
         if (utilisateur.getNom() == null || utilisateur.getPrenom() == null || utilisateur.getEmail() == null || utilisateur.getMotDePasse() == null || utilisateur.getTelephone() == null || utilisateur.getRole() == null) {
             throw new ChampsRequisManquantsException("Tous les champs requis doivent être remplis.");

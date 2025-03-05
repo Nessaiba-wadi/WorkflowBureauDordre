@@ -1,69 +1,100 @@
 package org.example.controller;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.core.io.Resource;
+
+import org.example.dto.CommandeDTO;
 import org.example.model.Commande;
 import org.example.model.Utilisateur;
 import org.example.service.CommandeService;
 import org.example.service.UtilisateurService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.UrlResource;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
+import java.nio.file.StandardCopyOption;
+import java.security.Principal;
+import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
+
 @CrossOrigin(origins = {"http://127.0.0.1:8080", "http://localhost:8080"})
 @RestController
 @RequestMapping("/BO/commandes")
 public class CommandeController {
+
     @Autowired
     private CommandeService commandeService;
+
     @Autowired
     private UtilisateurService utilisateurService;
-    @Autowired
-    private ObjectMapper objectMapper;
 
-    @Value("${file.upload-dir}")
-    private String uploadDir;
-    @PostMapping
-    public ResponseEntity<?> createCommande(
-            @RequestParam("commande") String commandeJson,
-            @RequestParam("utilisateurId") int utilisateurId,
-            @RequestParam(value = "fichier", required = false) MultipartFile fichier) {
+    @PostMapping("/nouvelle")
+    public ResponseEntity<?> creerCommande(
+            @ModelAttribute CommandeDTO commandeDTO,
+            @RequestHeader("Authorization") String emailUtilisateur) {
+
         try {
-            // Convertir le JSON en objet Commande
-            Commande commande = objectMapper.readValue(commandeJson, Commande.class);
+            // Récupérer l'utilisateur connecté à partir de l'email dans le header
+            Utilisateur utilisateurConnecte = utilisateurService.findByEmail(emailUtilisateur);
 
-            // Récupérer l'utilisateur
-            Utilisateur utilisateur = utilisateurService.getUtilisateurById(utilisateurId);
-            if (utilisateur == null) {
-                return ResponseEntity.badRequest().body(Map.of("message", "Utilisateur non trouvé"));
+            // Gestion du fichier
+            String nomFichier = null;
+            if (commandeDTO.getFichier() != null && !commandeDTO.getFichier().isEmpty()) {
+                nomFichier = sauvegarderFichier(commandeDTO.getFichier());
             }
-            // Créer la commande
-            Commande nouveleCommande = commandeService.createCommande(commande, utilisateur, fichier);
-            return ResponseEntity.ok(nouveleCommande);
+
+            // Conversion du DTO en entité Commande
+            Commande commande = new Commande();
+            commande.setRaisonSocialeFournisseur(commandeDTO.getRaisonSocialeFournisseur());
+            commande.setNumeroBC(commandeDTO.getNumeroBC());
+            commande.setDirectionGBM(commandeDTO.getDirectionGBM());
+            commande.setTypeDocument(commandeDTO.getTypeDocument());
+            commande.setDateRelanceBR(commandeDTO.getDateRelanceBR());
+            commande.setDateTransmission(commandeDTO.getDateTransmission());
+            commande.setRaisonSocialeGBM(commandeDTO.getRaisonSocialeGBM());
+            commande.setSouscripteur(commandeDTO.getSouscripteur());
+            commande.setTypeRelance(commandeDTO.getTypeRelance());
+            commande.setPersonnesCollectrice(commandeDTO.getPersonnesCollectrice());
+            commande.setDossierComplet(commandeDTO.isDossierComplet());
+            commande.setFichierJoint(nomFichier);
+            commande.setUtilisateur(utilisateurConnecte);
+            commande.setDateModification(LocalDateTime.now());
+
+            // Enregistrement de la commande
+            Commande commandeEnregistree = commandeService.creerCommande(commande);
+
+            // Préparation de la réponse
+            Map<String, Object> reponse = new HashMap<>();
+            reponse.put("message", "Commande créée avec succès");
+            reponse.put("idCommande", commandeEnregistree.getIdCommande());
+
+            return ResponseEntity.ok(reponse);
+
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+            Map<String, String> erreur = new HashMap<>();
+            erreur.put("message", "Erreur lors de la création de la commande : " + e.getMessage());
+            return ResponseEntity.badRequest().body(erreur);
         }
     }
-    @GetMapping("/utilisateur/{id}")
-    public ResponseEntity<?> getCommandesByUtilisateur(@PathVariable int id) {
-        try {
-            Utilisateur utilisateur = utilisateurService.getUtilisateurById(id);
-            if (utilisateur == null) {
-                return ResponseEntity.badRequest().body(Map.of("message", "Utilisateur non trouvé"));
-            }
-            List<Commande> commandes = commandeService.getCommandesByUtilisateur(utilisateur);
-            return ResponseEntity.ok(commandes);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
-        }
+
+    private String sauvegarderFichier(MultipartFile fichier) throws IOException {
+        String repertoireUpload = "uploads/commandes";
+        Path cheminRepertoire = Paths.get(repertoireUpload).toAbsolutePath().normalize();
+
+        // Créer le répertoire s'il n'existe pas
+        Files.createDirectories(cheminRepertoire);
+
+        // Générer un nom de fichier unique
+        String nomFichier = UUID.randomUUID().toString() + "_" + fichier.getOriginalFilename();
+        Path cheminCible = cheminRepertoire.resolve(nomFichier);
+
+        // Copier le fichier
+        Files.copy(fichier.getInputStream(), cheminCible, StandardCopyOption.REPLACE_EXISTING);
+
+        return nomFichier; // Retourne uniquement le nom du fichier
     }
-
-
 }
