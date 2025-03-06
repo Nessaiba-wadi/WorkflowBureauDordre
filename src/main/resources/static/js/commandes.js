@@ -204,10 +204,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Fonctions globales pour les actions sur les commandes
-    window.voirDetailsCommande = function(idCommande) {
-        showToast(`Voir les détails de la commande ${idCommande}`, 'info');
-    }
 
+    window.voirDetailsCommande = function(idCommande) {
+        window.location.href = `details.html?id=${idCommande}`;
+    }
     window.modifierCommande = function(idCommande) {
         showToast(`Modifier la commande ${idCommande}`, 'warning');
     }

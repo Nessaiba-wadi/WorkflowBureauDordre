@@ -6,6 +6,7 @@ import org.example.model.Utilisateur;
 import org.example.service.CommandeService;
 import org.example.service.UtilisateurService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -17,10 +18,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.security.Principal;
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 @CrossOrigin(origins = {"http://127.0.0.1:8080", "http://localhost:8080"})
 @RestController
@@ -36,6 +34,8 @@ public class CommandeController {
 
     @Autowired
     private CommandeRepository commandeRepository;
+
+
     @PostMapping("/nouvelle")
     public ResponseEntity<?> creerCommande(
             @ModelAttribute CommandeDTO commandeDTO,
@@ -110,5 +110,38 @@ public class CommandeController {
         List<Commande> commandes = commandeRepository.findByUtilisateur(utilisateur);
 
         return ResponseEntity.ok(commandes);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getCommandeById(
+            @PathVariable("id") Integer id,
+            @RequestHeader("Authorization") String emailUtilisateur) {
+
+        try {
+            // Vérifier si l'utilisateur est autorisé
+            Utilisateur utilisateur = utilisateurService.findByEmail(emailUtilisateur);
+
+            // Récupérer la commande
+            Optional<Commande> commandeOpt = commandeRepository.findById(id);
+
+            if (!commandeOpt.isPresent()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("message", "Commande non trouvée"));
+            }
+
+            Commande commande = commandeOpt.get();
+
+            // Vérifier que la commande appartient à l'utilisateur connecté
+            if (commande.getUtilisateur().getIdUtilisateur() != utilisateur.getIdUtilisateur()) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("message", "Vous n'êtes pas autorisé à accéder à cette commande"));
+            }
+
+            return ResponseEntity.ok(commande);
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "Erreur: " + e.getMessage()));
+        }
     }
 }
