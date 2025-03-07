@@ -342,44 +342,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Met à jour une commande existante
-    async function mettreAJourCommande(idCommande, formData) {
-        try {
-            const userInfo = JSON.parse(sessionStorage.getItem('userInfo'));
-            if (!userInfo || !userInfo.email) {
-                throw new Error('Utilisateur non authentifié');
-            }
-
-            // Effectuer la requête AJAX
-            const response = await fetch(`http://localhost:8082/BO/commandes/${idCommande}/modifier`, {
-                method: 'PUT',
-                headers: {
-                    'Authorization': userInfo.email
-                    // Supprimer le header 'Content-Type' pour permettre à FormData de définir sa propre boundary
-                },
-                body: formData
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Erreur lors de la mise à jour de la commande');
-            }
-
-            const data = await response.json();
-            showToast('Commande mise à jour avec succès', 'success');
-
-            // Rafraîchir la liste des commandes
-            chargerCommandes();
-
-            return data;
-
-        } catch (error) {
-            console.error('Erreur lors de la mise à jour de la commande:', error);
-            showToast(error.message, 'danger');
-            throw error;
-        }
-    }
-
     // Remplir le modal de modification avec les données de la commande
     function remplirModalModification(commande) {
         // Remplir les champs du formulaire
@@ -462,6 +424,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             } catch (error) {
                 console.error('Erreur lors de la soumission du formulaire:', error);
+                afficherErreurMiseAJour(error.message);
             }
         });
     }
@@ -497,27 +460,5 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 5000);
     }
 
-// Puis dans la fonction de soumission du formulaire
-    formModifierCommande.addEventListener('submit', async function(e) {
-        e.preventDefault();
 
-        // Récupérer l'ID de la commande depuis l'attribut data
-        const idCommande = this.getAttribute('data-commande-id');
-
-        // Créer un FormData à partir du formulaire
-        const formData = new FormData(this);
-
-        try {
-            // Envoyer la requête de mise à jour
-            await mettreAJourCommande(idCommande, formData);
-
-            // Fermer le modal
-            const modalModifier = bootstrap.Modal.getInstance(document.getElementById('modalModifierCommande'));
-            modalModifier.hide();
-
-        } catch (error) {
-            console.error('Erreur lors de la soumission du formulaire:', error);
-            afficherErreurMiseAJour(error.message);
-        }
-    });
 });

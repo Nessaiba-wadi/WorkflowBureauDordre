@@ -8,6 +8,7 @@ import java.time.LocalDate;
 
 @Data
 public class CommandeDTO {
+    private int idCommande;
     private String raisonSocialeFournisseur;
     private String numeroBC;
     private String directionGBM;

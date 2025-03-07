@@ -19,6 +19,9 @@ import java.nio.file.StandardCopyOption;
 import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 @CrossOrigin(origins = {"http://127.0.0.1:8080", "http://localhost:8080"})
 @RestController
@@ -34,6 +37,7 @@ public class CommandeController {
 
     @Autowired
     private CommandeRepository commandeRepository;
+    private static final Logger log = LoggerFactory.getLogger(CommandeController.class);
 
 
     @PostMapping("/nouvelle")
@@ -148,67 +152,5 @@ public class CommandeController {
 
 
     //Modifier une commande
-    @PutMapping("/{id}/modifier")
-    public ResponseEntity<?> modifierCommande(
-            @PathVariable("id") Integer id,
-            @ModelAttribute CommandeDTO commandeDTO,
-            @RequestHeader("Authorization") String emailUtilisateur) {
 
-        try {
-            // Vérifier si l'utilisateur est autorisé
-            Utilisateur utilisateurConnecte = utilisateurService.findByEmail(emailUtilisateur);
-            if (utilisateurConnecte == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(Map.of("message", "Utilisateur non authentifié"));
-            }
-
-            // Récupérer la commande existante
-            Optional<Commande> commandeOpt = commandeRepository.findById(id);
-            if (!commandeOpt.isPresent()) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(Map.of("message", "Commande non trouvée"));
-            }
-
-            Commande commande = commandeOpt.get();
-
-            // Vérifier que la commande n'est pas déjà complète (sauf si on la laisse complète)
-            if (commande.isDossierComplet() && !commandeDTO.isDossierComplet()) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(Map.of("message", "Une commande avec état 'Complet' ne peut pas être modifiée"));
-            }
-
-            // Mise à jour des champs de la commande (sans changer le numéro BC)
-            commande.setRaisonSocialeFournisseur(commandeDTO.getRaisonSocialeFournisseur());
-            commande.setDirectionGBM(commandeDTO.getDirectionGBM());
-            commande.setTypeDocument(commandeDTO.getTypeDocument());
-            commande.setDateRelanceBR(commandeDTO.getDateRelanceBR());
-            commande.setDateTransmission(commandeDTO.getDateTransmission());
-            commande.setRaisonSocialeGBM(commandeDTO.getRaisonSocialeGBM());
-            commande.setSouscripteur(commandeDTO.getSouscripteur());
-            commande.setTypeRelance(commandeDTO.getTypeRelance());
-            commande.setPersonnesCollectrice(commandeDTO.getPersonnesCollectrice());
-            commande.setDossierComplet(commandeDTO.isDossierComplet());
-            commande.setDateModification(LocalDateTime.now());
-
-            // Gestion du fichier
-            if (commandeDTO.getFichier() != null && !commandeDTO.getFichier().isEmpty()) {
-                String nomFichier = sauvegarderFichier(commandeDTO.getFichier());
-                commande.setFichierJoint(nomFichier);
-            }
-
-            // Enregistrement de la commande mise à jour
-            Commande commandeMiseAJour = commandeService.mettreAJourCommande(commande);
-
-            return ResponseEntity.ok(Map.of(
-                    "message", "Commande mise à jour avec succès",
-                    "idCommande", commandeMiseAJour.getIdCommande()
-            ));
-
-        } catch (Exception e) {
-            e.printStackTrace(); // Pour déboguer
-            return ResponseEntity.badRequest().body(Map.of(
-                    "message", "Erreur lors de la modification de la commande : " + e.getMessage()
-            ));
-        }
-    }
 }
