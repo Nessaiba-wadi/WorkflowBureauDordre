@@ -50,6 +50,13 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // Formate une date ISO pour les champs de formulaire date
+    function formatDateForInput(dateString) {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        return date.toISOString().split('T')[0];
+    }
+
     // Détermine l'état visuel d'une commande
     function getEtatCommande(commande) {
         // Génère un badge de couleur basé sur l'état du dossier
@@ -62,13 +69,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // Stocke toutes les commandes pour le filtrage
     let allCommandes = [];
 
-
     // Configuration de la pagination
     let currentPage = 1;
     const rowsPerPage = 10;
     let totalPages = 0;
     let filteredCommandes = [];
-
 
     // Filtre dynamique des commandes
     function filterCommandes() {
@@ -78,7 +83,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const etatFilter = document.getElementById('etatFilter').value;
 
         // Applique les filtres multi-critères
-        const filteredCommandes = allCommandes.filter(commande => {
+        filteredCommandes = allCommandes.filter(commande => {
             // Recherche globale sur toutes les colonnes
             const searchMatch = searchTerm ? Object.values(commande).some(value =>
                 String(value).toLowerCase().includes(searchTerm)
@@ -100,8 +105,8 @@ document.addEventListener('DOMContentLoaded', function() {
         currentPage = 1;
         totalPages = Math.ceil(filteredCommandes.length / rowsPerPage);
 
-        // Affiche les commandes filtrées
-        renderCommandes(filteredCommandes);
+        // Affiche les commandes filtrées pour la page courante
+        renderCommandesPage();
     }
 
     // Peuple le menu déroulant des directions
@@ -130,7 +135,7 @@ document.addEventListener('DOMContentLoaded', function() {
         updatePaginationControls();
     }
 
-// Met à jour les contrôles de pagination
+    // Met à jour les contrôles de pagination
     function updatePaginationControls() {
         const paginationContainer = document.getElementById('paginationContainer');
         totalPages = Math.ceil(filteredCommandes.length / rowsPerPage);
@@ -219,28 +224,35 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         // Crée les lignes du tableau pour chaque commande
-        const rows = commandes.map(commande => `
-            <tr>
-                <td>${formatDate(commande.dateModification)}</td>
-                <td>${commande.raisonSocialeFournisseur || 'N/A'}</td>
-                <td>${commande.raisonSocialeGBM || 'N/A'}</td>
-                <td>${commande.numeroBC || 'N/A'}</td>
-                <td>${commande.directionGBM || 'N/A'}</td>
-                <td>${commande.souscripteur || 'N/A'}</td>
-                <td>${commande.typeDocument || 'N/A'}</td>
-                <td>${getEtatCommande(commande)}</td>
-                <td>
-                    <div class="btn-group" role="group">
-                        <button class="btn btn-sm btn-info" onclick="voirDetailsCommande(${commande.idCommande})">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                        <button class="btn btn-sm btn-warning" onclick="modifierCommande(${commande.idCommande})">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                    </div>
-                </td>
-            </tr>
-        `).join('');
+        const rows = commandes.map(commande => {
+            // N'affiche le bouton de modification que pour les commandes "En cours"
+            const actionButtons = commande.dossierComplet ?
+                `<button class="btn btn-sm btn-info" onclick="voirDetailsCommande(${commande.idCommande})">
+                    <i class="fas fa-eye"></i>
+                </button>` :
+                `<div class="btn-group" role="group">
+                    <button class="btn btn-sm btn-info" onclick="voirDetailsCommande(${commande.idCommande})">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <button class="btn btn-sm btn-warning" onclick="modifierCommande(${commande.idCommande})">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                </div>`;
+
+            return `
+                <tr>
+                    <td>${formatDate(commande.dateModification)}</td>
+                    <td>${commande.raisonSocialeFournisseur || 'N/A'}</td>
+                    <td>${commande.raisonSocialeGBM || 'N/A'}</td>
+                    <td>${commande.numeroBC || 'N/A'}</td>
+                    <td>${commande.directionGBM || 'N/A'}</td>
+                    <td>${commande.souscripteur || 'N/A'}</td>
+                    <td>${commande.typeDocument || 'N/A'}</td>
+                    <td>${getEtatCommande(commande)}</td>
+                    <td>${actionButtons}</td>
+                </tr>
+            `;
+        }).join('');
 
         // Insère les lignes dans le tableau
         commandesBody.innerHTML = rows;
@@ -268,7 +280,6 @@ document.addEventListener('DOMContentLoaded', function() {
             filteredCommandes = [...allCommandes];
             totalPages = Math.ceil(filteredCommandes.length / rowsPerPage);
 
-
             // Supprime l'indicateur de chargement
             const loadingRow = document.getElementById('loadingRow');
             if (loadingRow) {
@@ -279,7 +290,7 @@ document.addEventListener('DOMContentLoaded', function() {
             populateDirectionFilter(allCommandes);
             renderCommandesPage();
 
-            // Configureles écouteurs d'événements pour le filtrage
+            // Configure les écouteurs d'événements pour le filtrage
             document.getElementById('searchInput').addEventListener('input', _.debounce(filterCommandes, 300));
             document.getElementById('directionFilter').addEventListener('change', filterCommandes);
             document.getElementById('etatFilter').addEventListener('change', filterCommandes);
@@ -302,18 +313,163 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // Charge les détails d'une commande pour le modal
+    async function chargerDetailsCommande(idCommande) {
+        try {
+            const userInfo = JSON.parse(sessionStorage.getItem('userInfo'));
+            if (!userInfo || !userInfo.email) {
+                throw new Error('Utilisateur non authentifié');
+            }
+
+            const response = await fetch(`http://localhost:8082/BO/commandes/${idCommande}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': userInfo.email
+                }
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Erreur lors du chargement de la commande');
+            }
+
+            return await response.json();
+
+        } catch (error) {
+            console.error('Erreur lors du chargement des détails de la commande:', error);
+            showToast(error.message, 'danger');
+            throw error;
+        }
+    }
+
+    // Met à jour une commande existante
+    async function mettreAJourCommande(idCommande, formData) {
+        try {
+            const userInfo = JSON.parse(sessionStorage.getItem('userInfo'));
+            if (!userInfo || !userInfo.email) {
+                throw new Error('Utilisateur non authentifié');
+            }
+
+            // Effectuer la requête AJAX
+            const response = await fetch(`http://localhost:8082/BO/commandes/${idCommande}/modifier`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': userInfo.email
+                    // Supprimer le header 'Content-Type' pour permettre à FormData de définir sa propre boundary
+                },
+                body: formData
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Erreur lors de la mise à jour de la commande');
+            }
+
+            const data = await response.json();
+            showToast('Commande mise à jour avec succès', 'success');
+
+            // Rafraîchir la liste des commandes
+            chargerCommandes();
+
+            return data;
+
+        } catch (error) {
+            console.error('Erreur lors de la mise à jour de la commande:', error);
+            showToast(error.message, 'danger');
+            throw error;
+        }
+    }
+
+    // Remplir le modal de modification avec les données de la commande
+    function remplirModalModification(commande) {
+        // Remplir les champs du formulaire
+        document.getElementById('modif-raisonSocialeFournisseur').value = commande.raisonSocialeFournisseur || '';
+        document.getElementById('modif-numeroBC').value = commande.numeroBC || '';
+        document.getElementById('modif-numeroBC').disabled = true; // Le numéro BC ne peut pas être modifié
+        document.getElementById('modif-directionGBM').value = commande.directionGBM || '';
+        document.getElementById('modif-typeDocument').value = commande.typeDocument || '';
+        document.getElementById('modif-dateRelanceBR').value = formatDateForInput(commande.dateRelanceBR);
+        document.getElementById('modif-dateTransmission').value = formatDateForInput(commande.dateTransmission);
+        document.getElementById('modif-raisonSocialeGBM').value = commande.raisonSocialeGBM || '';
+        document.getElementById('modif-souscripteur').value = commande.souscripteur || '';
+
+        // Type de relance (select)
+        const typeRelanceSelect = document.getElementById('modif-typeRelance');
+        if (commande.typeRelance) {
+            Array.from(typeRelanceSelect.options).forEach(option => {
+                if (option.value === commande.typeRelance) {
+                    option.selected = true;
+                }
+            });
+        }
+
+        document.getElementById('modif-personnesCollectrice').value = commande.personnesCollectrice || '';
+        document.getElementById('modif-dossierComplet').checked = commande.dossierComplet;
+
+        // Ajouter l'ID de la commande comme attribut de données au formulaire
+        document.getElementById('formModifierCommande').setAttribute('data-commande-id', commande.idCommande);
+    }
+
     // Fonctions globales pour les actions sur les commandes
 
     window.voirDetailsCommande = function(idCommande) {
         window.location.href = `details.html?id=${idCommande}`;
     }
-    window.modifierCommande = function(idCommande) {
-        showToast(`Modifier la commande ${idCommande}`, 'warning');
+
+    window.modifierCommande = async function(idCommande) {
+        try {
+            // Récupérer les détails de la commande
+            const commande = await chargerDetailsCommande(idCommande);
+
+            // Vérifier si la commande est complète (ne devrait pas arriver car le bouton est masqué)
+            if (commande.dossierComplet) {
+                showToast('Les commandes avec état "Complet" ne peuvent pas être modifiées', 'warning');
+                return;
+            }
+
+            // Remplir le modal avec les données
+            remplirModalModification(commande);
+
+            // Afficher le modal
+            const modalModifier = new bootstrap.Modal(document.getElementById('modalModifierCommande'));
+            modalModifier.show();
+
+        } catch (error) {
+            console.error('Erreur lors de l\'initialisation de la modification:', error);
+        }
+    }
+
+    // Initialisation du modal et de son formulaire
+    function initModalModification() {
+        const formModifierCommande = document.getElementById('formModifierCommande');
+
+        formModifierCommande.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            // Récupérer l'ID de la commande depuis l'attribut data
+            const idCommande = this.getAttribute('data-commande-id');
+
+            // Créer un FormData à partir du formulaire
+            const formData = new FormData(this);
+
+            try {
+                // Envoyer la requête de mise à jour
+                await mettreAJourCommande(idCommande, formData);
+
+                // Fermer le modal
+                const modalModifier = bootstrap.Modal.getInstance(document.getElementById('modalModifierCommande'));
+                modalModifier.hide();
+
+            } catch (error) {
+                console.error('Erreur lors de la soumission du formulaire:', error);
+            }
+        });
     }
 
     // Initialisation de l'interface
     initToast();
     chargerCommandes();
+    initModalModification();
 
     // Affiche le nom de l'utilisateur connecté
     const userInfo = JSON.parse(sessionStorage.getItem('userInfo'));
@@ -321,4 +477,47 @@ document.addEventListener('DOMContentLoaded', function() {
         const userNameElement = document.getElementById('userName');
         userNameElement.textContent = userInfo.prenom + ' ' + userInfo.nom;
     }
+
+
+    // Dans commandes.js
+    function afficherErreurMiseAJour(message) {
+        const alertElement = document.getElementById('updateErrorAlert');
+        const messageElement = document.getElementById('updateErrorMessage');
+
+        messageElement.textContent = message;
+        alertElement.classList.add('show');
+        alertElement.style.display = 'block';
+
+        // Masquer après 5 secondes
+        setTimeout(() => {
+            alertElement.classList.remove('show');
+            setTimeout(() => {
+                alertElement.style.display = 'none';
+            }, 300);
+        }, 5000);
+    }
+
+// Puis dans la fonction de soumission du formulaire
+    formModifierCommande.addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        // Récupérer l'ID de la commande depuis l'attribut data
+        const idCommande = this.getAttribute('data-commande-id');
+
+        // Créer un FormData à partir du formulaire
+        const formData = new FormData(this);
+
+        try {
+            // Envoyer la requête de mise à jour
+            await mettreAJourCommande(idCommande, formData);
+
+            // Fermer le modal
+            const modalModifier = bootstrap.Modal.getInstance(document.getElementById('modalModifierCommande'));
+            modalModifier.hide();
+
+        } catch (error) {
+            console.error('Erreur lors de la soumission du formulaire:', error);
+            afficherErreurMiseAJour(error.message);
+        }
+    });
 });

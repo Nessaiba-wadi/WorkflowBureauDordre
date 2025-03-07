@@ -29,4 +29,16 @@ public class CommandeService {
         // Enregistrer la commande
         return commandeRepository.save(commande);
     }
+
+    //modification de la commande
+    @Transactional
+    public Commande mettreAJourCommande(Commande commande) {
+        // Vérifier que la commande existe déjà
+        if (!commandeRepository.existsById(commande.getIdCommande())) {
+            throw new RuntimeException("La commande à mettre à jour n'existe pas");
+        }
+
+        // Enregistrer la commande mise à jour
+        return commandeRepository.save(commande);
+    }
 }
