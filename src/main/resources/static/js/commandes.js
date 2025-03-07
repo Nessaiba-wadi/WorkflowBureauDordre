@@ -62,6 +62,14 @@ document.addEventListener('DOMContentLoaded', function() {
     // Stocke toutes les commandes pour le filtrage
     let allCommandes = [];
 
+
+    // Configuration de la pagination
+    let currentPage = 1;
+    const rowsPerPage = 10;
+    let totalPages = 0;
+    let filteredCommandes = [];
+
+
     // Filtre dynamique des commandes
     function filterCommandes() {
         // Récupère les valeurs des filtres
@@ -88,6 +96,10 @@ document.addEventListener('DOMContentLoaded', function() {
             return searchMatch && directionMatch && etatMatch;
         });
 
+        // Réinitialise la pagination à la première page quand on filtre
+        currentPage = 1;
+        totalPages = Math.ceil(filteredCommandes.length / rowsPerPage);
+
         // Affiche les commandes filtrées
         renderCommandes(filteredCommandes);
     }
@@ -105,6 +117,87 @@ document.addEventListener('DOMContentLoaded', function() {
             option.value = direction;
             option.textContent = direction;
             directionFilter.appendChild(option);
+        });
+    }
+
+    // Affiche les commandes de la page courante
+    function renderCommandesPage() {
+        const startIndex = (currentPage - 1) * rowsPerPage;
+        const endIndex = startIndex + rowsPerPage;
+        const currentPageCommandes = filteredCommandes.slice(startIndex, endIndex);
+
+        renderCommandes(currentPageCommandes);
+        updatePaginationControls();
+    }
+
+// Met à jour les contrôles de pagination
+    function updatePaginationControls() {
+        const paginationContainer = document.getElementById('paginationContainer');
+        totalPages = Math.ceil(filteredCommandes.length / rowsPerPage);
+
+        if (totalPages <= 1) {
+            paginationContainer.innerHTML = '';
+            return;
+        }
+
+        // Crée la structure HTML de la pagination
+        let paginationHTML = `
+            <nav aria-label="Navigation des pages de commandes">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                        <a class="page-link" href="#" data-page="prev" aria-label="Précédent">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+        `;
+
+        // Affiche les numéros de page
+        let startPage = Math.max(1, currentPage - 2);
+        let endPage = Math.min(totalPages, startPage + 4);
+
+        if (endPage - startPage < 4) {
+            startPage = Math.max(1, endPage - 4);
+        }
+
+        for (let i = startPage; i <= endPage; i++) {
+            paginationHTML += `
+                <li class="page-item ${i === currentPage ? 'active' : ''}">
+                    <a class="page-link" href="#" data-page="${i}">${i}</a>
+                </li>
+            `;
+        }
+
+        paginationHTML += `
+                    <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+                        <a class="page-link" href="#" data-page="next" aria-label="Suivant">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            <div class="text-center text-muted">
+                <small>Affichage de ${(currentPage - 1) * rowsPerPage + 1} à ${Math.min(currentPage * rowsPerPage, filteredCommandes.length)} sur ${filteredCommandes.length} commandes</small>
+            </div>
+        `;
+
+        paginationContainer.innerHTML = paginationHTML;
+
+        // Ajoute les gestionnaires d'événements pour les liens de pagination
+        document.querySelectorAll('.pagination .page-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const page = this.getAttribute('data-page');
+
+                if (page === 'prev') {
+                    if (currentPage > 1) currentPage--;
+                } else if (page === 'next') {
+                    if (currentPage < totalPages) currentPage++;
+                } else {
+                    currentPage = parseInt(page);
+                }
+
+                renderCommandesPage();
+            });
         });
     }
 
@@ -172,6 +265,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Stocke toutes les commandes
             allCommandes = await response.json();
+            filteredCommandes = [...allCommandes];
+            totalPages = Math.ceil(filteredCommandes.length / rowsPerPage);
+
 
             // Supprime l'indicateur de chargement
             const loadingRow = document.getElementById('loadingRow');
@@ -181,7 +277,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Prépare l'interface de filtrage
             populateDirectionFilter(allCommandes);
-            renderCommandes(allCommandes);
+            renderCommandesPage();
 
             // Configureles écouteurs d'événements pour le filtrage
             document.getElementById('searchInput').addEventListener('input', _.debounce(filterCommandes, 300));
@@ -193,7 +289,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('searchInput').value = '';
                 document.getElementById('directionFilter').value = '';
                 document.getElementById('etatFilter').value = '';
-                renderCommandes(allCommandes);
+                filteredCommandes = [...allCommandes];
+                currentPage = 1;
+                totalPages = Math.ceil(filteredCommandes.length / rowsPerPage);
+                renderCommandesPage();
             });
 
         } catch (error) {
