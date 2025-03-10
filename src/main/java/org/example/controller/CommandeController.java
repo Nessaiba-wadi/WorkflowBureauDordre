@@ -1,5 +1,6 @@
 package org.example.controller;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.example.dto.CommandeDTO;
@@ -16,10 +17,13 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.example.repository.CommandeRepository;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -38,11 +42,14 @@ public class CommandeController {
     @Autowired
     private UtilisateurService utilisateurService;
 
-
     @Autowired
     private CommandeRepository commandeRepository;
-    private static final Logger log = LoggerFactory.getLogger(CommandeController.class);
 
+    @Value("${file.upload-dir:uploads/commandes}")
+    private String uploadDir;
+
+    private static final Logger log = LoggerFactory.getLogger(CommandeController.class);
+    private static final String[] EXTENSIONS_AUTORISEES = {".pdf", ".doc", ".docx"};
 
     @PostMapping("/nouvelle")
     public ResponseEntity<?> creerCommande(
@@ -56,7 +63,13 @@ public class CommandeController {
             // Gestion du fichier
             String nomFichier = null;
             if (commandeDTO.getFichier() != null && !commandeDTO.getFichier().isEmpty()) {
-                nomFichier = sauvegarderFichier(commandeDTO.getFichier());
+                // Vérifier l'extension du fichier
+                if (!isExtensionAutorisee(commandeDTO.getFichier().getOriginalFilename())) {
+                    return ResponseEntity.badRequest().body(Map.of(
+                            "message", "Type de fichier non autorisé. Seuls les fichiers PDF et Word sont acceptés."
+                    ));
+                }
+                nomFichier = sauvegarderFichierSecurise(commandeDTO.getFichier());
             }
 
             // Conversion du DTO en entité Commande
@@ -93,21 +106,61 @@ public class CommandeController {
         }
     }
 
-    private String sauvegarderFichier(MultipartFile fichier) throws IOException {
-        String repertoireUpload = "uploads/commandes";
+    private boolean isExtensionAutorisee(String nomFichier) {
+        if (nomFichier == null || nomFichier.isEmpty()) {
+            return false;
+        }
+        String extension = "";
+        int lastIndexOfDot = nomFichier.lastIndexOf(".");
+        if (lastIndexOfDot > 0) {
+            extension = nomFichier.substring(lastIndexOfDot).toLowerCase();
+        }
+        for (String ext : EXTENSIONS_AUTORISEES) {
+            if (ext.equals(extension)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private String sauvegarderFichierSecurise(MultipartFile fichier) throws IOException {
+        // Extraire l'extension originale
+        String originalFilename = fichier.getOriginalFilename();
+        String extension = "";
+        if (originalFilename != null && originalFilename.contains(".")) {
+            extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+        }
+
+        // Créer un nom de fichier crypté unique avec l'extension originale
+        String nomBaseFichier = UUID.randomUUID().toString();
+        String nomFichierCrypte = encrypterNomFichier(nomBaseFichier) + extension;
+
+        // Définir le chemin complet
+        String repertoireUpload = uploadDir;
         Path cheminRepertoire = Paths.get(repertoireUpload).toAbsolutePath().normalize();
 
         // Créer le répertoire s'il n'existe pas
         Files.createDirectories(cheminRepertoire);
 
-        // Générer un nom de fichier unique
-        String nomFichier = UUID.randomUUID().toString();
-        Path cheminCible = cheminRepertoire.resolve(nomFichier);
+        // Chemin complet du fichier
+        Path cheminCible = cheminRepertoire.resolve(nomFichierCrypte);
 
         // Copier le fichier
         Files.copy(fichier.getInputStream(), cheminCible, StandardCopyOption.REPLACE_EXISTING);
 
-        return nomFichier; // Retourne uniquement le nom du fichier
+        return nomFichierCrypte;
+    }
+
+    private String encrypterNomFichier(String nomFichier) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(nomFichier.getBytes(StandardCharsets.UTF_8));
+            return Base64.getUrlEncoder().withoutPadding().encodeToString(hash);
+        } catch (NoSuchAlgorithmException e) {
+            log.error("Erreur lors du cryptage du nom de fichier", e);
+            // Fallback si l'algorithme de hachage n'est pas disponible
+            return nomFichier;
+        }
     }
 
     @GetMapping
@@ -153,8 +206,6 @@ public class CommandeController {
         }
     }
 
-
-
     //Modifier une commande
     @PutMapping("/{id}")
     public ResponseEntity<?> modifierCommande(
@@ -189,7 +240,23 @@ public class CommandeController {
 
             // Traitement du fichier s'il est fourni
             if (commandeDTO.getFichier() != null && !commandeDTO.getFichier().isEmpty()) {
-                String nomFichier = sauvegarderFichier(commandeDTO.getFichier());
+                // Vérifier l'extension du fichier
+                if (!isExtensionAutorisee(commandeDTO.getFichier().getOriginalFilename())) {
+                    return ResponseEntity.badRequest().body(Map.of(
+                            "message", "Type de fichier non autorisé. Seuls les fichiers PDF et Word sont acceptés."
+                    ));
+                }
+                // Supprimer l'ancien fichier si existant
+                if (commande.getFichierJoint() != null && !commande.getFichierJoint().isEmpty()) {
+                    try {
+                        Path cheminAncienFichier = Paths.get(uploadDir).resolve(commande.getFichierJoint());
+                        Files.deleteIfExists(cheminAncienFichier);
+                    } catch (IOException e) {
+                        log.warn("Impossible de supprimer l'ancien fichier: {}", e.getMessage());
+                    }
+                }
+
+                String nomFichier = sauvegarderFichierSecurise(commandeDTO.getFichier());
                 commande.setFichierJoint(nomFichier);
             }
 
@@ -226,6 +293,7 @@ public class CommandeController {
             ));
         }
     }
+
     // lire le fichier
     @GetMapping("/fichier/{id}")
     public ResponseEntity<?> getFichierCommande(@PathVariable("id") Integer id,
@@ -244,7 +312,7 @@ public class CommandeController {
             Commande commande = commandeOpt.get();
 
             // Vérifier l'accès de l'utilisateur
-            if (commande.getUtilisateur().getIdUtilisateur()!= utilisateur.getIdUtilisateur()) {
+            if (commande.getUtilisateur().getIdUtilisateur() != utilisateur.getIdUtilisateur()) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                         .body(Map.of("message", "Vous n'êtes pas autorisé à accéder à ce fichier"));
             }
@@ -256,8 +324,7 @@ public class CommandeController {
             }
 
             // Construire le chemin du fichier
-            String repertoireUpload = "uploads/commandes";
-            Path cheminFichier = Paths.get(repertoireUpload).resolve(commande.getFichierJoint()).normalize();
+            Path cheminFichier = Paths.get(uploadDir).resolve(commande.getFichierJoint()).normalize();
 
             // Vérifier si le fichier existe physiquement
             if (!Files.exists(cheminFichier)) {
@@ -268,15 +335,32 @@ public class CommandeController {
             // Déterminer le type de contenu
             String contentType = Files.probeContentType(cheminFichier);
             if (contentType == null) {
-                contentType = "application/octet-stream";
+                // Déterminer le type en fonction de l'extension
+                String nomFichier = commande.getFichierJoint();
+                if (nomFichier.endsWith(".pdf")) {
+                    contentType = "application/pdf";
+                } else if (nomFichier.endsWith(".doc")) {
+                    contentType = "application/msword";
+                } else if (nomFichier.endsWith(".docx")) {
+                    contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+                } else {
+                    contentType = "application/octet-stream";
+                }
             }
 
             // Préparer la ressource à retourner
             Resource resource = new UrlResource(cheminFichier.toUri());
 
+            // Utiliser un nom de fichier sécurisé pour le téléchargement
+            String originalExtension = "";
+            if (commande.getFichierJoint().contains(".")) {
+                originalExtension = commande.getFichierJoint().substring(commande.getFichierJoint().lastIndexOf("."));
+            }
+            String securisedFileName = "document_" + id + originalExtension;
+
             return ResponseEntity.ok()
                     .contentType(MediaType.parseMediaType(contentType))
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + resource.getFilename() + "\"")
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + securisedFileName + "\"")
                     .body(resource);
 
         } catch (Exception e) {

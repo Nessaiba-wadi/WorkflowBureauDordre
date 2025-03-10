@@ -351,7 +351,8 @@ document.addEventListener('DOMContentLoaded', function() {
             });
 
             if (!response.ok) {
-                throw new Error('Erreur lors de la récupération des détails de la commande');
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Erreur lors de la récupération des détails de la commande');
             }
 
             const commande = await response.json();
@@ -389,6 +390,9 @@ document.addEventListener('DOMContentLoaded', function() {
             `;
                 const fichierInput = document.getElementById('modif-fichier');
                 fichierInput.parentNode.insertBefore(fichierExistantContainer, fichierInput.nextSibling);
+
+                // Ajouter une validation pour n'accepter que les fichiers PDF et Word
+                fichierInput.accept = ".pdf,.doc,.docx";
             }
 
             // Configurer la soumission du formulaire
@@ -403,12 +407,31 @@ document.addEventListener('DOMContentLoaded', function() {
                     return;
                 }
 
+                // Vérifier si un fichier est sélectionné et valider son extension
+                const fichierInput = document.getElementById('modif-fichier');
+                if (fichierInput.files.length > 0) {
+                    const fichier = fichierInput.files[0];
+                    const extensionsAutorisees = ['.pdf', '.doc', '.docx'];
+                    const extension = '.' + fichier.name.split('.').pop().toLowerCase();
+
+                    if (!extensionsAutorisees.includes(extension)) {
+                        showToast("Type de fichier non autorisé. Seuls les fichiers PDF et Word sont acceptés.", "danger");
+                        return;
+                    }
+                }
+
                 try {
                     // Créer FormData pour envoyer les données du formulaire
                     const formData = new FormData(form);
 
                     // Ajouter l'ID de la commande pour le backend
                     const idCommandeToUpdate = idCommande;
+
+                    // Afficher un indicateur de chargement
+                    const submitBtn = form.querySelector('button[type="submit"]');
+                    const originalBtnText = submitBtn.innerHTML;
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Traitement...';
 
                     // Envoyer la requête de mise à jour
                     const response = await fetch(`http://localhost:8082/BO/commandes/${idCommandeToUpdate}`, {
@@ -418,6 +441,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         },
                         body: formData
                     });
+
+                    // Restaurer le bouton
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalBtnText;
 
                     if (!response.ok) {
                         const errorData = await response.json();
@@ -445,7 +472,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 } catch (error) {
                     // Afficher un message d'erreur
-                    afficherErreurMiseAJour(error.message);
+                    showToast(error.message || "Une erreur est survenue", "danger");
                 }
             };
 
@@ -466,9 +493,38 @@ document.addEventListener('DOMContentLoaded', function() {
 
         } catch (error) {
             console.error('Erreur lors de la modification de la commande:', error);
-            showToast(error.message, 'danger');
+            showToast(error.message || "Une erreur est survenue", 'danger');
         }
     };
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Pour le formulaire de création
+        const nouveauFichierInput = document.getElementById('nouveau-fichier');
+        if (nouveauFichierInput) {
+            nouveauFichierInput.accept = ".pdf,.doc,.docx";
+            nouveauFichierInput.addEventListener('change', validateFileExtension);
+        }
+
+        // Pour le modal de modification (sera ajouté dynamiquement)
+        document.body.addEventListener('change', function(event) {
+            if (event.target.id === 'modif-fichier') {
+                validateFileExtension.call(event.target);
+            }
+        });
+    });
+
+    function validateFileExtension() {
+        if (this.files.length > 0) {
+            const fichier = this.files[0];
+            const extensionsAutorisees = ['.pdf', '.doc', '.docx'];
+            const extension = '.' + fichier.name.split('.').pop().toLowerCase();
+
+            if (!extensionsAutorisees.includes(extension)) {
+                showToast("Type de fichier non autorisé. Seuls les fichiers PDF et Word sont acceptés.", "danger");
+                this.value = ''; // Réinitialiser l'input
+            }
+        }
+    }
     // Dans commandes.js
     function afficherErreurMiseAJour(message) {
         const alertElement = document.getElementById('updateErrorAlert');
@@ -487,6 +543,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 5000);
     }
 
+    afficherErreurMiseAJour();
     // Initialisation des tooltips Bootstrap
     const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     tooltipTriggerList.map(function (tooltipTriggerEl) {
