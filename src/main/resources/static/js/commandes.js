@@ -277,6 +277,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Stocke toutes les commandes
             allCommandes = await response.json();
+
+            // Trier les commandes par date de modification décroissante (plus récentes en premier)
+            allCommandes.sort((a, b) => {
+                const dateA = a.dateModification ? new Date(a.dateModification) : new Date(0);
+                const dateB = b.dateModification ? new Date(b.dateModification) : new Date(0);
+                return dateB - dateA; // Ordre décroissant
+            });
             filteredCommandes = [...allCommandes];
             totalPages = Math.ceil(filteredCommandes.length / rowsPerPage);
 
@@ -380,7 +387,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <i class="fas fa-file-alt me-2"></i>
                 <div>
                     Fichier actuel:
-                    <a href="http://localhost:8082/BO/commandes/fichier/${idCommande}" 
+                    <a href="/uploads/commandes/${commande.fichierJoint}"
                        class="ms-2 btn btn-sm btn-outline-primary" 
                        target="_blank">
                         <i class="fas fa-eye"></i> Voir
@@ -645,7 +652,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
 
-
+sta
     // Ajouter cette fonction à l'initialisation
     setupDossierCompletCheckbox();
     // Dans commandes.js

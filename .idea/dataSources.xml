@@ -12,5 +12,14 @@ C:/Users/Acer/Desktop/WF_bureau_d-ordre/src/main/resources/hibernate.cfg.xml</re
       <jdbc-url>jdbc:sqlserver://localhost:1433;databaseName=BureauDordreWorkflow</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
+    <data-source source="LOCAL" name="WorkflowBureauDordre/Hibernate" uuid="f498d5f0-5956-493d-9949-76a867e8c2d9">
+      <driver-ref>sqlserver.ms</driver-ref>
+      <synchronize>true</synchronize>
+      <imported>true</imported>
+      <remarks>Hibernate</remarks>
+      <jdbc-driver>com.microsoft.sqlserver.jdbc.SQLServerDriver</jdbc-driver>
+      <jdbc-url>jdbc:sqlserver://localhost:1433;databaseName=BureauDordreWorkflow;encrypt=true;trustServerCertificate=true;</jdbc-url>
+      <working-dir>$ProjectFileDir$</working-dir>
+    </data-source>
   </component>
 </project>

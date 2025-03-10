@@ -12,15 +12,16 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <!-- Définir une version logback cohérente -->
+        <logback.version>1.4.14</logback.version>
     </properties>
 
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.2.0-SNAPSHOT</version>
+        <version>3.2.3</version> <!-- Version stable à la place de 3.2.0-SNAPSHOT -->
         <relativePath/>
     </parent>
-
 
     <dependencyManagement>
         <dependencies>
@@ -39,9 +40,10 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>1.18.30</version> <!-- Vérifiez la dernière version sur Maven Central -->
+            <version>1.18.30</version>
             <scope>provided</scope>
         </dependency>
+
         <!-- Spring Boot Starters -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -58,22 +60,22 @@
             <artifactId>mssql-jdbc</artifactId>
             <version>11.2.2.jre8</version>
         </dependency>
+
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
             <version>2.0.13</version>
         </dependency>
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-            <version>1.5.6</version>
-        </dependency>
+
+
+
         <!-- H2 Database (pour les tests ou le développement) -->
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
             <scope>runtime</scope>
         </dependency>
+
         <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-core</artifactId>
@@ -85,10 +87,8 @@
             <artifactId>jakarta.validation-api</artifactId>
             <version>3.0.2</version>
         </dependency>
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-        </dependency>
+
+
 
         <dependency>
             <groupId>com.fasterxml.jackson.datatype</groupId>
