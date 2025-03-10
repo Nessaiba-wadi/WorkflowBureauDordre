@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.example.repository.CommandeRepository;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -247,6 +248,63 @@ public class CommandeController {
         }
     }
 
+
+    //placement du fichier
+    @RestController
+    @RequestMapping("/api/files")
+    public class FileController {
+
+        @Value("${file.upload-dir}")
+        private String uploadDir;
+
+        private static final Logger log = LoggerFactory.getLogger(FileController.class);
+
+        /**
+         * Endpoint pour accéder aux fichiers par leur ID
+         */
+        @GetMapping("/{fileName:.+}")
+        public ResponseEntity<Resource> serveFile(@PathVariable String fileName) {
+            try {
+                // Construction du chemin absolu vers le fichier
+                Path filePath = Paths.get(uploadDir).resolve("commandes").resolve(fileName).normalize();
+                Resource resource = new UrlResource(filePath.toUri());
+
+                if (resource.exists()) {
+                    // Déterminer le type de contenu
+                    String contentType = null;
+                    try {
+                        contentType = Files.probeContentType(filePath);
+                    } catch (IOException e) {
+                        log.debug("Impossible de déterminer le type de contenu", e);
+                    }
+
+                    // Fallback si le type ne peut pas être déterminé
+                    if (contentType == null) {
+                        contentType = "application/octet-stream";
+
+                        // Essayer de déterminer le type par l'extension
+                        if (fileName.endsWith(".pdf")) {
+                            contentType = "application/pdf";
+                        } else if (fileName.endsWith(".doc")) {
+                            contentType = "application/msword";
+                        } else if (fileName.endsWith(".docx")) {
+                            contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+                        }
+                    }
+
+                    return ResponseEntity.ok()
+                            .contentType(MediaType.parseMediaType(contentType))
+                            .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + resource.getFilename() + "\"")
+                            .body(resource);
+                } else {
+                    return ResponseEntity.notFound().build();
+                }
+            } catch (MalformedURLException e) {
+                log.error("Erreur lors de la récupération du fichier: {}", e.getMessage());
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            }
+        }
+    }
     //Modifier une commande
     @PutMapping("/{id}")
     public ResponseEntity<?> modifierCommande(

@@ -15,17 +15,27 @@ public class SecurityConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        // Exposer le répertoire de fichiers comme ressource statique
         registry.addResourceHandler("/uploads/**")
-                .addResourceLocations("file:" + uploadDir + "/");
+                .addResourceLocations("file:" + uploadDir + "/")
+                .setCachePeriod(3600)
+                .resourceChain(true);
+
+        // Ajouter des gestionnaires pour les ressources statiques standards
+        registry.addResourceHandler("/static/**")
+                .addResourceLocations("classpath:/static/");
     }
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
-                .allowedOrigins("http://127.0.0.1:8080")
+                .allowedOrigins("http://127.0.0.1:8080", "http://localhost:8080",
+                        // Ajoutez ici votre domaine de production
+                        "https://votredomaine.com")
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
-                .allowCredentials(true);
+                .allowCredentials(true)
+                .maxAge(3600);
     }
     @Bean
     public BCryptPasswordEncoder passwordEncoder() {
