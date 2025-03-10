@@ -155,8 +155,12 @@ public class CommandeController {
         String nomBaseFichier = UUID.randomUUID().toString();
         String nomFichierCrypte = encrypterNomFichier(nomBaseFichier) + extension;
 
-        // Définir le chemin complet
+        // Définir le chemin complet avec le sous-dossier 'commandes'
         String repertoireUpload = uploadDir;
+        if (!repertoireUpload.endsWith("/commandes") && !repertoireUpload.endsWith("\\commandes")) {
+            repertoireUpload = Paths.get(repertoireUpload, "commandes").toString();
+        }
+
         Path cheminRepertoire = Paths.get(repertoireUpload).toAbsolutePath().normalize();
 
         // Créer le répertoire s'il n'existe pas
@@ -168,6 +172,9 @@ public class CommandeController {
         // Copier le fichier
         Files.copy(fichier.getInputStream(), cheminCible, StandardCopyOption.REPLACE_EXISTING);
 
+        // Retourner le nom du fichier (sans le chemin 'commandes/')
+        // Si vous préférez conserver le sous-répertoire dans la base de données, utilisez:
+        // return "commandes/" + nomFichierCrypte;
         return nomFichierCrypte;
     }
 
@@ -216,6 +223,20 @@ public class CommandeController {
             if (commande.getUtilisateur().getIdUtilisateur() != utilisateur.getIdUtilisateur()) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                         .body(Map.of("message", "Vous n'êtes pas autorisé à accéder à cette commande"));
+            }
+
+            // Ne pas tenter d'accéder au fichier si fichierJoint est null
+            if (commande.getFichierJoint() != null) {
+                // Construire le chemin du fichier
+                Path cheminFichier = Paths.get(uploadDir).normalize();
+
+                // Si le chemin stocké inclut "commandes/", on l'utilise directement
+                if (commande.getFichierJoint().contains("/") || commande.getFichierJoint().contains("\\")) {
+                    cheminFichier = cheminFichier.resolve(commande.getFichierJoint()).normalize();
+                } else {
+                    // Sinon on ajoute le préfixe "commandes/"
+                    cheminFichier = cheminFichier.resolve("commandes").resolve(commande.getFichierJoint()).normalize();
+                }
             }
 
             return ResponseEntity.ok(commande);
@@ -270,7 +291,13 @@ public class CommandeController {
                 // Supprimer l'ancien fichier si existant
                 if (commande.getFichierJoint() != null && !commande.getFichierJoint().isEmpty()) {
                     try {
-                        Path cheminAncienFichier = Paths.get(uploadDir).resolve(commande.getFichierJoint());
+                        // Construire le chemin correct selon le format du nom de fichier
+                        Path cheminAncienFichier;
+                        if (commande.getFichierJoint().contains("/") || commande.getFichierJoint().contains("\\")) {
+                            cheminAncienFichier = Paths.get(uploadDir).resolve(commande.getFichierJoint());
+                        } else {
+                            cheminAncienFichier = Paths.get(uploadDir).resolve("commandes").resolve(commande.getFichierJoint());
+                        }
                         Files.deleteIfExists(cheminAncienFichier);
                     } catch (IOException e) {
                         log.warn("Impossible de supprimer l'ancien fichier: {}", e.getMessage());
@@ -344,8 +371,15 @@ public class CommandeController {
                         .body(Map.of("message", "Aucun fichier joint à cette commande"));
             }
 
-            // Construire le chemin du fichier
-            Path cheminFichier = Paths.get(uploadDir).resolve(commande.getFichierJoint()).normalize();
+            // Construire le chemin du fichier en incluant le sous-dossier "commandes"
+            Path cheminFichier;
+            if (commande.getFichierJoint().startsWith("commandes/")) {
+                // Si le chemin inclut déjà le sous-dossier
+                cheminFichier = Paths.get(uploadDir).resolve(commande.getFichierJoint()).normalize();
+            } else {
+                // Sinon on ajoute le sous-dossier
+                cheminFichier = Paths.get(uploadDir).resolve("commandes").resolve(commande.getFichierJoint()).normalize();
+            }
 
             // Vérifier si le fichier existe physiquement
             if (!Files.exists(cheminFichier)) {

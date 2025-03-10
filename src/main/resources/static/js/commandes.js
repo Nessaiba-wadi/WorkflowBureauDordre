@@ -376,24 +376,38 @@ document.addEventListener('DOMContentLoaded', function() {
                 const fichierExistantContainer = document.createElement('div');
                 fichierExistantContainer.className = 'mt-2 mb-2';
                 fichierExistantContainer.innerHTML = `
-                <div class="alert alert-info d-flex align-items-center">
-                    <i class="fas fa-file-alt me-2"></i>
-                    <div>
-                        Fichier actuel:
-                        <a href="http://localhost:8082/BO/commandes/fichier/${idCommande}" 
-                           class="ms-2 btn btn-sm btn-outline-primary" 
-                           target="_blank">
-                            <i class="fas fa-eye"></i> Voir
-                        </a>
-                    </div>
+            <div class="alert alert-info d-flex align-items-center">
+                <i class="fas fa-file-alt me-2"></i>
+                <div>
+                    Fichier actuel:
+                    <a href="http://localhost:8082/BO/commandes/fichier/${idCommande}" 
+                       class="ms-2 btn btn-sm btn-outline-primary" 
+                       target="_blank">
+                        <i class="fas fa-eye"></i> Voir
+                    </a>
                 </div>
-            `;
+            </div>
+        `;
                 const fichierInput = document.getElementById('modif-fichier');
                 fichierInput.parentNode.insertBefore(fichierExistantContainer, fichierInput.nextSibling);
-
-                // Ajouter une validation pour n'accepter que les fichiers PDF et Word
-                fichierInput.accept = ".pdf,.doc,.docx";
+            } else {
+                // Afficher une information qu'aucun fichier n'est attaché
+                const fichierExistantContainer = document.createElement('div');
+                fichierExistantContainer.className = 'mt-2 mb-2';
+                fichierExistantContainer.innerHTML = `
+            <div class="alert alert-warning d-flex align-items-center">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <div>
+                    Aucun fichier actuellement attaché à cette commande.
+                </div>
+            </div>
+        `;
+                const fichierInput = document.getElementById('modif-fichier');
+                fichierInput.parentNode.insertBefore(fichierExistantContainer, fichierInput.nextSibling);
             }
+
+            // Ajouter une validation pour n'accepter que les fichiers PDF et Word
+            document.getElementById('modif-fichier').accept = ".pdf,.doc,.docx";
 
             // Configurer la soumission du formulaire
             const form = document.getElementById('formModifierCommande');
@@ -405,6 +419,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     e.stopPropagation();
                     form.classList.add('was-validated');
                     return;
+                }
+
+                // Vérifier si l'utilisateur a coché "dossier complet" et confirmer une dernière fois
+                const dossierCompletCheckbox = document.getElementById('modif-dossierComplet');
+                if (dossierCompletCheckbox && dossierCompletCheckbox.checked) {
+                    if (!confirm("ATTENTION : En validant ce formulaire avec l'option 'Dossier complet' cochée, vous ne pourrez plus modifier cette commande ultérieurement. Confirmez-vous cette action ?")) {
+                        return; // Arrêter la soumission si l'utilisateur annule
+                    }
                 }
 
                 // Vérifier si un fichier est sélectionné et valider son extension
@@ -424,9 +446,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Créer FormData pour envoyer les données du formulaire
                     const formData = new FormData(form);
 
-                    // Ajouter l'ID de la commande pour le backend
-                    const idCommandeToUpdate = idCommande;
-
                     // Afficher un indicateur de chargement
                     const submitBtn = form.querySelector('button[type="submit"]');
                     const originalBtnText = submitBtn.innerHTML;
@@ -434,7 +453,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Traitement...';
 
                     // Envoyer la requête de mise à jour
-                    const response = await fetch(`http://localhost:8082/BO/commandes/${idCommandeToUpdate}`, {
+                    const response = await fetch(`http://localhost:8082/BO/commandes/${idCommande}`, {
                         method: 'PUT',
                         headers: {
                             'Authorization': userInfo.email
@@ -461,7 +480,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Nettoyer le formulaire et les éléments ajoutés
                     form.reset();
                     form.classList.remove('was-validated');
-                    const fichierExistantContainer = form.querySelector('.alert.alert-info');
+                    const fichierExistantContainer = form.querySelector('.alert');
                     if (fichierExistantContainer) {
                         fichierExistantContainer.remove();
                     }
@@ -485,7 +504,7 @@ document.addEventListener('DOMContentLoaded', function() {
             modalElement.addEventListener('hidden.bs.modal', function() {
                 form.reset();
                 form.classList.remove('was-validated');
-                const fichierExistantContainer = form.querySelector('.alert.alert-info');
+                const fichierExistantContainer = form.querySelector('.alert');
                 if (fichierExistantContainer) {
                     fichierExistantContainer.remove();
                 }
@@ -529,6 +548,41 @@ document.addEventListener('DOMContentLoaded', function() {
         return true; // Si aucun fichier n'est sélectionné, c'est valide
     }
 
+
+    // Gestionnaire d'événement pour la case à cocher "dossier complet"
+    function setupDossierCompletCheckbox() {
+        // Pour le formulaire de création
+        const nouveauDossierComplet = document.getElementById('nouveau-dossierComplet');
+        if (nouveauDossierComplet) {
+            nouveauDossierComplet.addEventListener('change', confirmDossierComplet);
+        }
+
+        // Pour le formulaire de modification
+        const modifDossierComplet = document.getElementById('modif-dossierComplet');
+        if (modifDossierComplet) {
+            modifDossierComplet.addEventListener('change', confirmDossierComplet);
+        }
+
+        // Délégation d'événements pour les cases à cocher ajoutées dynamiquement
+        document.body.addEventListener('change', function(event) {
+            if (event.target.id === 'modif-dossierComplet') {
+                confirmDossierComplet.call(event.target);
+            }
+        });
+    }
+
+    // Fonction pour confirmer la validation du dossier
+    function confirmDossierComplet() {
+        if (this.checked) {
+            if (!confirm("Attention : En marquant ce dossier comme complet, vous ne pourrez plus le modifier ultérieurement. Souhaitez-vous continuer ?")) {
+                // Si l'utilisateur annule, décocher la case
+                this.checked = false;
+            }
+        }
+    }
+
+    // Ajouter cette fonction à l'initialisation
+    setupDossierCompletCheckbox();
     // Dans commandes.js
     function afficherErreurMiseAJour(message) {
         const alertElement = document.getElementById('updateErrorAlert');
