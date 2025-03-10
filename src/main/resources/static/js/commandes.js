@@ -550,6 +550,74 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
     // Gestionnaire d'événement pour la case à cocher "dossier complet"
+    // Fonction pour confirmer la validation du dossier avec un toast
+    function confirmDossierComplet() {
+        if (this.checked) {
+            // Stocker une référence à l'élément checkbox
+            const checkbox = this;
+
+            // Créer le toast de manière dynamique
+            const toastElement = document.createElement('div');
+            toastElement.className = 'toast align-items-center';
+            toastElement.setAttribute('role', 'alert');
+            toastElement.setAttribute('aria-live', 'assertive');
+            toastElement.setAttribute('aria-atomic', 'true');
+
+            toastElement.innerHTML = `
+            <div class="toast-header bg-warning text-dark">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <strong class="me-auto">Confirmation requise</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">
+                <p>En marquant ce dossier comme complet, vous ne pourrez plus le modifier ultérieurement. Souhaitez-vous continuer ?</p>
+                <div class="mt-2 pt-2 border-top d-flex justify-content-end gap-2">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="toastCancelBtn">Annuler</button>
+                    <button type="button" class="btn btn-warning btn-sm" id="toastConfirmBtn">Confirmer</button>
+                </div>
+            </div>
+        `;
+
+            // Ajouter le toast au conteneur (créer un conteneur s'il n'existe pas)
+            let toastContainer = document.querySelector('.toast-container');
+            if (!toastContainer) {
+                toastContainer = document.createElement('div');
+                toastContainer.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+                document.body.appendChild(toastContainer);
+            }
+            toastContainer.appendChild(toastElement);
+
+            // Initialiser le toast
+            const toastInstance = new bootstrap.Toast(toastElement, {
+                autohide: false
+            });
+
+            // Décocher la case jusqu'à confirmation
+            checkbox.checked = false;
+
+            // Montrer le toast
+            toastInstance.show();
+
+            // Ajouter les écouteurs d'événements pour les boutons
+            document.getElementById('toastCancelBtn').addEventListener('click', function() {
+                toastInstance.hide();
+                // Suppression du toast après fermeture
+                toastElement.addEventListener('hidden.bs.toast', function() {
+                    toastElement.remove();
+                });
+            });
+
+            document.getElementById('toastConfirmBtn').addEventListener('click', function() {
+                checkbox.checked = true;
+                toastInstance.hide();
+                // Suppression du toast après fermeture
+                toastElement.addEventListener('hidden.bs.toast', function() {
+                    toastElement.remove();
+                });
+            });
+        }
+    }
+
     function setupDossierCompletCheckbox() {
         // Pour le formulaire de création
         const nouveauDossierComplet = document.getElementById('nouveau-dossierComplet');
@@ -565,21 +633,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Délégation d'événements pour les cases à cocher ajoutées dynamiquement
         document.body.addEventListener('change', function(event) {
-            if (event.target.id === 'modif-dossierComplet') {
+            if (event.target.id === 'modif-dossierComplet' || event.target.id === 'nouveau-dossierComplet') {
                 confirmDossierComplet.call(event.target);
             }
         });
     }
 
-    // Fonction pour confirmer la validation du dossier
-    function confirmDossierComplet() {
-        if (this.checked) {
-            if (!confirm("Attention : En marquant ce dossier comme complet, vous ne pourrez plus le modifier ultérieurement. Souhaitez-vous continuer ?")) {
-                // Si l'utilisateur annule, décocher la case
-                this.checked = false;
-            }
-        }
-    }
+    // Ajouter cette fonction à l'initialisation
+    document.addEventListener('DOMContentLoaded', function() {
+        setupDossierCompletCheckbox();
+    });
+
+
 
     // Ajouter cette fonction à l'initialisation
     setupDossierCompletCheckbox();
