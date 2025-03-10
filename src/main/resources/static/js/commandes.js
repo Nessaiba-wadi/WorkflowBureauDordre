@@ -313,126 +313,17 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Charge les détails d'une commande pour le modal
-    async function chargerDetailsCommande(idCommande) {
-        try {
-            const userInfo = JSON.parse(sessionStorage.getItem('userInfo'));
-            if (!userInfo || !userInfo.email) {
-                throw new Error('Utilisateur non authentifié');
-            }
-
-            const response = await fetch(`http://localhost:8082/BO/commandes/${idCommande}`, {
-                method: 'GET',
-                headers: {
-                    'Authorization': userInfo.email
-                }
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Erreur lors du chargement de la commande');
-            }
-
-            return await response.json();
-
-        } catch (error) {
-            console.error('Erreur lors du chargement des détails de la commande:', error);
-            showToast(error.message, 'danger');
-            throw error;
-        }
-    }
-
-    // Remplir le modal de modification avec les données de la commande
-    function remplirModalModification(commande) {
-        // Remplir les champs du formulaire
-        document.getElementById('modif-raisonSocialeFournisseur').value = commande.raisonSocialeFournisseur || '';
-        document.getElementById('modif-numeroBC').value = commande.numeroBC || '';
-        document.getElementById('modif-numeroBC').disabled = true; // Le numéro BC ne peut pas être modifié
-        document.getElementById('modif-directionGBM').value = commande.directionGBM || '';
-        document.getElementById('modif-typeDocument').value = commande.typeDocument || '';
-        document.getElementById('modif-dateRelanceBR').value = formatDateForInput(commande.dateRelanceBR);
-        document.getElementById('modif-dateTransmission').value = formatDateForInput(commande.dateTransmission);
-        document.getElementById('modif-raisonSocialeGBM').value = commande.raisonSocialeGBM || '';
-        document.getElementById('modif-souscripteur').value = commande.souscripteur || '';
-
-        // Type de relance (select)
-        const typeRelanceSelect = document.getElementById('modif-typeRelance');
-        if (commande.typeRelance) {
-            Array.from(typeRelanceSelect.options).forEach(option => {
-                if (option.value === commande.typeRelance) {
-                    option.selected = true;
-                }
-            });
-        }
-
-        document.getElementById('modif-personnesCollectrice').value = commande.personnesCollectrice || '';
-        document.getElementById('modif-dossierComplet').checked = commande.dossierComplet;
-
-        // Ajouter l'ID de la commande comme attribut de données au formulaire
-        document.getElementById('formModifierCommande').setAttribute('data-commande-id', commande.idCommande);
-    }
-
     // Fonctions globales pour les actions sur les commandes
 
     window.voirDetailsCommande = function(idCommande) {
         window.location.href = `details.html?id=${idCommande}`;
     }
 
-    window.modifierCommande = async function(idCommande) {
-        try {
-            // Récupérer les détails de la commande
-            const commande = await chargerDetailsCommande(idCommande);
 
-            // Vérifier si la commande est complète (ne devrait pas arriver car le bouton est masqué)
-            if (commande.dossierComplet) {
-                showToast('Les commandes avec état "Complet" ne peuvent pas être modifiées', 'warning');
-                return;
-            }
-
-            // Remplir le modal avec les données
-            remplirModalModification(commande);
-
-            // Afficher le modal
-            const modalModifier = new bootstrap.Modal(document.getElementById('modalModifierCommande'));
-            modalModifier.show();
-
-        } catch (error) {
-            console.error('Erreur lors de l\'initialisation de la modification:', error);
-        }
-    }
-
-    // Initialisation du modal et de son formulaire
-    function initModalModification() {
-        const formModifierCommande = document.getElementById('formModifierCommande');
-
-        formModifierCommande.addEventListener('submit', async function(e) {
-            e.preventDefault();
-
-            // Récupérer l'ID de la commande depuis l'attribut data
-            const idCommande = this.getAttribute('data-commande-id');
-
-            // Créer un FormData à partir du formulaire
-            const formData = new FormData(this);
-
-            try {
-                // Envoyer la requête de mise à jour
-                await mettreAJourCommande(idCommande, formData);
-
-                // Fermer le modal
-                const modalModifier = bootstrap.Modal.getInstance(document.getElementById('modalModifierCommande'));
-                modalModifier.hide();
-
-            } catch (error) {
-                console.error('Erreur lors de la soumission du formulaire:', error);
-                afficherErreurMiseAJour(error.message);
-            }
-        });
-    }
 
     // Initialisation de l'interface
     initToast();
     chargerCommandes();
-    initModalModification();
 
     // Affiche le nom de l'utilisateur connecté
     const userInfo = JSON.parse(sessionStorage.getItem('userInfo'));
@@ -441,7 +332,143 @@ document.addEventListener('DOMContentLoaded', function() {
         userNameElement.textContent = userInfo.prenom + ' ' + userInfo.nom;
     }
 
+    //modifier une commande :
+    // Fonction globale pour modifier une commande
+    window.modifierCommande = async function(idCommande) {
+        try {
+            // Récupérer les informations de l'utilisateur connecté
+            const userInfo = JSON.parse(sessionStorage.getItem('userInfo'));
+            if (!userInfo || !userInfo.email) {
+                throw new Error('Utilisateur non authentifié');
+            }
 
+            // Récupérer les détails de la commande depuis l'API
+            const response = await fetch(`http://localhost:8082/BO/commandes/${idCommande}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': userInfo.email
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Erreur lors de la récupération des détails de la commande');
+            }
+
+            const commande = await response.json();
+
+            // Pré-remplir le formulaire avec les données existantes
+            document.getElementById('modif-raisonSocialeFournisseur').value = commande.raisonSocialeFournisseur || '';
+            document.getElementById('modif-numeroBC').value = commande.numeroBC || '';
+            document.getElementById('modif-raisonSocialeGBM').value = commande.raisonSocialeGBM || '';
+            document.getElementById('modif-directionGBM').value = commande.directionGBM || '';
+            document.getElementById('modif-souscripteur').value = commande.souscripteur || '';
+            document.getElementById('modif-typeDocument').value = commande.typeDocument || '';
+            document.getElementById('modif-dateTransmission').value = formatDateForInput(commande.dateTransmission);
+            document.getElementById('modif-dateRelanceBR').value = formatDateForInput(commande.dateRelanceBR);
+            document.getElementById('modif-typeRelance').value = commande.typeRelance || '';
+            document.getElementById('modif-personnesCollectrice').value = commande.personnesCollectrice || '';
+            document.getElementById('modif-dossierComplet').checked = commande.dossierComplet;
+
+            // Afficher le lien vers le fichier joint existant s'il existe
+            if (commande.fichierJoint) {
+                // Créer un élément pour afficher le fichier existant
+                const fichierExistantContainer = document.createElement('div');
+                fichierExistantContainer.className = 'mt-2 mb-2';
+                fichierExistantContainer.innerHTML = `
+                <div class="alert alert-info d-flex align-items-center">
+                    <i class="fas fa-file-alt me-2"></i>
+                    <div>
+                        Fichier actuel:
+                        <a href="http://localhost:8082/BO/commandes/fichier/${idCommande}" 
+                           class="ms-2 btn btn-sm btn-outline-primary" 
+                           target="_blank">
+                            <i class="fas fa-eye"></i> Voir
+                        </a>
+                    </div>
+                </div>
+            `;
+                const fichierInput = document.getElementById('modif-fichier');
+                fichierInput.parentNode.insertBefore(fichierExistantContainer, fichierInput.nextSibling);
+            }
+
+            // Configurer la soumission du formulaire
+            const form = document.getElementById('formModifierCommande');
+            form.onsubmit = async function(e) {
+                e.preventDefault();
+
+                // Vérifier la validité du formulaire
+                if (!form.checkValidity()) {
+                    e.stopPropagation();
+                    form.classList.add('was-validated');
+                    return;
+                }
+
+                try {
+                    // Créer FormData pour envoyer les données du formulaire
+                    const formData = new FormData(form);
+
+                    // Ajouter l'ID de la commande pour le backend
+                    const idCommandeToUpdate = idCommande;
+
+                    // Envoyer la requête de mise à jour
+                    const response = await fetch(`http://localhost:8082/BO/commandes/${idCommandeToUpdate}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Authorization': userInfo.email
+                        },
+                        body: formData
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.message || 'Erreur lors de la mise à jour de la commande');
+                    }
+
+                    const result = await response.json();
+
+                    // Fermer le modal et afficher un message de succès
+                    const modalElement = document.getElementById('modalModifierCommande');
+                    const modal = bootstrap.Modal.getInstance(modalElement);
+                    modal.hide();
+
+                    // Nettoyer le formulaire et les éléments ajoutés
+                    form.reset();
+                    form.classList.remove('was-validated');
+                    const fichierExistantContainer = form.querySelector('.alert.alert-info');
+                    if (fichierExistantContainer) {
+                        fichierExistantContainer.remove();
+                    }
+
+                    // Afficher un message de succès et recharger les commandes
+                    showToast('Commande mise à jour avec succès', 'success');
+                    chargerCommandes();
+
+                } catch (error) {
+                    // Afficher un message d'erreur
+                    afficherErreurMiseAJour(error.message);
+                }
+            };
+
+            // Afficher le modal
+            const modalElement = document.getElementById('modalModifierCommande');
+            const modal = new bootstrap.Modal(modalElement);
+            modal.show();
+
+            // Gérer le nettoyage lorsque le modal est fermé
+            modalElement.addEventListener('hidden.bs.modal', function() {
+                form.reset();
+                form.classList.remove('was-validated');
+                const fichierExistantContainer = form.querySelector('.alert.alert-info');
+                if (fichierExistantContainer) {
+                    fichierExistantContainer.remove();
+                }
+            });
+
+        } catch (error) {
+            console.error('Erreur lors de la modification de la commande:', error);
+            showToast(error.message, 'danger');
+        }
+    };
     // Dans commandes.js
     function afficherErreurMiseAJour(message) {
         const alertElement = document.getElementById('updateErrorAlert');
@@ -460,5 +487,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 5000);
     }
 
+    // Initialisation des tooltips Bootstrap
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
 
 });

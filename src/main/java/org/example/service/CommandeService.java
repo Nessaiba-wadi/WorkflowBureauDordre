@@ -31,6 +31,14 @@ public class CommandeService {
     }
 
     //modification de la commande
+    @Transactional
+    public Commande mettreAJourCommande(Commande commande) {
+        // Vérifier si la commande existe
+        if (!commandeRepository.existsById(commande.getIdCommande())) {
+            throw new RuntimeException("La commande n'existe pas");
+        }
 
+        return commandeRepository.save(commande);
+    }
 
 }
