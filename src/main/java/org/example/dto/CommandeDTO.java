@@ -21,4 +21,13 @@ public class CommandeDTO {
     private String personnesCollectrice;
     private boolean dossierComplet;
     private MultipartFile fichier;
+
+    // Getters et setters
+    public MultipartFile getFichier() {
+        return fichier;
+    }
+
+    public void setFichier(MultipartFile fichier) {
+        this.fichier = fichier;
+    }
 }

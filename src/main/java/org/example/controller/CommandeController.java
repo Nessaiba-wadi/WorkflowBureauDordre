@@ -50,7 +50,41 @@ public class CommandeController {
 
     private static final Logger log = LoggerFactory.getLogger(CommandeController.class);
     private static final String[] EXTENSIONS_AUTORISEES = {".pdf", ".doc", ".docx"};
+    private static final String[] MIME_TYPES_AUTORISES = {
+            "application/pdf",
+            "application/msword",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    };
 
+
+    private boolean isExtensionAutorisee(String nomFichier) {
+        if (nomFichier == null || nomFichier.isEmpty()) {
+            return false;
+        }
+        String extension = "";
+        int lastIndexOfDot = nomFichier.lastIndexOf(".");
+        if (lastIndexOfDot > 0) {
+            extension = nomFichier.substring(lastIndexOfDot).toLowerCase();
+        }
+        for (String ext : EXTENSIONS_AUTORISEES) {
+            if (ext.equals(extension)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean isContentTypeAutorise(String contentType) {
+        if (contentType == null || contentType.isEmpty()) {
+            return false;
+        }
+        for (String type : MIME_TYPES_AUTORISES) {
+            if (type.equals(contentType)) {
+                return true;
+            }
+        }
+        return false;
+    }
     @PostMapping("/nouvelle")
     public ResponseEntity<?> creerCommande(
             @ModelAttribute CommandeDTO commandeDTO,
@@ -64,7 +98,8 @@ public class CommandeController {
             String nomFichier = null;
             if (commandeDTO.getFichier() != null && !commandeDTO.getFichier().isEmpty()) {
                 // Vérifier l'extension du fichier
-                if (!isExtensionAutorisee(commandeDTO.getFichier().getOriginalFilename())) {
+                if (!isExtensionAutorisee(commandeDTO.getFichier().getOriginalFilename()) ||
+                        !isContentTypeAutorise(commandeDTO.getFichier().getContentType())) {
                     return ResponseEntity.badRequest().body(Map.of(
                             "message", "Type de fichier non autorisé. Seuls les fichiers PDF et Word sont acceptés."
                     ));
@@ -106,22 +141,7 @@ public class CommandeController {
         }
     }
 
-    private boolean isExtensionAutorisee(String nomFichier) {
-        if (nomFichier == null || nomFichier.isEmpty()) {
-            return false;
-        }
-        String extension = "";
-        int lastIndexOfDot = nomFichier.lastIndexOf(".");
-        if (lastIndexOfDot > 0) {
-            extension = nomFichier.substring(lastIndexOfDot).toLowerCase();
-        }
-        for (String ext : EXTENSIONS_AUTORISEES) {
-            if (ext.equals(extension)) {
-                return true;
-            }
-        }
-        return false;
-    }
+
 
     private String sauvegarderFichierSecurise(MultipartFile fichier) throws IOException {
         // Extraire l'extension originale
@@ -241,7 +261,8 @@ public class CommandeController {
             // Traitement du fichier s'il est fourni
             if (commandeDTO.getFichier() != null && !commandeDTO.getFichier().isEmpty()) {
                 // Vérifier l'extension du fichier
-                if (!isExtensionAutorisee(commandeDTO.getFichier().getOriginalFilename())) {
+                if (!isExtensionAutorisee(commandeDTO.getFichier().getOriginalFilename()) ||
+                        !isContentTypeAutorise(commandeDTO.getFichier().getContentType())) {
                     return ResponseEntity.badRequest().body(Map.of(
                             "message", "Type de fichier non autorisé. Seuls les fichiers PDF et Word sont acceptés."
                     ));

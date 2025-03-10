@@ -505,7 +505,7 @@ document.addEventListener('DOMContentLoaded', function() {
             nouveauFichierInput.addEventListener('change', validateFileExtension);
         }
 
-        // Pour le modal de modification (sera ajouté dynamiquement)
+        // Pour le formulaire de modification (ajout dynamique d'écouteur)
         document.body.addEventListener('change', function(event) {
             if (event.target.id === 'modif-fichier') {
                 validateFileExtension.call(event.target);
@@ -522,9 +522,13 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!extensionsAutorisees.includes(extension)) {
                 showToast("Type de fichier non autorisé. Seuls les fichiers PDF et Word sont acceptés.", "danger");
                 this.value = ''; // Réinitialiser l'input
+                return false;
             }
+            return true;
         }
+        return true; // Si aucun fichier n'est sélectionné, c'est valide
     }
+
     // Dans commandes.js
     function afficherErreurMiseAJour(message) {
         const alertElement = document.getElementById('updateErrorAlert');
