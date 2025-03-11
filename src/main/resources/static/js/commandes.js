@@ -387,7 +387,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <i class="fas fa-file-alt me-2"></i>
                 <div>
                     Fichier actuel:
-                    <a href="/uploads/commandes/${commande.fichierJoint}"
+                    <a href="http://localhost:8082/api/files/${commande.fichierJoint}"
                        class="ms-2 btn btn-sm btn-outline-primary" 
                        target="_blank">
                         <i class="fas fa-eye"></i> Voir

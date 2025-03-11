@@ -104,6 +104,7 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             personneCollectriceElement.textContent = 'Non renseigné';
         }
+        displayFichierJoint(commande);
     }// Fonction pour afficher les détails de la commande dans les champs appropriés
     function displayCommandeDetails(commande) {
         // Informations générales
@@ -219,4 +220,41 @@ document.addEventListener('DOMContentLoaded', function() {
     initToast();
     afficherNomUtilisateur();
     chargerDetailsCommande();
+
+
+
+    //voir le fichier joint
+    // Fonction pour afficher le fichier joint
+    function displayFichierJoint(commande) {
+        const fichierJointContainer = document.getElementById('fichierJointContainer');
+        const fichierJointMessage = document.getElementById('fichierJointMessage');
+        const fichierJointContent = document.getElementById('fichierJointContent');
+
+        // Vérifier si un fichier joint existe
+        if (commande.fichierJoint) {
+            // Créer un élément pour afficher le fichier existant
+            fichierJointContent.innerHTML = `
+            <div class="alert alert-info d-flex align-items-center justify-content-center">
+                <i class="fas fa-file-alt me-2"></i>
+                <div>
+                    <span class="fw-bold">Fichier attaché à la commande</span>
+                    <a href="/uploads/commandes/${commande.fichierJoint}"
+                       class="ms-3 btn btn-primary" 
+                       target="_blank">
+                        <i class="fas fa-eye me-1"></i> Voir le document
+                    </a>
+                </div>
+            </div>
+        `;
+
+            // Afficher le contenu et cacher le message
+            fichierJointContent.classList.remove('d-none');
+            fichierJointMessage.classList.add('d-none');
+        } else {
+            // Aucun fichier joint
+            fichierJointMessage.textContent = 'Aucun fichier joint disponible pour cette commande';
+            fichierJointContent.classList.add('d-none');
+            fichierJointMessage.classList.remove('d-none');
+        }
+    }
 });
