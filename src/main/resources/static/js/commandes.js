@@ -350,6 +350,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Récupérer les informations de l'utilisateur connecté
             const userInfo = JSON.parse(sessionStorage.getItem('userInfo'));
             if (!userInfo || !userInfo.email) {
+                showToast('Utilisateur non authentifié', 'danger');
                 throw new Error('Utilisateur non authentifié');
             }
 
@@ -363,7 +364,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.message || 'Erreur lors de la récupération des détails de la commande');
+                if (errorData.message && errorData.message.includes("pas autorisé")) {
+                    // Ignorer cette erreur spécifique et continuer
+                } else {
+                    showToast(errorData.message || 'Erreur lors de la récupération des détails de la commande', 'danger');
+                    throw new Error(errorData.message || 'Erreur lors de la récupération des détails de la commande');
+                }
             }
 
             const commande = await response.json();
@@ -435,8 +441,104 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Vérifier si l'utilisateur a coché "dossier complet" et confirmer une dernière fois
                 const dossierCompletCheckbox = document.getElementById('modif-dossierComplet');
                 if (dossierCompletCheckbox && dossierCompletCheckbox.checked) {
-                    if (!confirm("ATTENTION : En validant ce formulaire avec l'option 'Dossier complet' cochée, vous ne pourrez plus modifier cette commande ultérieurement. Confirmez-vous cette action ?")) {
-                        return; // Arrêter la soumission si l'utilisateur annule
+                    const toastContainer = document.getElementById('toastContainer');
+
+
+                    // Créer un toast personnalisé de confirmation
+                    const toastElement = document.createElement('div');
+                    toastElement.className = 'toast show';
+                    toastElement.setAttribute('role', 'alert');
+                    toastElement.setAttribute('aria-live', 'assertive');
+                    toastElement.setAttribute('aria-atomic', 'true');
+
+                    toastElement.innerHTML = `
+                        <div class="toast-header bg-warning text-dark">
+                            <strong class="me-auto"><i class="fas fa-exclamation-triangle"></i> Confirmation requise</strong>
+                            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                        </div>
+                        <div class="toast-body">
+                            En marquant ce dossier comme complet, vous ne pourrez plus le modifier ultérieurement. Souhaitez-vous continuer ?
+                            <div class="mt-2 pt-2 border-top d-flex justify-content-end">
+                                <button type="button" class="btn btn-secondary me-2" id="btnAnnulerConfirmation">Annuler</button>
+                                <button type="button" class="btn btn-warning" id="btnConfirmerDossierComplet">Confirmer</button>
+                            </div>
+                        </div>
+                    `;
+                    toastContainer.appendChild(toastElement);
+
+                    // Gérer les boutons de confirmation
+                    document.getElementById('btnAnnulerConfirmation').addEventListener('click', function() {
+                        dossierCompletCheckbox.checked = false;
+                        toastElement.remove();
+                    });
+
+                    document.getElementById('btnConfirmerDossierComplet').addEventListener('click', function() {
+                        // Marquer comme confirmé pour éviter de redemander
+                        dossierCompletCheckbox.dataset.confirmed = "true";
+                        toastElement.remove();
+                        soumettreFormulaire();
+                    });
+
+                    // Supprimer automatiquement le toast après 10 secondes
+                    setTimeout(() => {
+                        if (toastElement.parentNode) {
+                            toastElement.remove();
+                        }
+                    }, 15000);
+                    return; // Arrêter la soumission en attendant la confirmation
+                }
+
+                soumettreFormulaire();
+                async function soumettreFormulaire() {
+                    try {
+                        // Créer FormData pour envoyer les données du formulaire
+                        const formData = new FormData(form);
+
+                        // Afficher un indicateur de chargement
+                        const submitBtn = form.querySelector('button[type="submit"]');
+                        const originalBtnText = submitBtn.innerHTML;
+                        submitBtn.disabled = true;
+                        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Traitement...';
+
+                        // Envoyer la requête de mise à jour
+                        const response = await fetch(`http://localhost:8082/BO/commandes/${idCommande}`, {
+                            method: 'PUT',
+                            headers: {
+                                'Authorization': userInfo.email
+                            },
+                            body: formData
+                        });
+
+                        // Restaurer le bouton
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = originalBtnText;
+
+                        if (!response.ok) {
+                            const errorData = await response.json();
+                            showToast(errorData.message || 'Erreur lors de la mise à jour de la commande', 'danger');
+                            throw new Error(errorData.message || 'Erreur lors de la mise à jour de la commande');
+                        }
+
+                        const result = await response.json();
+
+                        // Fermer le modal et afficher un message de succès
+                        const modalElement = document.getElementById('modalModifierCommande');
+                        const modal = bootstrap.Modal.getInstance(modalElement);
+                        modal.hide();
+
+                        // Nettoyer le formulaire et les éléments ajoutés
+                        form.reset();
+                        form.classList.remove('was-validated');
+                        const fichierExistantContainer = form.querySelector('.alert');
+                        if (fichierExistantContainer) {
+                            fichierExistantContainer.remove();
+                        }
+
+                        // Afficher un message de succès et recharger les commandes
+                        showToast('Commande mise à jour avec succès', 'success');
+                        chargerCommandes();
+                    } catch (error) {
+                        showToast(error.message || "Une erreur est survenue", "danger");
                     }
                 }
 
@@ -451,58 +553,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         showToast("Type de fichier non autorisé. Seuls les fichiers PDF et Word sont acceptés.", "danger");
                         return;
                     }
-                }
-
-                try {
-                    // Créer FormData pour envoyer les données du formulaire
-                    const formData = new FormData(form);
-
-                    // Afficher un indicateur de chargement
-                    const submitBtn = form.querySelector('button[type="submit"]');
-                    const originalBtnText = submitBtn.innerHTML;
-                    submitBtn.disabled = true;
-                    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Traitement...';
-
-                    // Envoyer la requête de mise à jour
-                    const response = await fetch(`http://localhost:8082/BO/commandes/${idCommande}`, {
-                        method: 'PUT',
-                        headers: {
-                            'Authorization': userInfo.email
-                        },
-                        body: formData
-                    });
-
-                    // Restaurer le bouton
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = originalBtnText;
-
-                    if (!response.ok) {
-                        const errorData = await response.json();
-                        throw new Error(errorData.message || 'Erreur lors de la mise à jour de la commande');
-                    }
-
-                    const result = await response.json();
-
-                    // Fermer le modal et afficher un message de succès
-                    const modalElement = document.getElementById('modalModifierCommande');
-                    const modal = bootstrap.Modal.getInstance(modalElement);
-                    modal.hide();
-
-                    // Nettoyer le formulaire et les éléments ajoutés
-                    form.reset();
-                    form.classList.remove('was-validated');
-                    const fichierExistantContainer = form.querySelector('.alert');
-                    if (fichierExistantContainer) {
-                        fichierExistantContainer.remove();
-                    }
-
-                    // Afficher un message de succès et recharger les commandes
-                    showToast('Commande mise à jour avec succès', 'success');
-                    chargerCommandes();
-
-                } catch (error) {
-                    // Afficher un message d'erreur
-                    showToast(error.message || "Une erreur est survenue", "danger");
                 }
             };
 
@@ -561,75 +611,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
     // Gestionnaire d'événement pour la case à cocher "dossier complet"
-    // Fonction pour confirmer la validation du dossier avec un toast
-    function confirmDossierComplet() {
-        if (this.checked) {
-            // Stocker une référence à l'élément checkbox
-            const checkbox = this;
-
-            // Créer le toast de manière dynamique
-            const toastElement = document.createElement('div');
-            toastElement.className = 'toast align-items-center';
-            toastElement.setAttribute('role', 'alert');
-            toastElement.setAttribute('aria-live', 'assertive');
-            toastElement.setAttribute('aria-atomic', 'true');
-
-            toastElement.innerHTML = `
-            <div class="toast-header bg-warning text-dark">
-                <i class="fas fa-exclamation-triangle me-2"></i>
-                <strong class="me-auto">Confirmation requise</strong>
-                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
-            </div>
-            <div class="toast-body">
-                <p>En marquant ce dossier comme complet, vous ne pourrez plus le modifier ultérieurement. Souhaitez-vous continuer ?</p>
-                <div class="mt-2 pt-2 border-top d-flex justify-content-end gap-2">
-                    <button type="button" class="btn btn-outline-secondary btn-sm" id="toastCancelBtn">Annuler</button>
-                    <button type="button" class="btn btn-warning btn-sm" id="toastConfirmBtn">Confirmer</button>
-                </div>
-            </div>
-        `;
-
-            // Ajouter le toast au conteneur (créer un conteneur s'il n'existe pas)
-            let toastContainer = document.querySelector('.toast-container');
-            if (!toastContainer) {
-                toastContainer = document.createElement('div');
-                toastContainer.className = 'toast-container position-fixed bottom-0 end-0 p-3';
-                document.body.appendChild(toastContainer);
-            }
-            toastContainer.appendChild(toastElement);
-
-            // Initialiser le toast
-            const toastInstance = new bootstrap.Toast(toastElement, {
-                autohide: false
-            });
-
-            // Décocher la case jusqu'à confirmation
-            checkbox.checked = false;
-
-            // Montrer le toast
-            toastInstance.show();
-
-            // Ajouter les écouteurs d'événements pour les boutons
-            document.getElementById('toastCancelBtn').addEventListener('click', function() {
-                toastInstance.hide();
-                // Suppression du toast après fermeture
-                toastElement.addEventListener('hidden.bs.toast', function() {
-                    toastElement.remove();
-                });
-            });
-
-            document.getElementById('toastConfirmBtn').addEventListener('click', function() {
-                checkbox.checked = true;
-                toastInstance.hide();
-                // Suppression du toast après fermeture
-                toastElement.addEventListener('hidden.bs.toast', function() {
-                    toastElement.remove();
-                });
-            });
-        }
-    }
-
     function setupDossierCompletCheckbox() {
+
         // Pour le formulaire de création
         const nouveauDossierComplet = document.getElementById('nouveau-dossierComplet');
         if (nouveauDossierComplet) {
@@ -655,8 +638,6 @@ document.addEventListener('DOMContentLoaded', function() {
         setupDossierCompletCheckbox();
     });
 
-
-sta
     // Ajouter cette fonction à l'initialisation
     setupDossierCompletCheckbox();
     // Dans commandes.js

@@ -86,6 +86,9 @@ public class CommandeController {
         }
         return false;
     }
+
+
+    // creer une nouvelle commande
     @PostMapping("/nouvelle")
     public ResponseEntity<?> creerCommande(
             @ModelAttribute CommandeDTO commandeDTO,
@@ -214,6 +217,7 @@ public class CommandeController {
         }
     }
 
+    //afficher les commandes
     @GetMapping("/{id}")
     public ResponseEntity<?> getCommandeById(
             @PathVariable("id") Integer id,
@@ -233,11 +237,7 @@ public class CommandeController {
 
             Commande commande = commandeOpt.get();
 
-            // Vérifier que la commande appartient à l'utilisateur connecté
-            if (commande.getUtilisateur().getIdUtilisateur() != utilisateur.getIdUtilisateur()) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(Map.of("message", "Vous n'êtes pas autorisé à accéder à cette commande"));
-            }
+
 
             // Ne pas tenter d'accéder au fichier si fichierJoint est null
             if (commande.getFichierJoint() != null) {
@@ -338,11 +338,6 @@ public class CommandeController {
 
             Commande commande = commandeOpt.get();
 
-            // Vérifier que l'utilisateur est autorisé à modifier cette commande
-            if (commande.getUtilisateur().getIdUtilisateur() != utilisateurConnecte.getIdUtilisateur()) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(Map.of("message", "Vous n'êtes pas autorisé à modifier cette commande"));
-            }
 
             // Vérifier si la commande est déjà validée
             if ("validé".equals(commande.getEtatCommande()) && !commandeDTO.isDossierComplet()) {

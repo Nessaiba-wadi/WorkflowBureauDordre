@@ -204,9 +204,17 @@ document.addEventListener('DOMContentLoaded', function() {
             });
 
             if (!response.ok) {
-                const errorText = await response.text();
-                console.error('Réponse API non OK:', response.status, errorText);
-                throw new Error(`Erreur ${response.status}: Impossible de récupérer les détails de la commande`);
+                const errorData = await response.json().catch(() => ({ message: `Erreur ${response.status}` }));
+                console.error('Réponse API non OK:', response.status, errorData);
+
+                // Message d'erreur plus spécifique basé sur le code d'erreur
+                if (response.status === 403) {
+                    throw new Error('Vous n\'avez pas les droits nécessaires pour accéder à cette commande');
+                } else if (response.status === 404) {
+                    throw new Error('La commande demandée n\'existe pas');
+                } else {
+                    throw new Error(`Erreur ${response.status}: ${errorData.message || 'Impossible de récupérer les détails de la commande'}`);
+                }
             }
 
             const commande = await response.json();
