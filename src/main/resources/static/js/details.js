@@ -55,7 +55,72 @@ document.addEventListener('DOMContentLoaded', function() {
         return urlParams.get('id');
     }
 
-    // Affiche les détails de la commande dans les champs appropriés
+    // Fonction pour charger et afficher le fichier joint
+    function afficherFichierJoint(fichierJointNom) {
+        const fichierJointContainer = document.getElementById('fichierJointContainer');
+        const fichierJointMessage = document.getElementById('fichierJointMessage');
+        const fichierJointPreview = document.getElementById('fichierJointPreview');
+        const fichierJointContent = document.getElementById('fichierJointContent');
+
+        // Si aucun fichier n'est joint
+        if (!fichierJointNom) {
+            fichierJointMessage.innerHTML = '<i class="fas fa-exclamation-circle text-warning"></i> Aucun fichier joint pour cette commande.';
+            return;
+        }
+
+        // Construire l'URL du fichier
+        const fichierUrl = `http://localhost:8082/api/files/${fichierJointNom}`;
+
+        // Déterminer le type de fichier par l'extension
+        const extension = fichierJointNom.split('.').pop().toLowerCase();
+
+        // Afficher le message de chargement
+        fichierJointMessage.textContent = 'Chargement du fichier...';
+
+        // Créer les éléments en fonction du type de fichier
+        if (extension === 'pdf') {
+            // Pour les fichiers PDF, utiliser un iframe
+            fichierJointContent.innerHTML = `
+            <div class="mb-3">
+                <a href="${fichierUrl}" class="btn btn-primary" target="_blank">
+                    <i class="fas fa-external-link-alt me-2"></i>Ouvrir dans un nouvel onglet
+                </a>
+            </div>
+            <div class="embed-responsive embed-responsive-16by9">
+                <iframe class="embed-responsive-item" src="${fichierUrl}" style="width: 100%; height: 500px; border: 1px solid #dee2e6;"></iframe>
+            </div>
+        `;
+        } else if (extension === 'doc' || extension === 'docx') {
+            // Pour les fichiers Word, proposer uniquement le téléchargement
+            fichierJointContent.innerHTML = `
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>Les fichiers Word ne peuvent pas être prévisualisés directement.
+            </div>
+            <div>
+                <a href="${fichierUrl}" class="btn btn-primary" target="_blank">
+                    <i class="fas fa-download me-2"></i>Télécharger le fichier
+                </a>
+            </div>
+        `;
+        } else {
+            // Pour les autres types de fichiers
+            fichierJointContent.innerHTML = `
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>Ce type de fichier ne peut pas être prévisualisé.
+            </div>
+            <div>
+                <a href="${fichierUrl}" class="btn btn-primary" target="_blank">
+                    <i class="fas fa-download me-2"></i>Télécharger le fichier
+                </a>
+            </div>
+        `;
+        }
+
+        // Afficher le contenu et masquer le message de chargement
+        fichierJointMessage.classList.add('d-none');
+        fichierJointPreview.classList.remove('d-none');
+        fichierJointContent.classList.remove('d-none');
+    }
     // Fonction pour afficher les détails de la commande dans les champs appropriés
     function displayCommandeDetails(commande) {
         // Informations générales
@@ -84,54 +149,9 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('dateRelanceBR').textContent = formatDate(commande.dateRelanceBR);
         document.getElementById('typeRelance').textContent = commande.typeRelance || 'Non renseigné';
 
-        // Modification pour afficher l'état du dossier selon l'état de la commande
-        const dateCompositionElement = document.getElementById('dateCompositionDossier');
-        if (commande.dossierComplet) {
-            dateCompositionElement.textContent = 'DOSSIER COMPLET';
-            dateCompositionElement.className = 'border-bottom pb-2 text-success fw-bold';
-        } else {
-            dateCompositionElement.textContent = 'EN COURS';
-            dateCompositionElement.className = 'border-bottom pb-2 text-warning fw-bold';
-        }
 
-        // Section Transmission DCF
-        document.getElementById('dateTransmission').textContent = formatDate(commande.dateTransmission);
-
-        // Correction pour afficher la personne collectrice correctement
-        const personneCollectriceElement = document.getElementById('personneCollectrice');
-        if (commande.personnesCollectrice) {
-            personneCollectriceElement.textContent = commande.personnesCollectrice;
-        } else {
-            personneCollectriceElement.textContent = 'Non renseigné';
-        }
-        displayFichierJoint(commande);
-    }// Fonction pour afficher les détails de la commande dans les champs appropriés
-    function displayCommandeDetails(commande) {
-        // Informations générales
-        document.getElementById('idCommande').textContent = commande.idCommande || 'N/A';
-
-        // État de la commande
-        const commandeEtat = document.getElementById('commandeEtat');
-        if (commande.dossierComplet) {
-            commandeEtat.className = 'badge bg-success fs-6 p-2';
-            commandeEtat.textContent = 'Complet';
-        } else {
-            commandeEtat.className = 'badge bg-warning fs-6 p-2';
-            commandeEtat.textContent = 'En cours';
-        }
-
-        // Section Réception
-        document.getElementById('dateReception').textContent = formatDate(commande.dateReception);
-        document.getElementById('raisonSocialeFournisseur').textContent = commande.raisonSocialeFournisseur || 'Non renseigné';
-        document.getElementById('raisonSocialeGBM').textContent = commande.raisonSocialeGBM || 'Non renseigné';
-        document.getElementById('numeroBC').textContent = commande.numeroBC || 'N/A';
-        document.getElementById('directionGBM').textContent = commande.directionGBM || 'Non renseigné';
-        document.getElementById('souscripteur').textContent = commande.souscripteur || 'Non renseigné';
-        document.getElementById('typeDocument').textContent = commande.typeDocument || 'Non renseigné';
-
-        // Section Suivi Souscripteur
-        document.getElementById('dateRelanceBR').textContent = formatDate(commande.dateRelanceBR);
-        document.getElementById('typeRelance').textContent = commande.typeRelance || 'Non renseigné';
+        // Afficher le fichier joint s'il existe
+        afficherFichierJoint(commande.fichierJoint);
 
         // Modification pour afficher l'état du dossier selon l'état de la commande
         const dateCompositionElement = document.getElementById('dateCompositionDossier');
@@ -170,7 +190,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 throw new Error('ID de commande non spécifié');
             }
 
-            console.log('Chargement de la commande ID:', commandeId);  // Log pour débogage
 
             // Afficher un état de chargement
             document.querySelectorAll('[id^="chargement"]').forEach(el => {
@@ -225,36 +244,5 @@ document.addEventListener('DOMContentLoaded', function() {
 
     //voir le fichier joint
     // Fonction pour afficher le fichier joint
-    function displayFichierJoint(commande) {
-        const fichierJointContainer = document.getElementById('fichierJointContainer');
-        const fichierJointMessage = document.getElementById('fichierJointMessage');
-        const fichierJointContent = document.getElementById('fichierJointContent');
 
-        // Vérifier si un fichier joint existe
-        if (commande.fichierJoint) {
-            // Créer un élément pour afficher le fichier existant
-            fichierJointContent.innerHTML = `
-            <div class="alert alert-info d-flex align-items-center justify-content-center">
-                <i class="fas fa-file-alt me-2"></i>
-                <div>
-                    <span class="fw-bold">Fichier attaché à la commande</span>
-                    <a href="/uploads/commandes/${commande.fichierJoint}"
-                       class="ms-3 btn btn-primary" 
-                       target="_blank">
-                        <i class="fas fa-eye me-1"></i> Voir le document
-                    </a>
-                </div>
-            </div>
-        `;
-
-            // Afficher le contenu et cacher le message
-            fichierJointContent.classList.remove('d-none');
-            fichierJointMessage.classList.add('d-none');
-        } else {
-            // Aucun fichier joint
-            fichierJointMessage.textContent = 'Aucun fichier joint disponible pour cette commande';
-            fichierJointContent.classList.add('d-none');
-            fichierJointMessage.classList.remove('d-none');
-        }
-    }
 });
