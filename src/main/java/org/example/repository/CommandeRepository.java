@@ -10,4 +10,5 @@ import java.util.List;
 public interface CommandeRepository extends JpaRepository<Commande, Integer> {
     List<Commande> findByUtilisateur(Utilisateur utilisateur);
     boolean existsByNumeroBC(String numeroBC);
+    List<Commande> findByStatusTrue();
 }

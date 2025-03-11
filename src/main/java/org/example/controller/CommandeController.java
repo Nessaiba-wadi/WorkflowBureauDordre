@@ -191,14 +191,27 @@ public class CommandeController {
         }
     }
 
+    // Modifiez la méthode pour obtenir toutes les commandes avec status=true
     @GetMapping
-    public ResponseEntity<List<Commande>> getCommandesUtilisateur(
+    public ResponseEntity<?> getAllCommandes(
             @RequestHeader("Authorization") String emailUtilisateur) {
+        try {
+            // Vérifier si l'utilisateur est authentifié
+            Utilisateur utilisateur = utilisateurService.findByEmail(emailUtilisateur);
+            if (utilisateur == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("message", "Utilisateur non authentifié"));
+            }
 
-        Utilisateur utilisateur = utilisateurService.findByEmail(emailUtilisateur);
-        List<Commande> commandes = commandeRepository.findByUtilisateur(utilisateur);
+            // Récupérer toutes les commandes avec status = true (au lieu de celles de l'utilisateur)
+            List<Commande> commandes = commandeRepository.findByStatusTrue();
 
-        return ResponseEntity.ok(commandes);
+            return ResponseEntity.ok(commandes);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "message", "Erreur lors de la récupération des commandes: " + e.getMessage()
+            ));
+        }
     }
 
     @GetMapping("/{id}")

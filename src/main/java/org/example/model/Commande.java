@@ -73,6 +73,9 @@ public class Commande {
     @Column(name = "dossier_complet", nullable = false)
     private boolean dossierComplet;
 
+    @Column(name = "status", nullable = false)
+    private boolean status = true;
+
     public enum TypeRelance {
         MAIL, TELEPHONE
     }
@@ -82,5 +85,6 @@ public class Commande {
         this.dateReception = LocalDate.now();
         this.dateModification = LocalDateTime.now();
         this.etatCommande = this.dossierComplet ? "validé" : "en cours";
+        this.status = true;
     }
 }

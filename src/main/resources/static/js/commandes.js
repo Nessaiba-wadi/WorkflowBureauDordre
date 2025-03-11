@@ -211,6 +211,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const commandesBody = document.getElementById('commandesBody');
         commandesBody.innerHTML = '';
 
+
+        // Filtrer pour n'afficher que les commandes avec status = true
+        const commandesActives = commandes.filter(commande => commande.status === true);
+
         // Gère le cas où aucune commande n'est trouvée
         if (commandes.length === 0) {
             commandesBody.innerHTML = `

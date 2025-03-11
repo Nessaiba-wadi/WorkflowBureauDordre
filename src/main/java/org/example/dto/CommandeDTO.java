@@ -21,7 +21,7 @@ public class CommandeDTO {
     private String personnesCollectrice;
     private boolean dossierComplet;
     private MultipartFile fichier;
-
+    private boolean status = true;
     // Getters et setters
     public MultipartFile getFichier() {
         return fichier;
@@ -29,5 +29,13 @@ public class CommandeDTO {
 
     public void setFichier(MultipartFile fichier) {
         this.fichier = fichier;
+    }
+
+    public boolean isStatus() {
+        return status;
+    }
+
+    public void setStatus(boolean status) {
+        this.status = status;
     }
 }
