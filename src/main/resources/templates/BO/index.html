@@ -75,7 +75,7 @@
 
     /* Style pour les valeurs et tendances */
     .stat-value {
-      font-size: 1.8rem;
+      font-size: 24px;
       font-weight: 700;
       margin-bottom: 0.5rem;
       color: #333;
@@ -105,8 +105,9 @@
       margin-bottom: 0.5rem;
       font-weight: 600;
     }
-  </style>
-  <style>
+
+
+
     :root {
       --primary: #2d5ba1;
       --secondary: #6c757d;
@@ -119,63 +120,6 @@
       --light-purple: rgba(121, 82, 179, 0.1);
       --light-orange: rgba(255, 151, 0, 0.1);
     }
-
-    body {
-      background-color: #f8f9fa;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-
-    .content-wrapper {
-      padding: 20px 0;
-    }
-
-    .stat-card {
-      border-radius: 10px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-      transition: transform 0.3s ease;
-      border: none;
-    }
-
-    .stat-card:hover {
-      transform: translateY(-5px);
-    }
-
-    .stat-icon {
-      width: 50px;
-      height: 50px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-right: 15px;
-    }
-
-    .icon-blue {
-      background-color: var(--primary);
-      color: white;
-    }
-
-    .icon-green {
-      background-color: var(--success);
-      color: white;
-    }
-
-    .icon-purple {
-      background-color: #7952b3;
-      color: white;
-    }
-
-    .icon-orange {
-      background-color: #ff9700;
-      color: white;
-    }
-
-    .stat-value {
-      font-weight: 700;
-      font-size: 24px;
-      margin-bottom: 0;
-    }
-
     .workflow-container {
       margin-top: 30px;
       background: white;
@@ -307,7 +251,47 @@
       background-color: #f8f9fa;
       font-weight: 600;
     }
+
+
+    /* tables */
+    /* Styles pour le tableau triable */
+    .sortable {
+      cursor: pointer;
+      position: relative;
+      user-select: none;
+    }
+
+    .sortable:hover {
+      background-color: rgba(0, 0, 0, 0.05);
+    }
+
+    .sortable i {
+      margin-left: 5px;
+      opacity: 0.5;
+    }
+
+    .sortable:hover i {
+      opacity: 1;
+    }
+
+    th.sortable[data-sort] i.fa-sort-up,
+    th.sortable[data-sort] i.fa-sort-down {
+      opacity: 1;
+      color: #0d6efd;
+    }
+
+    .table-responsive {
+      max-height: 600px;
+    }
+
+    .table th {
+      position: sticky;
+      top: 0;
+      background-color: #f8f9fa;
+      z-index: 10;
+    }
   </style>
+
 </head>
 <body>
 <!-- Bouton menu mobile -->
@@ -385,34 +369,21 @@
 <!-- Dashboard Stats Cards -->
 <div class="content-wrapper">
   <div class="container-fluid mt-4 px-4">
-    <!-- En-tête et statistiques -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <h2 class="mb-0">Tableau de bord - Suivi des dossiers</h2>
-      <div>
-        <button class="btn btn-outline-primary me-2">
-          <i class="fas fa-sync-alt me-1"></i> Actualiser
-        </button>
-        <button class="btn btn-primary">
-          <i class="fas fa-plus me-1"></i> Nouveau dossier
-        </button>
-      </div>
-    </div>
-
-    <!-- Cartes de statistiques -->
     <div class="row mt-4">
+
       <div class="col-lg-3 col-md-6 mb-4">
         <div class="card stat-card bg-light-blue">
           <div class="card-body p-4">
             <div class="d-flex align-items-center mb-3">
               <div class="stat-icon icon-blue">
-                <i class="fas fa-file-import"></i>
+                <i class="fas fa-hourglass-half"></i>
               </div>
-              <h5 class="card-title">Réception</h5>
+              <h5 class="card-title">Total Commandes en Attente</h5>
             </div>
             <div class="d-flex justify-content-between align-items-end">
               <div>
-                <h3 class="stat-value">4</h3>
-                <p class="text-muted">Dossiers en réception</p>
+                <h3 class="stat-value" id="commandesEnAttente">Chargement...</h3>
+                <p class="text-muted">Commandes en attente de validation</p>
               </div>
             </div>
           </div>
@@ -424,14 +395,14 @@
           <div class="card-body p-4">
             <div class="d-flex align-items-center mb-3">
               <div class="stat-icon icon-green">
-                <i class="fas fa-tasks"></i>
+                <i class="fas fa-paper-plane"></i>
               </div>
-              <h5 class="card-title">Suivi souscripteur</h5>
+              <h5 class="card-title">Total Commandes Validées</h5>
             </div>
             <div class="d-flex justify-content-between align-items-end">
               <div>
-                <h3 class="stat-value">4</h3>
-                <p class="text-muted">Dossiers en traitement</p>
+                <h3 class="stat-value" id="commandesValidees">Chargement...</h3>
+                <p class="text-muted">Commandes envoyées au comptable</p>
               </div>
             </div>
           </div>
@@ -445,12 +416,12 @@
               <div class="stat-icon icon-purple">
                 <i class="fas fa-calculator"></i>
               </div>
-              <h5 class="card-title">Comptabilité</h5>
+              <h5 class="card-title">Commandes Comptabilisées</h5>
             </div>
             <div class="d-flex justify-content-between align-items-end">
               <div>
-                <h3 class="stat-value">4</h3>
-                <p class="text-muted">Dossiers en comptabilité</p>
+                <h3 class="stat-value" id="commandesComptabilisees">Chargement...</h3>
+                <p class="text-muted">Commandes validées en comptabilité</p>
               </div>
             </div>
           </div>
@@ -462,76 +433,30 @@
           <div class="card-body p-4">
             <div class="d-flex align-items-center mb-3">
               <div class="stat-icon icon-orange">
-                <i class="fas fa-money-check-alt"></i>
+                <i class="fas fa-check-circle"></i>
               </div>
-              <h5 class="card-title">Trésorerie</h5>
+              <h5 class="card-title">Commandes Clôturées</h5>
             </div>
             <div class="d-flex justify-content-between align-items-end">
               <div>
-                <h3 class="stat-value">4</h3>
-                <p class="text-muted">Dossiers en trésorerie</p>
+                <h3 class="stat-value" id="commandesCloturees">Chargement...</h3>
+                <p class="text-muted">Commandes traitées par la Trésorerie</p>
               </div>
             </div>
           </div>
         </div>
       </div>
     </div>
-
-    <!-- Zone de recherche et filtres -->
-    <div class="search-filters">
-      <div class="row">
-        <div class="col-md-4">
-          <div class="input-group">
-            <input type="text" class="form-control" placeholder="Rechercher un dossier, fournisseur...">
-            <button class="btn btn-primary" type="button">
-              <i class="fas fa-search"></i>
-            </button>
-          </div>
-        </div>
-        <div class="col-md-8">
-          <div class="d-flex justify-content-end gap-2">
-            <select class="form-select w-auto">
-              <option value="">Tous les fournisseurs</option>
-              <option value="MASHUP">MASHUP</option>
-              <option value="FM2I">FM2I</option>
-              <option value="SERIH MAGHREB">SERIH MAGHREB</option>
-            </select>
-            <select class="form-select w-auto">
-              <option value="">Toutes les directions</option>
-              <option value="DIRECTION COMMERCIAL">DIRECTION COMMERCIAL</option>
-              <option value="DIRECTION SUPPLY CHAIN">DIRECTION SUPPLY CHAIN</option>
-            </select>
-            <select class="form-select w-auto">
-              <option value="">Toutes les étapes</option>
-              <option value="reception">Réception</option>
-              <option value="suivi">Suivi souscripteur</option>
-              <option value="dcf">Transmission DCF</option>
-              <option value="comptabilite">Comptabilité</option>
-              <option value="tresorerie">Trésorerie</option>
-            </select>
-          </div>
-        </div>
-      </div>
-    </div>
-
+    <!-- afficher les insertions ici -->
     <!-- Zone d'onglets pour les différentes vues -->
     <div class="workflow-container">
       <ul class="nav nav-tabs mb-4" id="workflowTabs" role="tablist">
         <li class="nav-item" role="presentation">
-          <button class="nav-link active" id="vue-generale-tab" data-bs-toggle="tab" data-bs-target="#vue-generale" type="button" role="tab">
-            <i class="fas fa-th-large me-2"></i>Vue générale
-          </button>
-        </li>
-        <li class="nav-item" role="presentation">
-          <button class="nav-link" id="reception-tab" data-bs-toggle="tab" data-bs-target="#reception" type="button" role="tab">
+          <button class="nav-link active" id="reception-tab" data-bs-toggle="tab" data-bs-target="#reception" type="button" role="tab">
             <i class="fas fa-file-import me-2"></i>Réception
           </button>
         </li>
-        <li class="nav-item" role="presentation">
-          <button class="nav-link" id="suivi-tab" data-bs-toggle="tab" data-bs-target="#suivi" type="button" role="tab">
-            <i class="fas fa-tasks me-2"></i>Suivi souscripteur
-          </button>
-        </li>
+
         <li class="nav-item" role="presentation">
           <button class="nav-link" id="comptabilite-tab" data-bs-toggle="tab" data-bs-target="#comptabilite" type="button" role="tab">
             <i class="fas fa-calculator me-2"></i>Comptabilité
@@ -546,200 +471,70 @@
 
       <!-- Contenu des onglets -->
       <div class="tab-content" id="workflowTabsContent">
-        <!-- Vue générale -->
-        <div class="tab-pane fade show active" id="vue-generale" role="tabpanel">
-          <!-- Exemple d'un dossier complet -->
-          <div class="dossier-card">
-            <div class="dossier-header">
-              <div class="row align-items-center">
-                <div class="col-md-6">
-                  <i class="fas fa-folder me-2 text-primary"></i>
-                  FACTURE / GESTION DES RESEAUX AIN
-                </div>
-                <div class="col-md-6 text-md-end">
-                                    <span class="badge bg-success status-badge">
-                                        <i class="fas fa-check-circle me-1"></i> Traitement complet
-                                    </span>
-                </div>
-              </div>
-            </div>
-            <div class="dossier-body">
-              <div class="row mb-3">
-                <div class="col-md-3">
-                  <p class="mb-1 text-muted">Fournisseur</p>
-                  <p class="mb-0"><strong>MASHUP</strong></p>
-                </div>
-                <div class="col-md-3">
-                  <p class="mb-1 text-muted">Société GBM</p>
-                  <p class="mb-0"><strong>SBM (202565-237)</strong></p>
-                </div>
-                <div class="col-md-3">
-                  <p class="mb-1 text-muted">N° de BC</p>
-                  <p class="mb-0"><strong>2012000588</strong></p>
-                </div>
-                <div class="col-md-3">
-                  <p class="mb-1 text-muted">Direction</p>
-                  <p class="mb-0"><strong>DIRECTION COMMERCIAL</strong></p>
-                </div>
-              </div>
 
-              <div class="row">
-                <div class="col-md-3">
-                  <p class="mb-1 text-muted">Souscripteur</p>
-                  <p class="mb-0"><strong>Mr marouane el mejahed</strong></p>
-                </div>
-                <div class="col-md-3">
-                  <p class="mb-1 text-muted">Date réception</p>
-                  <p class="mb-0"><strong>15/10/2024</strong></p>
-                </div>
-                <div class="col-md-3">
-                  <p class="mb-1 text-muted">Date comptabilisation</p>
-                  <p class="mb-0"><strong>03/01/2022</strong></p>
-                </div>
-                <div class="col-md-3">
-                  <p class="mb-1 text-muted">Date paiement</p>
-                  <p class="mb-0"><strong>18/01/2022</strong></p>
-                </div>
-              </div>
-
-              <hr>
-
-              <h6 class="mb-3">Chronologie du dossier</h6>
-              <ul class="timeline">
-                <li class="timeline-item">
-                  <div class="timeline-badge badge-reception"></div>
-                  <p class="mb-1"><strong>Réception</strong> - 15/10/2024</p>
-                  <p class="mb-0 text-muted">Dossier réceptionné par Mr marouane el mejahed</p>
-                </li>
-                <li class="timeline-item">
-                  <div class="timeline-badge badge-suivi"></div>
-                  <p class="mb-1"><strong>Suivi souscripteur</strong> - 09/11/2021</p>
-                  <p class="mb-0 text-muted">Dossier complet - Mail, téléphone</p>
-                </li>
-                <li class="timeline-item">
-                  <div class="timeline-badge badge-dcf"></div>
-                  <p class="mb-1"><strong>Transmission DCF</strong> - 03/01/2022</p>
-                  <p class="mb-0 text-muted">Collecté par Mlle IMANE WALIM</p>
-                </li>
-                <li class="timeline-item">
-                  <div class="timeline-badge badge-comptabilite"></div>
-                  <p class="mb-1"><strong>Comptabilisation</strong> - 03/01/2022</p>
-                  <p class="mb-0 text-muted">Dossier traité en comptabilité</p>
-                </li>
-                <li class="timeline-item">
-                  <div class="timeline-badge badge-tresorerie"></div>
-                  <p class="mb-1"><strong>Paiement</strong> - 18/01/2022</p>
-                  <p class="mb-0 text-muted">Chèque N° 57003545 - Mr Taoufiq BELHAJ</p>
-                </li>
-              </ul>
-            </div>
-            <div class="dossier-footer">
-              <div class="row">
-                <div class="col">
-                  <button class="btn btn-sm btn-outline-primary">
-                    <i class="fas fa-eye me-1"></i> Voir détails
-                  </button>
-                  <button class="btn btn-sm btn-outline-secondary ms-2">
-                    <i class="fas fa-history me-1"></i> Historique
-                  </button>
-                </div>
-                <div class="col text-end">
-                  <span class="text-muted">Délai total: <strong>95 jours</strong></span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
 
         <!-- Onglet Réception -->
-        <div class="tab-pane fade" id="reception" role="tabpanel">
+        <div class="tab-pane fade show active" id="reception" role="tabpanel">
+          <!-- Filtres de date -->
+          <div class="row mb-3">
+            <div class="col-md-3">
+              <div class="input-group">
+                <span class="input-group-text">Date de réception</span>
+                <input type="date" class="form-control" id="dateReceptionFilter">
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="input-group">
+                <span class="input-group-text">Date de relance</span>
+                <input type="date" class="form-control" id="dateRelanceFilter">
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="input-group">
+                <span class="input-group-text">Date de transmission</span>
+                <input type="date" class="form-control" id="dateTransmissionFilter">
+              </div>
+            </div>
+            <div class="col-md-3">
+              <button id="resetDateFilters" class="btn btn-outline-secondary w-100">
+                <i class="fas fa-times"></i> Réinitialiser les dates
+              </button>
+            </div>
+          </div>
+
           <div class="table-responsive">
-            <table class="table table-hover detail-table">
+            <table class="table table-hover detail-table" id="tableCommandes">
               <thead>
               <tr>
-                <th>Date de réception</th>
-                <th>Raison sociale fournisseurs</th>
-                <th>Raison sociale société GBM</th>
-                <th>N° de BC</th>
-                <th>Direction GBM concernées</th>
-                <th>Souscripteur</th>
-                <th>Actions</th>
+                <th data-sort="dateModification" class="sortable">Date de réception <i class="fas fa-sort"></i></th>
+                <th data-sort="raisonSocialeFournisseur" class="sortable">Raison sociale fournisseurs <i class="fas fa-sort"></i></th>
+                <th data-sort="raisonSocialeGBM" class="sortable">Raison sociale société GBM <i class="fas fa-sort"></i></th>
+                <th data-sort="numeroBC" class="sortable">N° de BC <i class="fas fa-sort"></i></th>
+                <th data-sort="directionGBM" class="sortable">Direction GBM concernées <i class="fas fa-sort"></i></th>
+                <th data-sort="souscripteur" class="sortable">Souscripteur <i class="fas fa-sort"></i></th>
+                <th data-sort="typeDocument" class="sortable">Type de documents reçus <i class="fas fa-sort"></i></th>
+                <th data-sort="dateRelance" class="sortable">Date de relance pour BR <i class="fas fa-sort"></i></th>
+                <th data-sort="typeRelance" class="sortable">Type de relance <i class="fas fa-sort"></i></th>
+                <th data-sort="dossierComplet" class="sortable">Dossier complet <i class="fas fa-sort"></i></th>
+                <th data-sort="dateTransmission" class="sortable">Date de transmission <i class="fas fa-sort"></i></th>
+                <th data-sort="personneCollectrice" class="sortable">Personnes collectrice <i class="fas fa-sort"></i></th>
               </tr>
               </thead>
-              <tbody>
-              <tr>
-                <td>15/10/2024</td>
-                <td>MASHUP</td>
-                <td>SBM (202565-237)</td>
-                <td>2012000588/20120</td>
-                <td>DIRECTION COMMERCIAL</td>
-                <td>Mr marouane el mejahed</td>
-                <td>
-                  <button class="btn btn-sm btn-outline-primary">
-                    <i class="fas fa-eye"></i>
-                  </button>
-                  <button class="btn btn-sm btn-outline-success ms-1">
-                    <i class="fas fa-arrow-right"></i>
-                  </button>
-                </td>
-              </tr>
-              <tr>
-                <td>11/8/2021</td>
-                <td>MASHUP</td>
-                <td>SBM (202565-237)</td>
-                <td>2012000588</td>
-                <td>DIRECTION COMMERCIAL</td>
-                <td>Mr marouane el mejahed</td>
-                <td>
-                  <button class="btn btn-sm btn-outline-primary">
-                    <i class="fas fa-eye"></i>
-                  </button>
-                  <button class="btn btn-sm btn-outline-success ms-1">
-                    <i class="fas fa-arrow-right"></i>
-                  </button>
-                </td>
-              </tr>
-              <tr>
-                <td>11/8/2021</td>
-                <td>FM2I</td>
-                <td>EAE</td>
-                <td>1201300115</td>
-                <td>DIRECTION SUPPLY CHAIN</td>
-                <td>Mr Akkka</td>
-                <td>
-                  <button class="btn btn-sm btn-outline-primary">
-                    <i class="fas fa-eye"></i>
-                  </button>
-                  <button class="btn btn-sm btn-outline-success ms-1">
-                    <i class="fas fa-arrow-right"></i>
-                  </button>
-                </td>
-              </tr>
-              <tr>
-                <td>11/8/2021</td>
-                <td>SERIH MAGHREB</td>
-                <td>EAE</td>
-                <td>2013001035</td>
-                <td>DIRECTION SUPPLY CHAIN</td>
-                <td>Mr Akka</td>
-                <td>
-                  <button class="btn btn-sm btn-outline-primary">
-                    <i class="fas fa-eye"></i>
-                  </button>
-                  <button class="btn btn-sm btn-outline-success ms-1">
-                    <i class="fas fa-arrow-right"></i>
-                  </button>
+              <tbody id="commandesBody">
+              <tr id="loadingRow">
+                <td colspan="12" class="text-center">
+                  <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Chargement...</span>
+                  </div>
+                  <p>Chargement des commandes...</p>
                 </td>
               </tr>
               </tbody>
             </table>
           </div>
+          <div id="paginationContainer" class="mt-3"></div>
         </div>
 
-        <!-- Autres onglets auront un contenu similaire -->
-        <div class="tab-pane fade" id="suivi" role="tabpanel">
-          <p class="text-center py-4 text-muted">Sélectionnez "Vue générale" pour voir un exemple de données.</p>
-        </div>
 
         <div class="tab-pane fade" id="comptabilite" role="tabpanel">
           <p class="text-center py-4 text-muted">Sélectionnez "Vue générale" pour voir un exemple de données.</p>
@@ -748,6 +543,8 @@
         <div class="tab-pane fade" id="tresorerie" role="tabpanel">
           <p class="text-center py-4 text-muted">Sélectionnez "Vue générale" pour voir un exemple de données.</p>
         </div>
+
+
       </div>
     </div>
   </div>
