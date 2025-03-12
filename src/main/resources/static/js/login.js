@@ -35,7 +35,7 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
                     window.location.href = '../../templates/comptable/index.html';
                     break;
                 case 'bureau d\'ordre':
-                    window.location.href = '../../templates/BO/commandes.html';
+                    window.location.href = '../../templates/BO/index.html';
                     break;
                 case 'trésorerie':
                     window.location.href = '../../templates/Tresorerie/index.html';
