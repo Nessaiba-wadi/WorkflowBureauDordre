@@ -252,7 +252,6 @@
       font-weight: 600;
     }
 
-
     /* tables */
     /* Styles pour le tableau triable */
     .sortable {
@@ -274,21 +273,28 @@
       opacity: 1;
     }
 
-    th.sortable[data-sort] i.fa-sort-up,
-    th.sortable[data-sort] i.fa-sort-down {
+    th.sortable i.fa-sort-up,
+    th.sortable i.fa-sort-down {
       opacity: 1;
       color: #0d6efd;
     }
 
-    .table-responsive {
-      max-height: 600px;
+    /* Styles ajoutés pour les filtres */
+    .form-label {
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: #6c757d;
     }
 
-    .table th {
-      position: sticky;
-      top: 0;
-      background-color: #f8f9fa;
-      z-index: 10;
+    #searchInput {
+      height: 38px;
+    }
+
+    /* Styles pour rendre l'interface responsive sur petits écrans */
+    @media (max-width: 767.98px) {
+      .row.align-items-end > div {
+        margin-bottom: 0.5rem;
+      }
     }
   </style>
 
@@ -472,32 +478,31 @@
       <!-- Contenu des onglets -->
       <div class="tab-content" id="workflowTabsContent">
 
-
         <!-- Onglet Réception -->
         <div class="tab-pane fade show active" id="reception" role="tabpanel">
-          <!-- Filtres de date -->
-          <div class="row mb-3">
-            <div class="col-md-3">
+          <!-- Filtres -->
+          <div class="row mb-3 align-items-end">
+            <div class="col-md-5">
               <div class="input-group">
-                <span class="input-group-text">Date de réception</span>
-                <input type="date" class="form-control" id="dateReceptionFilter">
+                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                <input type="text" class="form-control" id="searchInput" placeholder="Rechercher...">
               </div>
             </div>
             <div class="col-md-3">
-              <div class="input-group">
-                <span class="input-group-text">Date de relance</span>
-                <input type="date" class="form-control" id="dateRelanceFilter">
-              </div>
+              <label for="typeDateFilter" class="form-label mb-1">Type de date :</label>
+              <select class="form-select" id="typeDateFilter">
+                <option value="dateReception">Date de réception</option>
+                <option value="dateRelance">Date de relance</option>
+                <option value="dateTransmission">Date de transmission</option>
+              </select>
             </div>
-            <div class="col-md-3">
-              <div class="input-group">
-                <span class="input-group-text">Date de transmission</span>
-                <input type="date" class="form-control" id="dateTransmissionFilter">
-              </div>
+            <div class="col-md-2">
+              <label for="dateExacteFilter" class="form-label mb-1">Date exacte :</label>
+              <input type="date" class="form-control" id="dateExacteFilter">
             </div>
-            <div class="col-md-3">
-              <button id="resetDateFilters" class="btn btn-outline-secondary w-100">
-                <i class="fas fa-times"></i> Réinitialiser les dates
+            <div class="col-md-2">
+              <button id="resetFilters" class="btn btn-outline-secondary w-100">
+                <i class="fas fa-times"></i> Réinitialiser
               </button>
             </div>
           </div>
@@ -506,7 +511,7 @@
             <table class="table table-hover detail-table" id="tableCommandes">
               <thead>
               <tr>
-                <th data-sort="dateModification" class="sortable">Date de réception <i class="fas fa-sort"></i></th>
+                <th data-sort="dateReception" class="sortable">Date de réception <i class="fas fa-sort"></i></th>
                 <th data-sort="raisonSocialeFournisseur" class="sortable">Raison sociale fournisseurs <i class="fas fa-sort"></i></th>
                 <th data-sort="raisonSocialeGBM" class="sortable">Raison sociale société GBM <i class="fas fa-sort"></i></th>
                 <th data-sort="numeroBC" class="sortable">N° de BC <i class="fas fa-sort"></i></th>
