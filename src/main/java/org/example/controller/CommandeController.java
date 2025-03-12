@@ -15,7 +15,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.example.repository.CommandeRepository;
+import org.example.repository.*;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.nio.charset.StandardCharsets;
@@ -48,7 +48,8 @@ public class CommandeController {
 
     @Value("${file.upload-dir:uploads/commandes}")
     private String uploadDir;
-
+    @Autowired
+    private ReglementRepository reglementRepository;
     private static final Logger log = LoggerFactory.getLogger(CommandeController.class);
     private static final String[] EXTENSIONS_AUTORISEES = {".pdf", ".doc", ".docx"};
     private static final String[] MIME_TYPES_AUTORISES = {
@@ -318,6 +319,7 @@ public class CommandeController {
             }
         }
     }
+
     //Modifier une commande
     @PutMapping("/{id}")
     public ResponseEntity<?> modifierCommande(
@@ -488,6 +490,37 @@ public class CommandeController {
             log.error("Erreur lors de la récupération du fichier: ", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("message", "Erreur lors de la récupération du fichier: " + e.getMessage()));
+        }
+    }
+
+    // calcul de dashbaord
+    @GetMapping("/statistiques")
+    public ResponseEntity<Map<String, Object>> getStatistiquesCommandes() {
+        try {
+            // Récupérer le nombre total de commandes
+            long totalCommandes = commandeRepository.count();
+
+            // Récupérer le nombre de commandes en attente (état = "en cours")
+            long commandesEnAttente = commandeRepository.countByEtatCommande("en cours");
+
+            // Récupérer le nombre de commandes validées mais non clôturées
+            long commandesValidees = commandeRepository.countByEtatCommande("validé");
+
+            // Récupérer le nombre de commandes clôturées
+            // Cette requête dépend de votre modèle de données exact
+            // Vous pourriez avoir besoin d'une requête personnalisée si cela implique des jointures
+            long commandesCloturees = reglementRepository.countByEtatEnCoursValideEtc("validé");
+
+            Map<String, Object> statistiques = new HashMap<>();
+            statistiques.put("totalCommandes", totalCommandes);
+            statistiques.put("commandesEnAttente", commandesEnAttente);
+            statistiques.put("commandesValidees", commandesValidees);
+            statistiques.put("commandesCloturees", commandesCloturees);
+
+            return ResponseEntity.ok(statistiques);
+        } catch (Exception e) {
+            log.error("Erreur lors de la récupération des statistiques de commandes", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 }

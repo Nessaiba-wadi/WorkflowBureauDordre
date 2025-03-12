@@ -7,7 +7,46 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="/../static/css/style.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+<style>
+  /* Styles pour les cartes de statistiques */
+  .stat-card {
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s, box-shadow 0.3s;
+  }
 
+  .stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  .stat-icon {
+    font-size: 2.5rem;
+    opacity: 0.7;
+    color: #6c757d;
+  }
+
+  .stat-card:nth-child(1) .stat-icon {
+    color: #007bff;
+  }
+
+  .stat-card:nth-child(2) .stat-icon {
+    color: #ffc107;
+  }
+
+  .stat-card:nth-child(3) .stat-icon {
+    color: #28a745;
+  }
+
+  .stat-card:nth-child(4) .stat-icon {
+    color: #17a2b8;
+  }
+
+  .stat-card h2 {
+    font-weight: 600;
+    color: #343a40;
+  }
+</style>
 
 </head>
 <body>
@@ -83,11 +122,83 @@
   </div>
 </div>
 
+<!-- Dashboard Stats Cards -->
+<div class="content-wrapper">
+  <div class="container-fluid mt-4 px-4">
+      <div class="row mt-4">
+        <div class="col-md-3">
+          <div class="card stat-card">
+            <div class="card-body">
+              <div class="d-flex justify-content-between">
+                <div>
+                  <h5 class="card-title">Total des commandes</h5>
+                  <h2 class="mt-2 mb-2" id="totalCommandes">Chargement...</h2>
+                  <p class="text-muted">Toutes commandes créées</p>
+                </div>
+                <div class="stat-icon">
+                  <i class="fas fa-file-alt"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
+        <div class="col-md-3">
+          <div class="card stat-card">
+            <div class="card-body">
+              <div class="d-flex justify-content-between">
+                <div>
+                  <h5 class="card-title">En attente</h5>
+                  <h2 class="mt-2 mb-2" id="commandesEnAttente">Chargement...</h2>
+                  <p class="text-muted">Commandes en attente de validation</p>
+                </div>
+                <div class="stat-icon">
+                  <i class="fas fa-hourglass-half"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
+        <div class="col-md-3">
+          <div class="card stat-card">
+            <div class="card-body">
+              <div class="d-flex justify-content-between">
+                <div>
+                  <h5 class="card-title">Validées</h5>
+                  <h2 class="mt-2 mb-2" id="commandesValidees">Chargement...</h2>
+                  <p class="text-muted">Commandes envoyées au comptable</p>
+                </div>
+                <div class="stat-icon">
+                  <i class="fas fa-paper-plane"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-3">
+          <div class="card stat-card">
+            <div class="card-body">
+              <div class="d-flex justify-content-between">
+                <div>
+                  <h5 class="card-title">Clôturées</h5>
+                  <h2 class="mt-2 mb-2" id="commandesCloturees">Chargement...</h2>
+                  <p class="text-muted">Commandes traitées par la Trésorerie</p>
+                </div>
+                <div class="stat-icon">
+                  <i class="fas fa-check-circle"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+  </div>
+</div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"></script>
 <script src="/static/js/dashboard.js"></script>
-
+<script src="/static/js/infos.js"></script>
 </body>
 </html>

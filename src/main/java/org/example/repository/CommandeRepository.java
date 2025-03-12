@@ -11,4 +11,8 @@ public interface CommandeRepository extends JpaRepository<Commande, Integer> {
     List<Commande> findByUtilisateur(Utilisateur utilisateur);
     boolean existsByNumeroBC(String numeroBC);
     List<Commande> findByStatusTrue();
+
+    // calcul de dashboard
+    long countByEtatCommande(String etatCommande);
+
 }
