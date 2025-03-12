@@ -11,17 +11,17 @@ function chargerStatistiquesCommandes() {
         .then(data => {
             console.log("Données reçues:", data); // Pour déboguer
 
-            // Mise à jour des compteurs en utilisant les clés exactes de la réponse
-            document.getElementById('totalCommandes').textContent = data.totalCommandes + ' commandes';
-            document.getElementById('commandesEnAttente').textContent = data.commandesEnAttente + ' en attente';
-            document.getElementById('commandesValidees').textContent = data.commandesValidees + ' envoyées';
-            document.getElementById('commandesCloturees').textContent = data.commandesCloturees + ' clôturées';
+            // Mise à jour des compteurs avec le format "X/Total"
+            document.getElementById('commandesComptabilisees').textContent = data.commandesComptabilisees + ' comptabilisées';
+            document.getElementById('commandesEnAttente').textContent = 'En attente ' + data.commandesEnAttente + '/' + data.totalCommandes;
+            document.getElementById('commandesValidees').textContent = 'Envoyées ' + data.commandesValidees + '/' + data.totalCommandes;
+            document.getElementById('commandesCloturees').textContent = 'Clôturées ' + data.commandesCloturees + '/' + data.totalCommandes;
         })
         .catch(error => {
             console.error('Erreur:', error);
 
             // En cas d'erreur, afficher un message
-            document.getElementById('totalCommandes').textContent = 'Erreur de chargement';
+            document.getElementById('commandesComptabilisees').textContent = 'Erreur de chargement';
             document.getElementById('commandesEnAttente').textContent = 'Erreur de chargement';
             document.getElementById('commandesValidees').textContent = 'Erreur de chargement';
             document.getElementById('commandesCloturees').textContent = 'Erreur de chargement';

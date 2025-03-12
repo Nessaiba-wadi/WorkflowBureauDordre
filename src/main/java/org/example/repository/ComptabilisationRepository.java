@@ -8,4 +8,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface ComptabilisationRepository extends JpaRepository<Comptabilisation, Integer> {
     boolean existsByCommande(Commande commande);
+
+    long countByEtat(String validé);
 }

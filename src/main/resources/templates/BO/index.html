@@ -7,46 +7,105 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="/../static/css/style.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-<style>
-  /* Styles pour les cartes de statistiques */
-  .stat-card {
-    border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    transition: transform 0.3s, box-shadow 0.3s;
-  }
 
-  .stat-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-  }
+  <style>
+    /* Styles pour les cartes de statistiques modernisées */
+    .stat-card {
+      border-radius: 12px;
+      border: none;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+      transition: transform 0.2s, box-shadow 0.2s;
+      overflow: hidden;
+      margin-bottom: 20px;
+      height: 100%;
+    }
 
-  .stat-icon {
-    font-size: 2.5rem;
-    opacity: 0.7;
-    color: #6c757d;
-  }
+    .stat-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
 
-  .stat-card:nth-child(1) .stat-icon {
-    color: #007bff;
-  }
+    /* Couleurs de fond pour chaque carte */
+    .bg-light-blue {
+      background-color: #e6f7ff;
+    }
 
-  .stat-card:nth-child(2) .stat-icon {
-    color: #ffc107;
-  }
+    .bg-light-green {
+      background-color: #e6fff2;
+    }
 
-  .stat-card:nth-child(3) .stat-icon {
-    color: #28a745;
-  }
+    .bg-light-purple {
+      background-color: #f0e6ff;
+    }
 
-  .stat-card:nth-child(4) .stat-icon {
-    color: #17a2b8;
-  }
+    .bg-light-orange {
+      background-color: #fff2e6;
+    }
 
-  .stat-card h2 {
-    font-weight: 600;
-    color: #343a40;
-  }
-</style>
+    /* Style pour les icônes */
+    .stat-icon {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 15px;
+    }
+
+    .icon-blue {
+      background-color: #2196f3;
+      color: white;
+    }
+
+    .icon-green {
+      background-color: #4caf50;
+      color: white;
+    }
+
+    .icon-purple {
+      background-color: #9c27b0;
+      color: white;
+    }
+
+    .icon-orange {
+      background-color: #ff9800;
+      color: white;
+    }
+
+    /* Style pour les valeurs et tendances */
+    .stat-value {
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      color: #333;
+    }
+
+    .stat-trend {
+      font-size: 0.85rem;
+      font-weight: 600;
+      border-radius: 15px;
+      padding: 0.15rem 0.5rem;
+      display: inline-block;
+    }
+
+    .trend-up {
+      background-color: rgba(76, 175, 80, 0.1);
+      color: #4caf50;
+    }
+
+    .trend-down {
+      background-color: rgba(244, 67, 54, 0.1);
+      color: #f44336;
+    }
+
+    .card-title {
+      font-size: 1rem;
+      color: #666;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+    }
+  </style>
 
 </head>
 <body>
@@ -123,79 +182,91 @@
 </div>
 
 <!-- Dashboard Stats Cards -->
+<!-- Dashboard Stats Cards -->
 <div class="content-wrapper">
   <div class="container-fluid mt-4 px-4">
-      <div class="row mt-4">
-        <div class="col-md-3">
-          <div class="card stat-card">
-            <div class="card-body">
-              <div class="d-flex justify-content-between">
-                <div>
-                  <h5 class="card-title">Total des commandes</h5>
-                  <h2 class="mt-2 mb-2" id="totalCommandes">Chargement...</h2>
-                  <p class="text-muted">Toutes commandes créées</p>
-                </div>
-                <div class="stat-icon">
-                  <i class="fas fa-file-alt"></i>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+    <div class="row mt-4">
 
-        <div class="col-md-3">
-          <div class="card stat-card">
-            <div class="card-body">
-              <div class="d-flex justify-content-between">
-                <div>
-                  <h5 class="card-title">En attente</h5>
-                  <h2 class="mt-2 mb-2" id="commandesEnAttente">Chargement...</h2>
-                  <p class="text-muted">Commandes en attente de validation</p>
-                </div>
-                <div class="stat-icon">
-                  <i class="fas fa-hourglass-half"></i>
-                </div>
+      <div class="col-lg-3 col-md-6 mb-4">
+        <div class="card stat-card bg-light-blue">
+          <div class="card-body p-4">
+            <div class="d-flex align-items-center mb-3">
+              <div class="stat-icon icon-blue">
+                <i class="fas fa-hourglass-half"></i>
               </div>
+              <h5 class="card-title">Total Commandes en Attente</h5>
             </div>
-          </div>
-        </div>
-
-        <div class="col-md-3">
-          <div class="card stat-card">
-            <div class="card-body">
-              <div class="d-flex justify-content-between">
-                <div>
-                  <h5 class="card-title">Validées</h5>
-                  <h2 class="mt-2 mb-2" id="commandesValidees">Chargement...</h2>
-                  <p class="text-muted">Commandes envoyées au comptable</p>
-                </div>
-                <div class="stat-icon">
-                  <i class="fas fa-paper-plane"></i>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-md-3">
-          <div class="card stat-card">
-            <div class="card-body">
-              <div class="d-flex justify-content-between">
-                <div>
-                  <h5 class="card-title">Clôturées</h5>
-                  <h2 class="mt-2 mb-2" id="commandesCloturees">Chargement...</h2>
-                  <p class="text-muted">Commandes traitées par la Trésorerie</p>
-                </div>
-                <div class="stat-icon">
-                  <i class="fas fa-check-circle"></i>
-                </div>
+            <div class="d-flex justify-content-between align-items-end">
+              <div>
+                <h3 class="stat-value" id="commandesEnAttente">Chargement...</h3>
+                <p class="text-muted">Commandes en attente de validation</p>
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      <div class="col-lg-3 col-md-6 mb-4">
+        <div class="card stat-card bg-light-green">
+          <div class="card-body p-4">
+            <div class="d-flex align-items-center mb-3">
+              <div class="stat-icon icon-green">
+                <i class="fas fa-paper-plane"></i>
+              </div>
+              <h5 class="card-title">Total Commandes Validées</h5>
+            </div>
+            <div class="d-flex justify-content-between align-items-end">
+              <div>
+                <h3 class="stat-value" id="commandesValidees">Chargement...</h3>
+                <p class="text-muted">Commandes envoyées au comptable</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-3 col-md-6 mb-4">
+        <div class="card stat-card bg-light-purple">
+          <div class="card-body p-4">
+            <div class="d-flex align-items-center mb-3">
+              <div class="stat-icon icon-purple">
+                <i class="fas fa-calculator"></i>
+              </div>
+              <h5 class="card-title">Commandes Comptabilisées</h5>
+            </div>
+            <div class="d-flex justify-content-between align-items-end">
+              <div>
+                <h3 class="stat-value" id="commandesComptabilisees">Chargement...</h3>
+                <p class="text-muted">Commandes validées en comptabilité</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-3 col-md-6 mb-4">
+        <div class="card stat-card bg-light-orange">
+          <div class="card-body p-4">
+            <div class="d-flex align-items-center mb-3">
+              <div class="stat-icon icon-orange">
+                <i class="fas fa-check-circle"></i>
+              </div>
+              <h5 class="card-title">Commandes Clôturées</h5>
+            </div>
+            <div class="d-flex justify-content-between align-items-end">
+              <div>
+                <h3 class="stat-value" id="commandesCloturees">Chargement...</h3>
+                <p class="text-muted">Commandes traitées par la Trésorerie</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
   </div>
 </div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"></script>
 <script src="/static/js/dashboard.js"></script>

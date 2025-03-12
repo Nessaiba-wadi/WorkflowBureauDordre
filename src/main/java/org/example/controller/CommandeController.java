@@ -46,6 +46,9 @@ public class CommandeController {
     @Autowired
     private CommandeRepository commandeRepository;
 
+    @Autowired
+    private ComptabilisationRepository comptabilisationRepository;
+
     @Value("${file.upload-dir:uploads/commandes}")
     private String uploadDir;
     @Autowired
@@ -507,15 +510,17 @@ public class CommandeController {
             long commandesValidees = commandeRepository.countByEtatCommande("validé");
 
             // Récupérer le nombre de commandes clôturées
-            // Cette requête dépend de votre modèle de données exact
-            // Vous pourriez avoir besoin d'une requête personnalisée si cela implique des jointures
             long commandesCloturees = reglementRepository.countByEtatEnCoursValideEtc("validé");
+
+            // Récupérer le nombre de commandes comptabilisées (état = "validé" dans la table comptabilisations)
+            long commandesComptabilisees = comptabilisationRepository.countByEtat("validé");
 
             Map<String, Object> statistiques = new HashMap<>();
             statistiques.put("totalCommandes", totalCommandes);
             statistiques.put("commandesEnAttente", commandesEnAttente);
             statistiques.put("commandesValidees", commandesValidees);
             statistiques.put("commandesCloturees", commandesCloturees);
+            statistiques.put("commandesComptabilisees", commandesComptabilisees);
 
             return ResponseEntity.ok(statistiques);
         } catch (Exception e) {
