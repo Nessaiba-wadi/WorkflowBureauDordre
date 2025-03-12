@@ -19,8 +19,11 @@ import java.util.Map;
 public class UtilisateurController {
 
     @Autowired
-    private UtilisateurService utilisateurService;
-
+    private final UtilisateurService utilisateurService;
+    @Autowired
+    public UtilisateurController(UtilisateurService utilisateurService) {
+        this.utilisateurService = utilisateurService;
+    }
     @PostMapping
     public ResponseEntity<?> creerUtilisateur(@RequestBody Utilisateur utilisateur) {
         try {
@@ -100,31 +103,7 @@ public class UtilisateurController {
             return new ResponseEntity<>("Une erreur est survenue lors de la modification", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-    //modifier le mot de passe
-    @PutMapping("/modifier-mot-de-passe/{id}")
-    public ResponseEntity<?> modifierMotDePasse(
-            @PathVariable Integer id,
-            @RequestBody Map<String, String> passwordData) {
-        try {
-            String ancienMotDePasse = passwordData.get("ancienMotDePasse");
-            String nouveauMotDePasse = passwordData.get("nouveauMotDePasse");
 
-            if (ancienMotDePasse == null || nouveauMotDePasse == null) {
-                return new ResponseEntity<>("Les deux mots de passe sont requis", HttpStatus.BAD_REQUEST);
-            }
-
-            utilisateurService.modifierMotDePasse(id, ancienMotDePasse, nouveauMotDePasse);
-            return new ResponseEntity<>("Mot de passe modifié avec succès", HttpStatus.OK);
-        } catch (UtilisateurService.UtilisateurNonTrouveException e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
-        } catch (UtilisateurService.MotDePasseIncorrectException |
-                 UtilisateurService.MotDePasseTropCourtException e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
-        } catch (Exception e) {
-            return new ResponseEntity<>("Une erreur est survenue lors de la modification du mot de passe",
-                    HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
 
     //désactiver un utilisateur (par les admins)
     @PutMapping("/desactiver/{id}")
@@ -141,4 +120,81 @@ public class UtilisateurController {
                     HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+
+
+    /**
+     * Vérifie si le mot de passe actuel est correct
+     */
+    @PostMapping("/verifier-mot-de-passe/{id}")
+    public ResponseEntity<?> verifierMotDePasse(@PathVariable("id") Integer id,
+                                                @RequestBody Map<String, String> passwordMap) {
+        try {
+            String motDePasseActuel = passwordMap.get("motDePasseActuel");
+            boolean estCorrect = utilisateurService.verifierMotDePasse(id, motDePasseActuel);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("estCorrect", estCorrect);
+
+            return ResponseEntity.ok(response);
+        } catch (UtilisateurService.UtilisateurNonTrouveException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "Une erreur est survenue lors de la vérification du mot de passe"));
+        }
+    }
+
+    /**
+     * Modifie le mot de passe de l'utilisateur
+     */
+    @PutMapping("/modifier-mot-de-passe/{id}")
+    public ResponseEntity<?> modifierMotDePasse(@PathVariable("id") Integer id,
+                                                @RequestBody Map<String, String> passwordMap) {
+        try {
+            String motDePasseActuel = passwordMap.get("motDePasseActuel");
+            String nouveauMotDePasse = passwordMap.get("nouveauMotDePasse");
+
+            // Vérification des paramètres
+            if (motDePasseActuel == null || nouveauMotDePasse == null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Map.of("message", "Les paramètres 'motDePasseActuel' et 'nouveauMotDePasse' sont requis"));
+            }
+
+            utilisateurService.modifierMotDePasse(id, motDePasseActuel, nouveauMotDePasse);
+
+            return ResponseEntity.ok(Map.of(
+                    "message", "Mot de passe modifié avec succès",
+                    "success", true
+            ));
+        } catch (UtilisateurService.UtilisateurNonTrouveException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of(
+                            "message", "Utilisateur non trouvé",
+                            "success", false
+                    ));
+        } catch (UtilisateurService.MotDePasseIncorrectException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of(
+                            "message", "Le mot de passe actuel est incorrect",
+                            "success", false
+                    ));
+        } catch (UtilisateurService.MotDePasseTropCourtException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of(
+                            "message", "Le nouveau mot de passe ne respecte pas les critères de sécurité",
+                            "success", false
+                    ));
+        } catch (Exception e) {
+            // Journaliser l'erreur sur le serveur
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of(
+                            "message", "Une erreur inattendue est survenue lors de la modification du mot de passe",
+                            "success", false
+                    ));
+        }
+    }
+
+
 }

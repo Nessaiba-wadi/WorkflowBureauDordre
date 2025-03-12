@@ -31,7 +31,7 @@
                     <i class="fas fa-user-circle me-2"></i>
                     <!-- afficher ici le nom de l'utilisateur -->
                     <div id="userName"></div>
-                    <div id="userId" style="visibility: hidden;"></div>
+
 
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
@@ -84,6 +84,9 @@
 <div class="content-wrapper">
     <div class="container-fluid mt-4 px-4">
         <div class="col-md-12">
+            <!-- Champ caché pour l'ID utilisateur -->
+            <input type="hidden" id="userId" value="">
+
             <div id="passwordSettings" class="card shadow-sm">
                 <div class="card-header bg-primary text-white">
                     <h5 class="mb-0"><i class="fas fa-key me-2"></i>Changer votre mot de passe</h5>
@@ -168,31 +171,13 @@
                     </form>
                 </div>
             </div>
-
-            <!-- Placeholder pour les autres sections de paramètres -->
-            <div id="profileSettings" class="card shadow-sm mt-4" style="display: none;">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0"><i class="fas fa-user-edit me-2"></i>Profil utilisateur</h5>
-                </div>
-                <div class="card-body">
-                    <p class="card-text">Contenu du profil utilisateur à venir</p>
-                </div>
-            </div>
-
-            <div id="notificationSettings" class="card shadow-sm mt-4" style="display: none;">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0"><i class="fas fa-bell me-2"></i>Paramètres de notification</h5>
-                </div>
-                <div class="card-body">
-                    <p class="card-text">Paramètres de notification à venir</p>
-                </div>
-            </div>
         </div>
     </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/js/all.min.js"></script>
 <script src="/../static/js/dashboard.js"></script>
+<script src="/../static/js/parametres.js"></script>
 
 </body>
 </html>

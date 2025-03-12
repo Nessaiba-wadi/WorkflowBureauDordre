@@ -121,9 +121,10 @@ public class Utilisateur {
     }
 
     public void setMotDePasse(String motDePasse) {
+        System.out.println("Ancien mot de passe: " + this.motDePasse);
+        System.out.println("Nouveau mot de passe: " + motDePasse);
         this.motDePasse = motDePasse;
     }
-
     public Role getRole() {
         return role;
     }

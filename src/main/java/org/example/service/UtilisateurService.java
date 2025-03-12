@@ -1,5 +1,6 @@
 package org.example.service;
 
+import jakarta.transaction.Transactional;
 import org.example.model.Utilisateur;
 import org.example.model.Role;
 import org.example.repository.UtilisateurRepository;
@@ -16,17 +17,21 @@ import java.util.regex.Pattern;
 @Service
 public class UtilisateurService {
 
-    @Autowired
-    private UtilisateurRepository utilisateurRepository;
+    private final UtilisateurRepository utilisateurRepository;
+    private final RoleRepository roleRepository;
+    private final BCryptPasswordEncoder passwordEncoder;
 
     @Autowired
-    private RoleRepository roleRepository;
-
-    @Autowired
-    private BCryptPasswordEncoder passwordEncoder;
+    public UtilisateurService(UtilisateurRepository utilisateurRepository,
+                              RoleRepository roleRepository,
+                              BCryptPasswordEncoder passwordEncoder) {
+        this.utilisateurRepository = utilisateurRepository;
+        this.roleRepository = roleRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
 
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
-    private static final Pattern PASSWORD_PATTERN = Pattern.compile("^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=])(?=\\S+$).{8,}$");
+    private static final Pattern PASSWORD_PATTERN = Pattern.compile("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$");
     private static final Pattern NAME_PATTERN = Pattern.compile("^[a-zA-Z]+$");
     private static final Pattern PHONE_PATTERN = Pattern.compile("^(\\+\\d{1,3}[- ]?)?\\d{10}$");
 
@@ -54,11 +59,7 @@ public class UtilisateurService {
         }
     }
 
-    public static class MotDePasseIncorrectException extends RuntimeException {
-        public MotDePasseIncorrectException(String message) {
-            super(message);
-        }
-    }
+
 
     public static class EmailDejaUtiliseException extends RuntimeException {
         public EmailDejaUtiliseException(String message) {
@@ -78,12 +79,6 @@ public class UtilisateurService {
         }
     }
 
-    public static class MotDePasseTropCourtException extends RuntimeException {
-        public MotDePasseTropCourtException(String message) {
-            super(message);
-        }
-    }
-
     public static class NomPrenomInvalideException extends RuntimeException {
         public NomPrenomInvalideException(String message) {
             super(message);
@@ -95,6 +90,19 @@ public class UtilisateurService {
             super(message);
         }
     }
+
+    // mot de passe
+    public static class MotDePasseTropCourtException extends RuntimeException {
+        public MotDePasseTropCourtException(String message) {
+            super(message);
+        }
+    }
+    public static class MotDePasseIncorrectException extends RuntimeException {
+        public MotDePasseIncorrectException(String message) {
+            super(message);
+        }
+    }
+
     public Utilisateur findByEmail(String email) {
         Utilisateur utilisateur = utilisateurRepository.findByEmail(email);
         if (utilisateur == null) {
@@ -232,36 +240,56 @@ public class UtilisateurService {
         return utilisateurRepository.save(utilisateurExistant);
     }
 
-    //modifier que le mot de passe
-    public void modifierMotDePasse(Integer idUtilisateur, String ancienMotDePasse, String nouveauMotDePasse) {
-        // Récupérer l'utilisateur depuis la base de données
-        Utilisateur utilisateur = utilisateurRepository.findById(idUtilisateur)
-                .orElseThrow(() -> new UtilisateurNonTrouveException("Utilisateur non trouvé avec l'ID : " + idUtilisateur));
+   // modifier le mot de passe
+    /**
+     * Vérifie si le mot de passe actuel est correct
+     */
+    public boolean verifierMotDePasse(Integer id, String motDePasseActuel) {
+        Utilisateur utilisateur = utilisateurRepository.findById(id)
+                .orElseThrow(() -> new UtilisateurNonTrouveException("Utilisateur non trouvé avec l'ID : " + id));
 
-        // Vérifier si l'ancien mot de passe est correct
-        if (!passwordEncoder.matches(ancienMotDePasse, utilisateur.getMotDePasse())) {
-            throw new MotDePasseIncorrectException("L'ancien mot de passe est incorrect.");
+        return passwordEncoder.matches(motDePasseActuel, utilisateur.getMotDePasse());
+    }
+
+    /**
+     * Modifie le mot de passe d'un utilisateur
+     */
+    @Transactional
+    public void modifierMotDePasse(Integer id, String motDePasseActuel, String nouveauMotDePasse) {
+        // Vérifier si l'utilisateur existe
+        Utilisateur utilisateur = utilisateurRepository.findById(id)
+                .orElseThrow(() -> new UtilisateurNonTrouveException("Utilisateur non trouvé avec l'ID : " + id));
+
+        // Vérifier si le mot de passe actuel est correct
+        if (!passwordEncoder.matches(motDePasseActuel, utilisateur.getMotDePasse())) {
+            throw new MotDePasseIncorrectException("Le mot de passe actuel est incorrect");
         }
 
-        // Vérifier si le nouveau mot de passe est différent de l'ancien
+        // Vérifier si le nouveau mot de passe est identique à l'ancien
         if (passwordEncoder.matches(nouveauMotDePasse, utilisateur.getMotDePasse())) {
-            throw new MotDePasseIncorrectException("Le nouveau mot de passe doit être différent de l'ancien.");
+            throw new MotDePasseIncorrectException("Le nouveau mot de passe doit être différent de l'ancien");
         }
 
-        // Vérifier que le nouveau mot de passe respecte les critères de sécurité
-        if (!PASSWORD_PATTERN.matcher(nouveauMotDePasse).matches()) {
-            throw new MotDePasseTropCourtException("Le mot de passe doit contenir au moins 8 caractères, une lettre majuscule, une lettre minuscule, un chiffre et un caractère spécial.");
+        // Vérifier la complexité du nouveau mot de passe
+        if (!estMotDePasseSecurise(nouveauMotDePasse)) {
+            throw new MotDePasseTropCourtException(
+                    "Le nouveau mot de passe doit contenir au moins 8 caractères, une majuscule, " +
+                            "une minuscule, un chiffre et un caractère spécial");
         }
 
-        // Crypter le nouveau mot de passe
-        String nouveauMotDePasseCrypte = passwordEncoder.encode(nouveauMotDePasse);
-
-        // Mettre à jour le mot de passe dans l'objet utilisateur
-        utilisateur.setMotDePasse(nouveauMotDePasseCrypte);
-
-        // Enregistrer les modifications dans la base de données
+        // Encoder et enregistrer le nouveau mot de passe
+        String motDePasseEncode = passwordEncoder.encode(nouveauMotDePasse);
+        utilisateur.setMotDePasse(motDePasseEncode);
         utilisateurRepository.save(utilisateur);
     }
+
+    /**
+     * Vérifie la complexité du mot de passe
+     */
+    private boolean estMotDePasseSecurise(String motDePasse) {
+        return PASSWORD_PATTERN.matcher(motDePasse).matches();
+    }
+
 
     //Désactiver un utilisateur (par les admins)
     public void desactiverUtilisateur(Integer id) {
