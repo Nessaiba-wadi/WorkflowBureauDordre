@@ -1,3 +1,7 @@
+/**
+ * KPI
+ */
+
 // Fonction pour récupérer les statistiques des commandes
 function chargerStatistiquesCommandes() {
     // Récupération des données depuis l'API
@@ -32,12 +36,38 @@ function chargerStatistiquesCommandes() {
 document.addEventListener('DOMContentLoaded', function() {
     console.log("Page chargée, chargement des statistiques...");
     chargerStatistiquesCommandes();
-    chargerCommandesAvecPagination();  // Ajoutez cette ligne
+    chargerCommandesAvecPagination();  // commandes
+
+
+    // Écouter l'événement "shown.bs.tab" qui est déclenché par Bootstrap
+    // lorsqu'un onglet devient visible
+    document.querySelectorAll('button[data-bs-toggle="tab"]').forEach(function(button) {
+        button.addEventListener('shown.bs.tab', function(event) {
+            const targetId = event.target.getAttribute('data-bs-target');
+
+            // Si l'onglet comptabilité est activé
+            if (targetId === '#comptabilite') {
+                console.log("Onglet comptabilité activé, chargement des données...");
+                chargerComptabilisationsAvecPagination();
+            }
+            // Vous pouvez ajouter d'autres conditions pour les autres onglets
+        });
+    });
+    // Si l'onglet comptabilité est actif par défaut
+    if (document.querySelector('#comptabilite.active')) {
+        chargerComptabilisationsAvecPagination();
+    }
+
 
     // Actualiser les données toutes les 5 minutes
     setInterval(chargerStatistiquesCommandes, 300000);
 });
 
+
+/**
+ * Partie BO
+ */
+// Variables globales pour la gestion de la pagination et du tri
 // Variables globales pour la gestion de la pagination et du tri
 let allCommandes = [];
 let filteredCommandes = [];
@@ -179,17 +209,17 @@ function renderCommandes(commandes) {
         return `
             <tr>
                 <td>${formatDate(commande.dateReception)}</td>
-                <td>${commande.raisonSocialeFournisseur || 'N/A'}</td>
-                <td>${commande.raisonSocialeGBM || 'N/A'}</td>
-                <td>${commande.numeroBC || 'N/A'}</td>
-                <td>${commande.directionGBM || 'N/A'}</td>
-                <td>${commande.souscripteur || 'N/A'}</td>
-                <td>${commande.typeDocument || 'N/A'}</td>
-                <td>${formatDate(commande.dateRelance)}</td>
-                <td>${commande.typeRelance || 'N/A'}</td>
+                <td>${commande.raisonSocialeFournisseur || '-'}</td>
+                <td>${commande.raisonSocialeGBM || '-'}</td>
+                <td>${commande.numeroBC || '-'}</td>
+                <td>${commande.directionGBM || '-'}</td>
+                <td>${commande.souscripteur || '-'}</td>
+                <td>${commande.typeDocument || '-'}</td>
+                <td>${formatDate(commande.dateRelanceBR)}</td>
+                <td>${commande.typeRelance || '-'}</td>
                 <td>${getEtatDossier(commande.dossierComplet)}</td>
                 <td>${formatDate(commande.dateTransmission)}</td>
-                <td>${commande.personneCollectrice || 'N/A'}</td>
+                <td>${commande.personnesCollectrice || '-'}</td>
             </tr>
         `;
     }).join('');
@@ -346,3 +376,326 @@ async function chargerCommandesAvecPagination() {
         `;
     }
 }
+
+/**
+ * Partie Comptabilisation
+ */
+// Variables globales pour la gestion de la pagination et du tri des comptabilisations
+let allComptabilisations = [];
+let filteredComptabilisations = [];
+let currentPageCompta = 1;
+const rowsPerPageCompta = 10;
+let totalPagesCompta = 0;
+let currentSortCompta = {
+    column: 'dateComptabilisation',
+    direction: 'desc'
+};
+
+// Fonction pour charger les comptabilisations depuis l'API
+async function chargerComptabilisationsAvecPagination() {
+    // Afficher l'indicateur de chargement
+    const comptabilisationsBody = document.getElementById('comptabilisationsBody');
+    comptabilisationsBody.innerHTML = `
+        <tr id="loadingRowCompta">
+            <td colspan="6" class="text-center">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Chargement...</span>
+                </div>
+                <p>Chargement des comptabilisations...</p>
+            </td>
+        </tr>
+    `;
+    try {
+        // Vérifier l'authentification
+        const userInfo = JSON.parse(sessionStorage.getItem('userInfo'));
+        if (!userInfo || !userInfo.email) {
+            throw new Error('Utilisateur non authentifié');
+        }
+
+        console.log("Récupération des comptabilisations avec email:", userInfo.email);
+
+        // Utiliser le bon endpoint pour les comptabilisations validées
+        const response = await fetch('http://localhost:8082/comptabilisations', {
+            method: 'GET',
+            headers: {
+                'Authorization': userInfo.email,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error("Erreur de réponse:", response.status, errorText);
+            throw new Error(`Erreur ${response.status}: ${errorText || response.statusText}`);
+        }
+
+        // Stocker toutes les comptabilisations
+        allComptabilisations = await response.json();
+
+        // Supprimer l'indicateur de chargement
+        const loadingRow = document.getElementById('loadingRowCompta');
+        if (loadingRow) {
+            loadingRow.remove();
+        }
+
+        // Initialiser les comptabilisations filtrées avec toutes les comptabilisations
+        filteredComptabilisations = [...allComptabilisations];
+
+        // Calculer le nombre total de pages
+        totalPagesCompta = Math.ceil(filteredComptabilisations.length / rowsPerPageCompta);
+
+        // Trier les données selon le tri par défaut
+        sortComptabilisations(currentSortCompta.column, currentSortCompta.direction);
+
+        // Mettre à jour l'interface utilisateur
+        renderComptabilisationsPage();
+
+        // Mettre à jour les icônes de tri
+        updateSortIconsCompta(currentSortCompta.column, currentSortCompta.direction);
+    } catch (error) {
+        console.error('Erreur lors du chargement des comptabilisations:', error);
+        const comptabilisationsBody = document.getElementById('comptabilisationsBody');
+        comptabilisationsBody.innerHTML = `
+            <tr>
+                <td colspan="6" class="text-center text-danger py-4">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Erreur: ${error.message}
+                </td>
+            </tr>
+        `;
+    }
+}
+
+
+// Filtrage des comptabilisations
+function filterComptabilisations() {
+    const searchTerm = document.getElementById('searchInputCompta').value.toLowerCase();
+    const dateExacte = document.getElementById('dateExacteFilterCompta').value;
+    const typeDate = document.getElementById('typeDateFilterCompta').value;
+
+    filteredComptabilisations = allComptabilisations.filter(compta => {
+        // Recherche texte
+        const searchMatch = searchTerm ? Object.values(compta).some(value =>
+            value && String(value).toLowerCase().includes(searchTerm)
+        ) : true;
+
+        // Filtrage par date exacte
+        let dateMatch = true;
+        if (dateExacte && compta[typeDate]) {
+            const dateCompta = new Date(compta[typeDate]);
+            // Formater la date sans l'heure pour une comparaison exacte par jour
+            const dateComptaFormatted = dateCompta.toISOString().split('T')[0];
+            dateMatch = dateComptaFormatted === dateExacte;
+        }
+
+        return searchMatch && dateMatch;
+    });
+
+    // Trier les comptabilisations selon les critères actuels
+    sortComptabilisations(currentSortCompta.column, currentSortCompta.direction);
+
+    // Réinitialise la pagination
+    currentPageCompta = 1;
+    totalPagesCompta = Math.ceil(filteredComptabilisations.length / rowsPerPageCompta);
+
+    // Affiche les résultats
+    renderComptabilisationsPage();
+}
+
+// Trier les comptabilisations
+function sortComptabilisations(column, direction) {
+    currentSortCompta.column = column;
+    currentSortCompta.direction = direction;
+
+    // Tri par comparaison selon le type de donnée
+    filteredComptabilisations.sort((a, b) => {
+        let valA = a[column];
+        let valB = b[column];
+
+        // Traitement selon le type de données
+        if (column.includes('date')) {
+            valA = valA ? new Date(valA).getTime() : 0;
+            valB = valB ? new Date(valB).getTime() : 0;
+        } else if (typeof valA === 'boolean') {
+            // Pas de conversion pour les booléens
+        } else {
+            valA = valA ? String(valA).toLowerCase() : '';
+            valB = valB ? String(valB).toLowerCase() : '';
+        }
+
+        // Applique la direction du tri
+        if (direction === 'asc') {
+            return valA > valB ? 1 : valA < valB ? -1 : 0;
+        } else {
+            return valA < valB ? 1 : valA > valB ? -1 : 0;
+        }
+    });
+}
+
+// Mettre à jour les icônes de tri pour les comptabilisations
+function updateSortIconsCompta(column, direction) {
+    // Réinitialiser toutes les icônes
+    document.querySelectorAll('#tableComptabilisations th.sortable i').forEach(icon => {
+        icon.className = 'fas fa-sort';
+    });
+
+    // Mettre à jour l'icône pour la colonne triée
+    const headerCell = document.querySelector(`#tableComptabilisations th[data-sort="${column}"] i`);
+    if (headerCell) {
+        headerCell.className = direction === 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down';
+    }
+}
+
+// Affiche les comptabilisations de la page courante
+function renderComptabilisationsPage() {
+    const startIndex = (currentPageCompta - 1) * rowsPerPageCompta;
+    const endIndex = startIndex + rowsPerPageCompta;
+    const currentPageComptabilisations = filteredComptabilisations.slice(startIndex, endIndex);
+
+    renderComptabilisations(currentPageComptabilisations);
+    updatePaginationControlsCompta();
+}
+
+// Générer le contenu du tableau des comptabilisations
+function renderComptabilisations(comptabilisations) {
+    const comptabilisationsBody = document.getElementById('comptabilisationsBody');
+    comptabilisationsBody.innerHTML = '';
+
+    // Aucune comptabilisation trouvée
+    if (comptabilisations.length === 0) {
+        comptabilisationsBody.innerHTML = `
+            <tr>
+                <td colspan="6" class="text-center text-muted py-4">
+                    Aucune comptabilisation trouvée
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    // Créer les lignes pour chaque comptabilisation
+    const rows = comptabilisations.map(compta => {
+        return `
+            <tr>
+                <td>${compta.numeroBC || '-'}</td>
+                <td>${formatDate(compta.dateComptabilisation)}</td>
+                <td>${formatDate(compta.dateTransmission)}</td>
+                <td>${compta.personneCollectrice || '-'}</td>
+                <td>${compta.commentaire || '-'}</td>
+                <td class="text-center">
+                    ${compta.fichierJoint ? '<i class="fas fa-eye text-primary" title="Voir le fichier"></i>' : 'Non'}
+                </td>
+            </tr>
+        `;
+    }).join('');
+
+    comptabilisationsBody.innerHTML = rows;
+}
+
+// Mettre à jour les contrôles de pagination pour les comptabilisations
+function updatePaginationControlsCompta() {
+    const paginationContainer = document.getElementById('paginationContainerCompta');
+    totalPagesCompta = Math.ceil(filteredComptabilisations.length / rowsPerPageCompta);
+
+    if (totalPagesCompta <= 1) {
+        paginationContainer.innerHTML = '';
+        return;
+    }
+
+    // Créer les contrôles de pagination
+    let paginationHTML = `
+        <nav aria-label="Navigation des pages de comptabilisations">
+            <ul class="pagination justify-content-center">
+                <li class="page-item ${currentPageCompta === 1 ? 'disabled' : ''}">
+                    <a class="page-link" href="#" data-page="prev" aria-label="Précédent">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+    `;
+
+    // Afficher les numéros de page
+    let startPage = Math.max(1, currentPageCompta - 2);
+    let endPage = Math.min(totalPagesCompta, startPage + 4);
+
+    if (endPage - startPage < 4) {
+        startPage = Math.max(1, endPage - 4);
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+        paginationHTML += `
+            <li class="page-item ${i === currentPageCompta ? 'active' : ''}">
+                <a class="page-link" href="#" data-page="${i}">${i}</a>
+            </li>
+        `;
+    }
+
+    paginationHTML += `
+                <li class="page-item ${currentPageCompta === totalPagesCompta ? 'disabled' : ''}">
+                    <a class="page-link" href="#" data-page="next" aria-label="Suivant">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        <div class="text-center text-muted">
+            <small>Affichage de ${(currentPageCompta - 1) * rowsPerPageCompta + 1} à ${Math.min(currentPageCompta * rowsPerPageCompta, filteredComptabilisations.length)} sur ${filteredComptabilisations.length} comptabilisations</small>
+        </div>
+    `;
+
+    paginationContainer.innerHTML = paginationHTML;
+
+    // Ajouter les gestionnaires d'événements pour la pagination
+    document.querySelectorAll('#paginationContainerCompta .pagination .page-link').forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const page = this.getAttribute('data-page');
+
+            if (page === 'prev') {
+                if (currentPageCompta > 1) currentPageCompta--;
+            } else if (page === 'next') {
+                if (currentPageCompta < totalPagesCompta) currentPageCompta++;
+            } else {
+                currentPageCompta = parseInt(page);
+            }
+
+            renderComptabilisationsPage();
+        });
+    });
+}
+// Initialisation des écouteurs d'événements
+document.addEventListener('DOMContentLoaded', function() {
+    // Écouteur pour le chargement de l'onglet comptabilité
+    document.querySelector('a[href="#comptabilite"]').addEventListener('click', function() {
+        chargerComptabilisationsAvecPagination();
+    });
+
+    // Écouteur pour le filtre de recherche
+    document.getElementById('searchInputCompta').addEventListener('input', filterComptabilisations);
+    document.getElementById('dateExacteFilterCompta').addEventListener('change', filterComptabilisations);
+    document.getElementById('typeDateFilterCompta').addEventListener('change', filterComptabilisations);
+
+    // Écouteur pour le bouton de réinitialisation des filtres
+    document.getElementById('resetFiltersCompta').addEventListener('click', function() {
+        document.getElementById('searchInputCompta').value = '';
+        document.getElementById('dateExacteFilterCompta').value = '';
+        document.getElementById('typeDateFilterCompta').value = 'dateComptabilisation';
+        filterComptabilisations();
+    });
+
+    // Écouteurs pour le tri des colonnes
+    document.querySelectorAll('#tableComptabilisations th.sortable').forEach(header => {
+        header.addEventListener('click', function() {
+            const column = this.getAttribute('data-sort');
+            const currentDirection = currentSortCompta.column === column ? currentSortCompta.direction : 'desc';
+            const newDirection = currentDirection === 'asc' ? 'desc' : 'asc';
+            sortComptabilisations(column, newDirection);
+            updateSortIconsCompta(column, newDirection);
+            renderComptabilisationsPage();
+        });
+    });
+
+    // Charger les comptabilisations si l'onglet comptabilité est actif par défaut
+    if (document.querySelector('.tab-pane.fade.active.show#comptabilite')) {
+        chargerComptabilisationsAvecPagination();
+    }
+});

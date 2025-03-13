@@ -1,5 +1,6 @@
 package org.example.controller;
 
+import jakarta.annotation.Resource;
 import org.example.model.Commande;
 import org.example.model.Comptabilisation;
 import org.example.model.Utilisateur;
@@ -8,6 +9,8 @@ import org.example.service.ComptabilisationService;
 import org.example.service.UtilisateurService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.UrlResource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -16,10 +19,12 @@ import org.springframework.web.multipart.MultipartFile;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/comptabilisations")
@@ -109,4 +114,69 @@ public class ComptabilisationController {
                             "Veuillez réessayer ultérieurement ou contacter le support technique si le problème persiste.");
         }
     }
+
+
+    /**
+     * Récupérer toutes les comptabilisations avec état validé
+     */
+    @GetMapping
+    public ResponseEntity<?> getAllComptabilisations(
+            @RequestHeader(value = "Authorization", required = false) String email) {
+        try {
+            // Log pour déboguer
+            System.out.println("Tentative d'accès aux comptabilisations validées - Email: " +
+                    (email != null ? email : "non fourni"));
+
+            // Vérifier l'authentification de l'utilisateur
+            if (email == null || email.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Utilisateur non authentifié: email manquant");
+            }
+
+            Utilisateur utilisateur = utilisateurService.findByEmail(email);
+            if (utilisateur == null) {
+                // Log pour déboguer
+                System.out.println("Utilisateur non trouvé pour l'email: " + email);
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Utilisateur non authentifié: utilisateur non trouvé");
+            }
+
+            // Vérifier si l'utilisateur est un comptable
+            boolean isComptable = comptabilisationService.isComptable(utilisateur);
+            System.out.println("Utilisateur " + email + " est comptable: " + isComptable);
+
+
+            // Récupérer les comptabilisations validées
+            List<Comptabilisation> comptabilisations = comptabilisationService.getComptabilisationsValidees();
+
+            // Log pour déboguer
+            System.out.println("Nombre de comptabilisations validées trouvées: " + comptabilisations.size());
+
+            // Transformer les comptabilisations en DTO pour l'affichage frontend
+            List<Map<String, Object>> result = comptabilisations.stream().map(c -> {
+                Map<String, Object> comptaMap = new HashMap<>();
+                comptaMap.put("id", c.getIdComptabilisation());
+                comptaMap.put("dateComptabilisation", c.getDateComptabilisation());
+                comptaMap.put("dateTransmission", c.getDateTransmission());
+                comptaMap.put("personneCollectrice", c.getPersonnesCollectrice());
+                comptaMap.put("commentaire", c.getCommentaire());
+                comptaMap.put("etat", c.getEtat());
+                comptaMap.put("fichierJoint", c.getFichierJoint() != null && !c.getFichierJoint().isEmpty());
+                comptaMap.put("numeroBC", c.getCommande() != null ? c.getCommande().getNumeroBC() : null);
+                return comptaMap;
+            }).collect(Collectors.toList());
+
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            // Log plus détaillé de l'erreur
+            System.err.println("Erreur lors de la récupération des comptabilisations: " + e.getMessage());
+            e.printStackTrace();
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Erreur lors de la récupération des comptabilisations: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Télécharger un fichier joint
+     */
+
 }

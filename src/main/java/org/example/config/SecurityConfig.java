@@ -29,9 +29,7 @@ public class SecurityConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
-                .allowedOrigins("http://127.0.0.1:8080", "http://localhost:8080",
-                        // Ajoutez ici votre domaine de production
-                        "https://votredomaine.com")
+                .allowedOrigins("http://127.0.0.1:8080", "http://localhost:8080")
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
                 .allowCredentials(true)
