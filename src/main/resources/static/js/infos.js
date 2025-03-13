@@ -391,7 +391,7 @@ let currentSortCompta = {
     direction: 'desc'
 };
 
-// Fonction pour charger les comptabilisations depuis l'API
+// Charger les comptabilisations depuis l'API
 async function chargerComptabilisationsAvecPagination() {
     // Afficher l'indicateur de chargement
     const comptabilisationsBody = document.getElementById('comptabilisationsBody');
@@ -452,6 +452,39 @@ async function chargerComptabilisationsAvecPagination() {
 
         // Mettre à jour les icônes de tri
         updateSortIconsCompta(currentSortCompta.column, currentSortCompta.direction);
+
+        // Configuration des écouteurs d'événements pour la recherche et le filtrage
+        // Utilisation de debounce pour la recherche, comme pour les commandes
+        document.getElementById('searchInputCompta').addEventListener('input', _.debounce(filterComptabilisations, 300));
+        document.getElementById('dateExacteFilterCompta').addEventListener('change', filterComptabilisations);
+        document.getElementById('typeDateFilterCompta').addEventListener('change', filterComptabilisations);
+
+        // Réinitialiser les filtres
+        document.getElementById('resetFiltersCompta').addEventListener('click', () => {
+            document.getElementById('searchInputCompta').value = '';
+            document.getElementById('dateExacteFilterCompta').value = '';
+            document.getElementById('typeDateFilterCompta').value = 'dateComptabilisation';
+
+            filteredComptabilisations = [...allComptabilisations];
+            currentPageCompta = 1;
+            sortComptabilisations('dateComptabilisation', 'desc');
+            updateSortIconsCompta('dateComptabilisation', 'desc');
+            renderComptabilisationsPage();
+        });
+
+        // Ajouter le tri par en-tête de colonne
+        document.querySelectorAll('#tableComptabilisations th.sortable').forEach(header => {
+            header.addEventListener('click', function() {
+                const column = this.getAttribute('data-sort');
+                // Inverser la direction si on clique sur la même colonne
+                const direction = (column === currentSortCompta.column && currentSortCompta.direction === 'desc') ? 'asc' : 'desc';
+
+                sortComptabilisations(column, direction);
+                updateSortIconsCompta(column, direction);
+                renderComptabilisationsPage();
+            });
+        });
+
     } catch (error) {
         console.error('Erreur lors du chargement des comptabilisations:', error);
         const comptabilisationsBody = document.getElementById('comptabilisationsBody');
@@ -466,18 +499,19 @@ async function chargerComptabilisationsAvecPagination() {
     }
 }
 
-
 // Filtrage des comptabilisations
 function filterComptabilisations() {
     const searchTerm = document.getElementById('searchInputCompta').value.toLowerCase();
     const dateExacte = document.getElementById('dateExacteFilterCompta').value;
     const typeDate = document.getElementById('typeDateFilterCompta').value;
 
+    console.log(`Filtrage des comptabilisations - searchTerm: ${searchTerm}, dateExacte: ${dateExacte}, typeDate: ${typeDate}`);
+
     filteredComptabilisations = allComptabilisations.filter(compta => {
-        // Recherche texte
-        const searchMatch = searchTerm ? Object.values(compta).some(value =>
-            value && String(value).toLowerCase().includes(searchTerm)
-        ) : true;
+        // Recherche texte - vérifier chaque propriété pour le texte de recherche
+        const searchMatch = searchTerm ? Object.values(compta).some(value => {
+            return value && String(value).toLowerCase().includes(searchTerm);
+        }) : true;
 
         // Filtrage par date exacte
         let dateMatch = true;
@@ -487,6 +521,8 @@ function filterComptabilisations() {
             const dateComptaFormatted = dateCompta.toISOString().split('T')[0];
             dateMatch = dateComptaFormatted === dateExacte;
         }
+
+        console.log(`Comptabilisation ${compta.numeroBC} - searchMatch: ${searchMatch}, dateMatch: ${dateMatch}`);
 
         return searchMatch && dateMatch;
     });
@@ -498,10 +534,32 @@ function filterComptabilisations() {
     currentPageCompta = 1;
     totalPagesCompta = Math.ceil(filteredComptabilisations.length / rowsPerPageCompta);
 
+    console.log(`Résultat du filtrage: ${filteredComptabilisations.length} comptabilisations trouvées`);
+
     // Affiche les résultats
     renderComptabilisationsPage();
 }
 
+// Initialisation des écouteurs d'événements pour l'onglet comptabilité
+document.addEventListener('DOMContentLoaded', function() {
+    // Écouteur pour le chargement de l'onglet comptabilité
+    document.querySelectorAll('button[data-bs-toggle="tab"]').forEach(function(button) {
+        button.addEventListener('shown.bs.tab', function(event) {
+            const targetId = event.target.getAttribute('data-bs-target');
+
+            // Si l'onglet comptabilité est activé
+            if (targetId === '#comptabilite') {
+                console.log("Onglet comptabilité activé, chargement des données...");
+                chargerComptabilisationsAvecPagination();
+            }
+        });
+    });
+
+    // Charger les comptabilisations si l'onglet comptabilité est actif par défaut
+    if (document.querySelector('.tab-pane.fade.active.show#comptabilite')) {
+        chargerComptabilisationsAvecPagination();
+    }
+});
 // Trier les comptabilisations
 function sortComptabilisations(column, direction) {
     currentSortCompta.column = column;
@@ -583,7 +641,7 @@ function renderComptabilisations(comptabilisations) {
                 <td>${compta.personneCollectrice || '-'}</td>
                 <td>${compta.commentaire || '-'}</td>
                 <td class="text-center">
-                    ${compta.fichierJoint ? '<i class="fas fa-eye text-primary" title="Voir le fichier"></i>' : 'Non'}
+                    ${compta.fichierJoint ? '<i class="fas fa-eye text-primary" title="Voir le fichier"></i>' : '-'}
                 </td>
             </tr>
         `;
@@ -662,40 +720,3 @@ function updatePaginationControlsCompta() {
         });
     });
 }
-// Initialisation des écouteurs d'événements
-document.addEventListener('DOMContentLoaded', function() {
-    // Écouteur pour le chargement de l'onglet comptabilité
-    document.querySelector('a[href="#comptabilite"]').addEventListener('click', function() {
-        chargerComptabilisationsAvecPagination();
-    });
-
-    // Écouteur pour le filtre de recherche
-    document.getElementById('searchInputCompta').addEventListener('input', filterComptabilisations);
-    document.getElementById('dateExacteFilterCompta').addEventListener('change', filterComptabilisations);
-    document.getElementById('typeDateFilterCompta').addEventListener('change', filterComptabilisations);
-
-    // Écouteur pour le bouton de réinitialisation des filtres
-    document.getElementById('resetFiltersCompta').addEventListener('click', function() {
-        document.getElementById('searchInputCompta').value = '';
-        document.getElementById('dateExacteFilterCompta').value = '';
-        document.getElementById('typeDateFilterCompta').value = 'dateComptabilisation';
-        filterComptabilisations();
-    });
-
-    // Écouteurs pour le tri des colonnes
-    document.querySelectorAll('#tableComptabilisations th.sortable').forEach(header => {
-        header.addEventListener('click', function() {
-            const column = this.getAttribute('data-sort');
-            const currentDirection = currentSortCompta.column === column ? currentSortCompta.direction : 'desc';
-            const newDirection = currentDirection === 'asc' ? 'desc' : 'asc';
-            sortComptabilisations(column, newDirection);
-            updateSortIconsCompta(column, newDirection);
-            renderComptabilisationsPage();
-        });
-    });
-
-    // Charger les comptabilisations si l'onglet comptabilité est actif par défaut
-    if (document.querySelector('.tab-pane.fade.active.show#comptabilite')) {
-        chargerComptabilisationsAvecPagination();
-    }
-});
