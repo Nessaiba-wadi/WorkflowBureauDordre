@@ -13,6 +13,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 @Service
 public class CommandeService {
@@ -41,4 +42,7 @@ public class CommandeService {
         return commandeRepository.save(commande);
     }
 
+    public Optional<Commande> findById(int commandeId) {
+        return commandeRepository.findById(commandeId);
+    }
 }
