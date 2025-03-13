@@ -787,12 +787,13 @@ let currentSortTresorerie = {
 };
 
 // Charger les règlements depuis l'API
+// Modification dans la fonction chargerReglementsAvecPagination
 async function chargerReglementsAvecPagination() {
     // Afficher l'indicateur de chargement
     const reglementsBody = document.getElementById('reglementsBody');
     reglementsBody.innerHTML = `
         <tr id="loadingRowTresorerie">
-            <td colspan="8" class="text-center">
+            <td colspan="7" class="text-center">
                 <div class="spinner-border text-primary" role="status">
                     <span class="visually-hidden">Chargement...</span>
                 </div>
@@ -825,7 +826,13 @@ async function chargerReglementsAvecPagination() {
         }
 
         // Stocker tous les règlements
-        allReglements = await response.json();
+        const allReglementsData = await response.json();
+
+        // Filtrer pour ne garder que les règlements validés
+        allReglements = allReglementsData.filter(reglement =>
+            reglement.etatEnCoursValideEtc &&
+            reglement.etatEnCoursValideEtc.toLowerCase() === 'validé'
+        );
 
         // Supprimer l'indicateur de chargement
         const loadingRow = document.getElementById('loadingRowTresorerie');
@@ -833,7 +840,7 @@ async function chargerReglementsAvecPagination() {
             loadingRow.remove();
         }
 
-        // Initialiser les règlements filtrés avec tous les règlements
+        // Initialiser les règlements filtrés avec tous les règlements validés
         filteredReglements = [...allReglements];
 
         // Calculer le nombre total de pages
@@ -859,7 +866,7 @@ async function chargerReglementsAvecPagination() {
             document.getElementById('dateExacteFilterTresorerie').value = '';
             document.getElementById('typeDateFilterTresorerie').value = 'datePreparation';
 
-            filteredReglements = [...allReglements];
+            filteredReglements = [...allReglements]; // Toujours uniquement les validés
             currentPageTresorerie = 1;
             sortReglements('datePreparation', 'desc');
             updateSortIconsTresorerie('datePreparation', 'desc');
@@ -884,7 +891,7 @@ async function chargerReglementsAvecPagination() {
         const reglementsBody = document.getElementById('reglementsBody');
         reglementsBody.innerHTML = `
             <tr>
-                <td colspan="8" class="text-center text-danger py-4">
+                <td colspan="7" class="text-center text-danger py-4">
                     <i class="fas fa-exclamation-triangle me-2"></i>
                     Erreur: ${error.message}
                 </td>
@@ -893,7 +900,7 @@ async function chargerReglementsAvecPagination() {
     }
 }
 
-// Filtrage des règlements
+// la fonction filterReglements
 function filterReglements() {
     const searchTerm = document.getElementById('searchInputTresorerie').value.toLowerCase();
     const dateExacte = document.getElementById('dateExacteFilterTresorerie').value;
@@ -901,6 +908,7 @@ function filterReglements() {
 
     console.log(`Filtrage des règlements - searchTerm: ${searchTerm}, dateExacte: ${dateExacte}, typeDate: ${typeDate}`);
 
+    // Pas besoin de filtrer sur l'état car allReglements ne contient déjà que les validés
     filteredReglements = allReglements.filter(reglement => {
         // Recherche texte - vérifier chaque propriété pour le texte de recherche
         const searchMatch = searchTerm ? Object.values(reglement).some(value => {
@@ -1016,7 +1024,7 @@ function renderReglements(reglements) {
     if (reglements.length === 0) {
         reglementsBody.innerHTML = `
             <tr>
-                <td colspan="8" class="text-center text-muted py-4">
+                <td colspan="7" class="text-center text-muted py-4">
                     Aucun règlement trouvé
                 </td>
             </tr>
@@ -1037,7 +1045,6 @@ function renderReglements(reglements) {
                 <td>${reglement.numeroCheque || '-'}</td>
                 <td>${formatDate(reglement.dateTransmission)}</td>
                 <td>${reglement.commentaire || '-'}</td>
-                <td>${reglement.etatEnCoursValideEtc || '-'}</td>
                 <td class="text-center">${reglement.fichierJoint ?
             `<a href="#" onclick="voirFichierReglement(${reglement.idReglement}); return false;" class="btn btn-sm btn-outline-primary">
                         <i class="fas fa-eye"></i>
@@ -1049,7 +1056,6 @@ function renderReglements(reglements) {
 
     reglementsBody.innerHTML = rows;
 }
-
 // Fonction pour voir le fichier joint d'un règlement
 window.voirFichierReglement = function(idReglement) {
     try {
