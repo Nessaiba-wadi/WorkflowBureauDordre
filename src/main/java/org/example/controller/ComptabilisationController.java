@@ -1,6 +1,6 @@
 package org.example.controller;
+import org.springframework.core.io.Resource;
 
-import jakarta.annotation.Resource;
 import org.example.model.Commande;
 import org.example.model.Comptabilisation;
 import org.example.model.Utilisateur;
@@ -176,7 +176,80 @@ public class ComptabilisationController {
     }
 
     /**
-     * Télécharger un fichier joint
+     * Télécharger un fichier joint à une comptabilisation
      */
+    @GetMapping("/fichier/{id}")
+    public ResponseEntity<?> getFichierComptabilisation(
+            @PathVariable("id") Integer id,
+            @RequestHeader("Authorization") String emailUtilisateur) {
+        try {
+            // Récupérer l'utilisateur et vérifier son autorisation
+            Utilisateur utilisateur = utilisateurService.findByEmail(emailUtilisateur);
+            if (utilisateur == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("message", "Utilisateur non authentifié"));
+            }
 
+            // Récupérer la comptabilisation
+            Optional<Comptabilisation> comptabilisationOpt = comptabilisationRepository.findById(id);
+            if (!comptabilisationOpt.isPresent()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("message", "Comptabilisation non trouvée"));
+            }
+
+            Comptabilisation comptabilisation = comptabilisationOpt.get();
+
+            // Vérifier si un fichier existe
+            if (comptabilisation.getFichierJoint() == null || comptabilisation.getFichierJoint().isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("message", "Aucun fichier joint à cette comptabilisation"));
+            }
+
+            // Construire le chemin du fichier en incluant le sous-dossier "Comptable"
+            Path cheminFichier = Paths.get(uploadDir).resolve("Comptable").resolve(comptabilisation.getFichierJoint()).normalize();
+
+            // Vérifier si le fichier existe physiquement
+            if (!Files.exists(cheminFichier)) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("message", "Fichier non trouvé sur le serveur"));
+            }
+
+            // Déterminer le type de contenu
+            String contentType = Files.probeContentType(cheminFichier);
+            if (contentType == null) {
+                // Déterminer le type en fonction de l'extension
+                String nomFichier = comptabilisation.getFichierJoint();
+                if (nomFichier.endsWith(".pdf")) {
+                    contentType = "application/pdf";
+                } else if (nomFichier.endsWith(".doc")) {
+                    contentType = "application/msword";
+                } else if (nomFichier.endsWith(".docx")) {
+                    contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+                } else {
+                    contentType = "application/octet-stream";
+                }
+            }
+
+            // Préparer la ressource à retourner
+            Resource resource = new UrlResource(cheminFichier.toUri());
+
+            // Utiliser un nom de fichier sécurisé pour le téléchargement
+            String originalExtension = "";
+            if (comptabilisation.getFichierJoint().contains(".")) {
+                originalExtension = comptabilisation.getFichierJoint().substring(comptabilisation.getFichierJoint().lastIndexOf("."));
+            }
+            String securisedFileName = "comptabilisation_" + id + originalExtension;
+
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType(contentType))
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + securisedFileName + "\"")
+                    .body(resource);
+
+        } catch (Exception e) {
+            System.err.println("Erreur lors de la récupération du fichier de comptabilisation: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "Erreur lors de la récupération du fichier: " + e.getMessage()));
+        }
+    }
 }

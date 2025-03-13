@@ -640,8 +640,10 @@ function renderComptabilisations(comptabilisations) {
                 <td>${formatDate(compta.dateTransmission)}</td>
                 <td>${compta.personneCollectrice || '-'}</td>
                 <td>${compta.commentaire || '-'}</td>
-                <td class="text-center">
-                    ${compta.fichierJoint ? '<i class="fas fa-eye text-primary" title="Voir le fichier"></i>' : '-'}
+                <td class="text-center">${compta.fichierJoint ?
+                    `<a href="#" onclick="voirFichierComptabilisation(${compta.id}); return false;" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-eye"></i>
+                    </a>` : '-'}
                 </td>
             </tr>
         `;
@@ -649,6 +651,55 @@ function renderComptabilisations(comptabilisations) {
 
     comptabilisationsBody.innerHTML = rows;
 }
+
+// Fonction pour voir le fichier joint d'une comptabilisation
+window.voirFichierComptabilisation = function(idComptabilisation) {
+    try {
+        // Récupérer les informations de l'utilisateur connecté
+        const userInfo = JSON.parse(sessionStorage.getItem('userInfo'));
+        if (!userInfo || !userInfo.email) {
+            showToast('Utilisateur non authentifié', 'danger');
+            throw new Error('Utilisateur non authentifié');
+        }
+
+        // Créer une requête au lieu d'ouvrir directement l'URL
+        const url = `http://localhost:8082/comptabilisations/fichier/${idComptabilisation}`;
+
+        // Créer un élément iframe caché pour afficher le PDF
+        const iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+        document.body.appendChild(iframe);
+
+        // Créer une requête fetch avec le header d'autorisation
+        fetch(url, {
+            method: 'GET',
+            headers: {
+                'Authorization': userInfo.email
+            }
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Erreur lors de la récupération du fichier: ' + response.status);
+                }
+                return response.blob();
+            })
+            .then(blob => {
+                // Créer une URL pour le blob et l'ouvrir dans un nouvel onglet
+                const fileURL = URL.createObjectURL(blob);
+                window.open(fileURL, '_blank');
+                // Nettoyer
+                document.body.removeChild(iframe);
+            })
+            .catch(error => {
+                document.body.removeChild(iframe);
+                console.error('Erreur lors de l\'ouverture du fichier:', error);
+                showToast(error.message || "Une erreur est survenue", 'danger');
+            });
+    } catch (error) {
+        console.error('Erreur lors de l\'ouverture du fichier:', error);
+        showToast(error.message || "Une erreur est survenue", 'danger');
+    }
+};
 
 // Mettre à jour les contrôles de pagination pour les comptabilisations
 function updatePaginationControlsCompta() {
