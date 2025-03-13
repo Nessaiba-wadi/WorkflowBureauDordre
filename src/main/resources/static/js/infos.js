@@ -771,3 +771,416 @@ function updatePaginationControlsCompta() {
         });
     });
 }
+
+/**
+ * Partie Trésorerie - Règlements
+ */
+// Variables globales pour la gestion de la pagination et du tri des règlements
+let allReglements = [];
+let filteredReglements = [];
+let currentPageTresorerie = 1;
+const rowsPerPageTresorerie = 10;
+let totalPagesTresorerie = 0;
+let currentSortTresorerie = {
+    column: 'datePreparation',
+    direction: 'desc'
+};
+
+// Charger les règlements depuis l'API
+async function chargerReglementsAvecPagination() {
+    // Afficher l'indicateur de chargement
+    const reglementsBody = document.getElementById('reglementsBody');
+    reglementsBody.innerHTML = `
+        <tr id="loadingRowTresorerie">
+            <td colspan="8" class="text-center">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Chargement...</span>
+                </div>
+                <p>Chargement des règlements...</p>
+            </td>
+        </tr>
+    `;
+    try {
+        // Vérifier l'authentification
+        const userInfo = JSON.parse(sessionStorage.getItem('userInfo'));
+        if (!userInfo || !userInfo.email) {
+            throw new Error('Utilisateur non authentifié');
+        }
+
+        console.log("Récupération des règlements avec email:", userInfo.email);
+
+        // Utiliser l'endpoint pour les règlements
+        const response = await fetch('http://localhost:8082/api/reglements', {
+            method: 'GET',
+            headers: {
+                'Authorization': userInfo.email,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error("Erreur de réponse:", response.status, errorText);
+            throw new Error(`Erreur ${response.status}: ${errorText || response.statusText}`);
+        }
+
+        // Stocker tous les règlements
+        allReglements = await response.json();
+
+        // Supprimer l'indicateur de chargement
+        const loadingRow = document.getElementById('loadingRowTresorerie');
+        if (loadingRow) {
+            loadingRow.remove();
+        }
+
+        // Initialiser les règlements filtrés avec tous les règlements
+        filteredReglements = [...allReglements];
+
+        // Calculer le nombre total de pages
+        totalPagesTresorerie = Math.ceil(filteredReglements.length / rowsPerPageTresorerie);
+
+        // Trier les données selon le tri par défaut
+        sortReglements(currentSortTresorerie.column, currentSortTresorerie.direction);
+
+        // Mettre à jour l'interface utilisateur
+        renderReglementsPage();
+
+        // Mettre à jour les icônes de tri
+        updateSortIconsTresorerie(currentSortTresorerie.column, currentSortTresorerie.direction);
+
+        // Configuration des écouteurs d'événements pour la recherche et le filtrage
+        document.getElementById('searchInputTresorerie').addEventListener('input', _.debounce(filterReglements, 300));
+        document.getElementById('dateExacteFilterTresorerie').addEventListener('change', filterReglements);
+        document.getElementById('typeDateFilterTresorerie').addEventListener('change', filterReglements);
+
+        // Réinitialiser les filtres
+        document.getElementById('resetFiltersTresorerie').addEventListener('click', () => {
+            document.getElementById('searchInputTresorerie').value = '';
+            document.getElementById('dateExacteFilterTresorerie').value = '';
+            document.getElementById('typeDateFilterTresorerie').value = 'datePreparation';
+
+            filteredReglements = [...allReglements];
+            currentPageTresorerie = 1;
+            sortReglements('datePreparation', 'desc');
+            updateSortIconsTresorerie('datePreparation', 'desc');
+            renderReglementsPage();
+        });
+
+        // Ajouter le tri par en-tête de colonne
+        document.querySelectorAll('#tableReglements th.sortable').forEach(header => {
+            header.addEventListener('click', function() {
+                const column = this.getAttribute('data-sort');
+                // Inverser la direction si on clique sur la même colonne
+                const direction = (column === currentSortTresorerie.column && currentSortTresorerie.direction === 'desc') ? 'asc' : 'desc';
+
+                sortReglements(column, direction);
+                updateSortIconsTresorerie(column, direction);
+                renderReglementsPage();
+            });
+        });
+
+    } catch (error) {
+        console.error('Erreur lors du chargement des règlements:', error);
+        const reglementsBody = document.getElementById('reglementsBody');
+        reglementsBody.innerHTML = `
+            <tr>
+                <td colspan="8" class="text-center text-danger py-4">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Erreur: ${error.message}
+                </td>
+            </tr>
+        `;
+    }
+}
+
+// Filtrage des règlements
+function filterReglements() {
+    const searchTerm = document.getElementById('searchInputTresorerie').value.toLowerCase();
+    const dateExacte = document.getElementById('dateExacteFilterTresorerie').value;
+    const typeDate = document.getElementById('typeDateFilterTresorerie').value;
+
+    console.log(`Filtrage des règlements - searchTerm: ${searchTerm}, dateExacte: ${dateExacte}, typeDate: ${typeDate}`);
+
+    filteredReglements = allReglements.filter(reglement => {
+        // Recherche texte - vérifier chaque propriété pour le texte de recherche
+        const searchMatch = searchTerm ? Object.values(reglement).some(value => {
+            return value && String(value).toLowerCase().includes(searchTerm);
+        }) : true;
+
+        // Filtrage par date exacte
+        let dateMatch = true;
+        if (dateExacte && reglement[typeDate]) {
+            const dateReglement = new Date(reglement[typeDate]);
+            // Formater la date sans l'heure pour une comparaison exacte par jour
+            const dateReglementFormatted = dateReglement.toISOString().split('T')[0];
+            dateMatch = dateReglementFormatted === dateExacte;
+        }
+
+        return searchMatch && dateMatch;
+    });
+
+    // Trier les règlements selon les critères actuels
+    sortReglements(currentSortTresorerie.column, currentSortTresorerie.direction);
+
+    // Réinitialise la pagination
+    currentPageTresorerie = 1;
+    totalPagesTresorerie = Math.ceil(filteredReglements.length / rowsPerPageTresorerie);
+
+    console.log(`Résultat du filtrage: ${filteredReglements.length} règlements trouvés`);
+
+    // Affiche les résultats
+    renderReglementsPage();
+}
+
+// Initialisation des écouteurs d'événements pour l'onglet trésorerie
+document.addEventListener('DOMContentLoaded', function() {
+    // Écouteur pour le chargement de l'onglet trésorerie
+    document.querySelectorAll('button[data-bs-toggle="tab"]').forEach(function(button) {
+        button.addEventListener('shown.bs.tab', function(event) {
+            const targetId = event.target.getAttribute('data-bs-target');
+
+            // Si l'onglet trésorerie est activé
+            if (targetId === '#tresorerie') {
+                console.log("Onglet trésorerie activé, chargement des données...");
+                chargerReglementsAvecPagination();
+            }
+        });
+    });
+
+    // Charger les règlements si l'onglet trésorerie est actif par défaut
+    if (document.querySelector('.tab-pane.fade.active.show#tresorerie')) {
+        chargerReglementsAvecPagination();
+    }
+});
+
+// Trier les règlements
+function sortReglements(column, direction) {
+    currentSortTresorerie.column = column;
+    currentSortTresorerie.direction = direction;
+
+    // Tri par comparaison selon le type de donnée
+    filteredReglements.sort((a, b) => {
+        let valA = a[column];
+        let valB = b[column];
+
+        // Traitement selon le type de données
+        if (column.includes('date')) {
+            valA = valA ? new Date(valA).getTime() : 0;
+            valB = valB ? new Date(valB).getTime() : 0;
+        } else if (typeof valA === 'boolean') {
+            // Pas de conversion pour les booléens
+        } else {
+            valA = valA ? String(valA).toLowerCase() : '';
+            valB = valB ? String(valB).toLowerCase() : '';
+        }
+
+        // Applique la direction du tri
+        if (direction === 'asc') {
+            return valA > valB ? 1 : valA < valB ? -1 : 0;
+        } else {
+            return valA < valB ? 1 : valA > valB ? -1 : 0;
+        }
+    });
+}
+
+// Mettre à jour les icônes de tri pour les règlements
+function updateSortIconsTresorerie(column, direction) {
+    // Réinitialiser toutes les icônes
+    document.querySelectorAll('#tableReglements th.sortable i').forEach(icon => {
+        icon.className = 'fas fa-sort';
+    });
+
+    // Mettre à jour l'icône pour la colonne triée
+    const headerCell = document.querySelector(`#tableReglements th[data-sort="${column}"] i`);
+    if (headerCell) {
+        headerCell.className = direction === 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down';
+    }
+}
+
+// Affiche les règlements de la page courante
+function renderReglementsPage() {
+    const startIndex = (currentPageTresorerie - 1) * rowsPerPageTresorerie;
+    const endIndex = startIndex + rowsPerPageTresorerie;
+    const currentPageReglements = filteredReglements.slice(startIndex, endIndex);
+
+    renderReglements(currentPageReglements);
+    updatePaginationControlsTresorerie();
+}
+
+// Générer le contenu du tableau des règlements
+function renderReglements(reglements) {
+    const reglementsBody = document.getElementById('reglementsBody');
+    reglementsBody.innerHTML = '';
+
+    // Aucun règlement trouvé
+    if (reglements.length === 0) {
+        reglementsBody.innerHTML = `
+            <tr>
+                <td colspan="8" class="text-center text-muted py-4">
+                    Aucun règlement trouvé
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    // Créer les lignes pour chaque règlement
+    const rows = reglements.map(reglement => {
+        // Récupérer le numéro de BC à partir de la commande
+        const numeroBC = reglement.commande && reglement.commande.numeroBC ? reglement.commande.numeroBC : '-';
+
+        return `
+            <tr>
+                <td>${numeroBC}</td>
+                <td>${formatDate(reglement.datePreparation)}</td>
+                <td>${reglement.modeReglement || '-'}</td>
+                <td>${reglement.numeroCheque || '-'}</td>
+                <td>${formatDate(reglement.dateTransmission)}</td>
+                <td>${reglement.commentaire || '-'}</td>
+                <td>${reglement.etatEnCoursValideEtc || '-'}</td>
+                <td class="text-center">${reglement.fichierJoint ?
+            `<a href="#" onclick="voirFichierReglement(${reglement.idReglement}); return false;" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-eye"></i>
+                    </a>` : '-'}
+                </td>
+            </tr>
+        `;
+    }).join('');
+
+    reglementsBody.innerHTML = rows;
+}
+
+// Fonction pour voir le fichier joint d'un règlement
+window.voirFichierReglement = function(idReglement) {
+    try {
+        // Récupérer les informations de l'utilisateur connecté
+        const userInfo = JSON.parse(sessionStorage.getItem('userInfo'));
+        if (!userInfo || !userInfo.email) {
+            showToast('Utilisateur non authentifié', 'danger');
+            throw new Error('Utilisateur non authentifié');
+        }
+
+        // URL pour récupérer le fichier
+        const url = `http://localhost:8082/api/reglements/fichier/${idReglement}`;
+
+        // Créer un élément iframe caché pour afficher le PDF
+        const iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+        document.body.appendChild(iframe);
+
+        // Créer une requête fetch avec le header d'autorisation
+        fetch(url, {
+            method: 'GET',
+            headers: {
+                'Authorization': userInfo.email
+            }
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Erreur lors de la récupération du fichier: ' + response.status);
+                }
+                return response.blob();
+            })
+            .then(blob => {
+                // Créer une URL pour le blob et l'ouvrir dans un nouvel onglet
+                const fileURL = URL.createObjectURL(blob);
+                window.open(fileURL, '_blank');
+                // Nettoyer
+                document.body.removeChild(iframe);
+            })
+            .catch(error => {
+                document.body.removeChild(iframe);
+                console.error('Erreur lors de l\'ouverture du fichier:', error);
+                showToast(error.message || "Une erreur est survenue", 'danger');
+            });
+    } catch (error) {
+        console.error('Erreur lors de l\'ouverture du fichier:', error);
+        showToast(error.message || "Une erreur est survenue", 'danger');
+    }
+};
+
+// Mettre à jour les contrôles de pagination pour les règlements
+function updatePaginationControlsTresorerie() {
+    const paginationContainer = document.getElementById('paginationContainerTresorerie');
+    totalPagesTresorerie = Math.ceil(filteredReglements.length / rowsPerPageTresorerie);
+
+    if (totalPagesTresorerie <= 1) {
+        paginationContainer.innerHTML = '';
+        return;
+    }
+
+    // Créer les contrôles de pagination
+    let paginationHTML = `
+        <nav aria-label="Navigation des pages de règlements">
+            <ul class="pagination justify-content-center">
+                <li class="page-item ${currentPageTresorerie === 1 ? 'disabled' : ''}">
+                    <a class="page-link" href="#" data-page="prev" aria-label="Précédent">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+    `;
+
+    // Afficher les numéros de page
+    let startPage = Math.max(1, currentPageTresorerie - 2);
+    let endPage = Math.min(totalPagesTresorerie, startPage + 4);
+
+    if (endPage - startPage < 4) {
+        startPage = Math.max(1, endPage - 4);
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+        paginationHTML += `
+            <li class="page-item ${i === currentPageTresorerie ? 'active' : ''}">
+                <a class="page-link" href="#" data-page="${i}">${i}</a>
+            </li>
+        `;
+    }
+
+    paginationHTML += `
+                <li class="page-item ${currentPageTresorerie === totalPagesTresorerie ? 'disabled' : ''}">
+                    <a class="page-link" href="#" data-page="next" aria-label="Suivant">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        <div class="text-center text-muted">
+            <small>Affichage de ${(currentPageTresorerie - 1) * rowsPerPageTresorerie + 1} à ${Math.min(currentPageTresorerie * rowsPerPageTresorerie, filteredReglements.length)} sur ${filteredReglements.length} règlements</small>
+        </div>
+    `;
+
+    paginationContainer.innerHTML = paginationHTML;
+
+    // Ajouter les gestionnaires d'événements pour la pagination
+    document.querySelectorAll('#paginationContainerTresorerie .pagination .page-link').forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const page = this.getAttribute('data-page');
+
+            if (page === 'prev') {
+                if (currentPageTresorerie > 1) currentPageTresorerie--;
+            } else if (page === 'next') {
+                if (currentPageTresorerie < totalPagesTresorerie) currentPageTresorerie++;
+            } else {
+                currentPageTresorerie = parseInt(page);
+            }
+
+            renderReglementsPage();
+        });
+    });
+}
+
+// Assurez-vous que la fonction formatDate existe
+// Si elle n'existe pas déjà dans votre code, ajoutez-la :
+if (typeof formatDate !== 'function') {
+    function formatDate(dateString) {
+        if (!dateString) return '-';
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return '-';
+        return date.toLocaleDateString('fr-FR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        });
+    }
+}

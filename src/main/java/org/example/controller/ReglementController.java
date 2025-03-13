@@ -7,7 +7,11 @@ import org.example.model.Utilisateur;
 import org.example.service.*;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -199,6 +203,116 @@ public class ReglementController {
             log.error("Erreur lors du cryptage du nom de fichier", e);
             // Fallback si l'algorithme de hachage n'est pas disponible
             return nomFichier;
+        }
+    }
+
+
+
+
+    @GetMapping("/details/{id}")
+    public ResponseEntity<?> afficherDetailReglement(@PathVariable int id) {
+        try {
+            Optional<Reglement> reglementOpt = reglementService.getReglementById(id);
+
+            if (reglementOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("message", "Règlement non trouvé avec l'ID: " + id));
+            }
+
+            Reglement reglement = reglementOpt.get();
+
+            // Création d'un DTO pour l'affichage
+            Map<String, Object> reglementDetails = new HashMap<>();
+            reglementDetails.put("idReglement", reglement.getIdReglement());
+            reglementDetails.put("datePreparation", reglement.getDatePreparation());
+            reglementDetails.put("modeReglement", reglement.getModeReglement());
+            reglementDetails.put("numeroCheque", reglement.getNumeroCheque());
+            reglementDetails.put("dateTransmission", reglement.getDateTransmission());
+            reglementDetails.put("commentaire", reglement.getCommentaire());
+            reglementDetails.put("etatEnCoursValideEtc", reglement.getEtatEnCoursValideEtc());
+            reglementDetails.put("fichierJoint", reglement.getFichierJoint());
+
+            // Informations sur la commande associée
+            if (reglement.getCommande() != null) {
+                Map<String, Object> commandeInfo = new HashMap<>();
+                commandeInfo.put("idCommande", reglement.getCommande().getIdCommande());
+                // Ajoutez d'autres détails pertinents de la commande
+                reglementDetails.put("commande", commandeInfo);
+            }
+
+            // Informations sur l'utilisateur associé
+            if (reglement.getUtilisateur() != null) {
+                Map<String, Object> utilisateurInfo = new HashMap<>();
+                utilisateurInfo.put("id", reglement.getUtilisateur().getIdUtilisateur());
+                utilisateurInfo.put("email", reglement.getUtilisateur().getEmail());
+                // Ajoutez d'autres détails pertinents de l'utilisateur
+                reglementDetails.put("utilisateur", utilisateurInfo);
+            }
+
+            return ResponseEntity.ok(reglementDetails);
+
+        } catch (Exception e) {
+            log.error("Erreur lors de la récupération des détails du règlement", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "Erreur lors de la récupération des détails du règlement: " + e.getMessage()));
+        }
+    }
+
+    // Méthode pour télécharger le fichier joint du règlement
+    @GetMapping("/fichier/{id}")
+    public ResponseEntity<?> telechargerFichierReglement(@PathVariable int id) {
+        try {
+            Optional<Reglement> reglementOpt = reglementService.getReglementById(id);
+
+            if (reglementOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("message", "Règlement non trouvé avec l'ID: " + id));
+            }
+
+            Reglement reglement = reglementOpt.get();
+            String nomFichier = reglement.getFichierJoint();
+
+            if (nomFichier == null || nomFichier.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("message", "Aucun fichier joint n'est associé à ce règlement"));
+            }
+
+            // Construire le chemin du fichier
+            Path cheminFichier = Paths.get(uploadDir).toAbsolutePath().normalize().resolve(nomFichier);
+
+            // Vérifier si le fichier existe
+            if (!Files.exists(cheminFichier)) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("message", "Le fichier demandé n'a pas été trouvé"));
+            }
+
+            // Déterminer le type de contenu
+            String contentType = determinerContentType(nomFichier);
+
+            // Préparer la réponse avec le fichier
+            Resource resource = new UrlResource(cheminFichier.toUri());
+
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType(contentType))
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + nomFichier + "\"")
+                    .body(resource);
+
+        } catch (Exception e) {
+            log.error("Erreur lors du téléchargement du fichier de règlement", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "Erreur lors du téléchargement du fichier: " + e.getMessage()));
+        }
+    }
+
+    private String determinerContentType(String nomFichier) {
+        if (nomFichier.toLowerCase().endsWith(".pdf")) {
+            return "application/pdf";
+        } else if (nomFichier.toLowerCase().endsWith(".doc")) {
+            return "application/msword";
+        } else if (nomFichier.toLowerCase().endsWith(".docx")) {
+            return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+        } else {
+            return "application/octet-stream"; // Type par défaut
         }
     }
 }
