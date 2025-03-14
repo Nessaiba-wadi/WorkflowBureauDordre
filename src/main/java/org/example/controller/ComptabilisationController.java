@@ -1,4 +1,5 @@
 package org.example.controller;
+import org.example.repository.CommandeRepository;
 import org.springframework.core.io.Resource;
 
 import org.example.model.Commande;
@@ -38,6 +39,11 @@ public class ComptabilisationController {
 
     @Autowired // Injectez le repository ici
     private ComptabilisationRepository comptabilisationRepository;
+
+
+
+    @Autowired
+    private CommandeRepository commandeRepository;
 
     @Value("${file.upload-dir}")
     private String uploadDir;
@@ -250,6 +256,66 @@ public class ComptabilisationController {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("message", "Erreur lors de la récupération du fichier: " + e.getMessage()));
+        }
+    }
+
+    @GetMapping("/commandes-validees")
+    public ResponseEntity<?> getCommandesValidees(@RequestHeader("Authorization") String emailUtilisateur) {
+        try {
+            // Vérifier si l'utilisateur est autorisé
+            Utilisateur utilisateur = utilisateurService.findByEmail(emailUtilisateur);
+
+            // Récupérer toutes les commandes avec status=true
+            List<Commande> commandes = commandeRepository.findByStatusTrue();
+
+            // Récupérer les comptabilisations avec etat="validé"
+            List<Comptabilisation> comptabilisations = comptabilisationRepository.findByEtat("validé");
+
+            // Créer un Map pour accéder rapidement aux comptabilisations par id de commande
+            Map<Integer, Comptabilisation> comptabilisationMap = new HashMap<>();
+            for (Comptabilisation compta : comptabilisations) {
+                comptabilisationMap.put(compta.getCommande().getIdCommande(), compta);
+            }
+
+            // Transformer les commandes en DTOs enrichis avec les infos de comptabilisation
+            List<Map<String, Object>> result = new ArrayList<>();
+            for (Commande commande : commandes) {
+                Comptabilisation comptabilisation = comptabilisationMap.get(commande.getIdCommande());
+
+                // Création du DTO pour toutes les commandes avec status=true
+                Map<String, Object> dto = new HashMap<>();
+                dto.put("idCommande", commande.getIdCommande());
+                dto.put("dateReception", commande.getDateModification());
+                dto.put("raisonSocialeFournisseur", commande.getRaisonSocialeFournisseur());
+                dto.put("raisonSocialeGBM", commande.getRaisonSocialeGBM());
+                dto.put("numeroBC", commande.getNumeroBC());
+                dto.put("directionGBM", commande.getDirectionGBM());
+                dto.put("souscripteur", commande.getSouscripteur());
+                dto.put("typeDocument", commande.getTypeDocument());
+                dto.put("dateRelanceBR", commande.getDateRelanceBR());
+                dto.put("typeRelance", commande.getTypeRelance());
+                dto.put("dateDossierComplet", commande.isDossierComplet() ? commande.getDateModification() : null);
+
+                // Vérification si la commande est comptabilisée ou non
+                if (comptabilisation != null) {
+                    // La commande a une comptabilisation avec état validé
+                    dto.put("dateTransmission", comptabilisation.getDateTransmission());
+                    dto.put("personnesCollectrice", comptabilisation.getPersonnesCollectrice());
+                    dto.put("comptabilise", true);
+                } else {
+                    // La commande n'a pas de comptabilisation validée
+                    dto.put("dateTransmission", null);
+                    dto.put("personnesCollectrice", null);
+                    dto.put("comptabilise", false);
+                }
+
+                result.add(dto);
+            }
+
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "Erreur: " + e.getMessage()));
         }
     }
 }

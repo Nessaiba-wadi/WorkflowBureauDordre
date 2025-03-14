@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Rediriger vers la page correspondante au rôle
         switch(userData.role.toLowerCase()) {
             case 'comptable':
-                window.location.href = '../../templates/comptable/index.html';
+                window.location.href = '../../templates/comptable/commandes_à_comptabilisées.html';
                 break;
             case 'bureau d\'ordre':
                 window.location.href = '../../templates/BO/index.html';
@@ -55,7 +55,7 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
 
             switch(data.role.toLowerCase()) {
                 case 'comptable':
-                    window.location.href = '../../templates/comptable/index.html';
+                    window.location.href = '../../templates/comptable/commandes_à_comptabilisées.html';
                     break;
                 case 'bureau d\'ordre':
                     window.location.href = '../../templates/BO/index.html';

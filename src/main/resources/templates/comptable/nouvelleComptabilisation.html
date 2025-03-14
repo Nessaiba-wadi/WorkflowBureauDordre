@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SBM - Comptable</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/../static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+</head>
+<body>
+
+
+<nav class="top-navbar">
+    <div class="container-fluid">
+        <div class="d-flex align-items-center">
+            <button class="menu-toggle d-lg-none me-3" onclick="toggleMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <a class="navbar-brand" href="#">
+                <img src="/../static/images/logo.png" alt="SBM Logo" height="40">
+            </a>
+        </div>
+        <div class="navbar-text">
+            Comptable - Nouvelle Comptabilisation
+        </div>
+        <div class="user-menu">
+            <div class="dropdown">
+                <button class="btn btn-transparent dropdown-toggle text-white d-flex align-items-center" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fas fa-user-circle me-2"></i>
+                    <span id="userName">Chargement...</span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                    <li>
+                        <a class="dropdown-item" href="parametres.html" onclick="openUserSettings()">
+                            <i class="fas fa-cog me-2"></i>
+                            Paramètres
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" id="logoutButton" class="dropdown-item" onclick="deconnexion()">
+                            <i class="fas fa-sign-out-alt me-2"></i>
+                            Déconnexion
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- Sidebar pour la navigation -->
+<div class="sidebar">
+    <div class="sidebar-body">
+        <ul class="sidebar-nav">
+            <li class="sidebar-item">
+                <a class="sidebar-link" href="index.html">
+                    <i class="fas fa-tachometer-alt me-2"></i>Tableau de bord
+                </a>
+            </li>
+            <li class="sidebar-item">
+                <a class="sidebar-link" href="commandes_à_comptabilisées.html">
+                    <i class="fas fa-clipboard-list me-2"></i>Commandes à comptabilisées
+                </a>
+            </li>
+            <li class="sidebar-item">
+                <a class="sidebar-link active" href="nouvelleComptabilisation.html">
+                    <i class="fas fa-plus-circle me-2"></i>Nouvelle Comptabilisation
+                </a>
+            </li>
+            <li class="sidebar-item">
+                <a class="sidebar-link" href="parametres.html">
+                    <i class="fas fa-cog me-2"></i>Paramètres
+                </a>
+            </li>
+        </ul>
+    </div>
+</div>
+
+<div class="content-wrapper">
+    <div class="container-fluid mt-4 px-4">
+        <h2 class="mb-4"><i class="fas fa-calculator me-2"></i>Nouvelle Comptabilisation</h2>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <form id="comptabilisationForm" class="needs-validation" novalidate>
+                    <div class="row g-3">
+                        <!-- Sélection de commande -->
+                        <div class="col-12 mb-3">
+                            <label class="form-label fw-bold">Sélectionner une commande validée *</label>
+                            <select class="form-select form-select-lg" id="commandeId" required>
+                                <option value="">Sélectionner une commande...</option>
+                                <!-- Les commandes seront chargées dynamiquement ici -->
+                            </select>
+                            <div class="form-text">Seules les commandes à l'état validé et non encore comptabilisées sont affichées.</div>
+                        </div>
+
+                        <!-- Détails de la commande sélectionnée -->
+                        <div class="col-12 mb-3" id="commandeDetailsContainer" style="display: none;">
+                            <div class="card bg-light">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Détails de la commande</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row" id="commandeDetails">
+                                        <!-- Les détails de la commande seront affichés ici -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Colonne de gauche -->
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Date de Comptabilisation *</label>
+                                <input type="date" class="form-control" id="dateComptabilisation" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Date de Transmission *</label>
+                                <input type="date" class="form-control" id="dateTransmission" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Commentaire</label>
+                                <textarea class="form-control" id="commentaire" rows="3" placeholder="Entrez un commentaire optionnel..."></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Colonne de droite -->
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">État *</label>
+                                <select class="form-select" id="etat" required>
+                                    <option value="">Choisir...</option>
+                                    <option value="validé" selected>Validé</option>
+                                    <option value="en attente">En attente</option>
+                                    <option value="rejeté">Rejeté</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Personnes Collectrices *</label>
+                                <input type="text" class="form-control" id="personnesCollectrice" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Document Joint</label>
+                                <input type="file" class="form-control" id="file" accept=".pdf,.doc,.docx">
+                                <div class="form-text">Formats acceptés : PDF, DOC, DOCX</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end mt-4">
+                        <button type="button" class="btn btn-outline-secondary me-2" onclick="window.location.href='comptabilisations.html'">
+                            <i class="fas fa-times me-2"></i>Annuler
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Enregistrer
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/js/all.min.js"></script>
+<script src="/../static/js/auth.js"></script>
+<script src="/../static/js/comptabilisation.js"></script>
+
+</body>
+</html>
