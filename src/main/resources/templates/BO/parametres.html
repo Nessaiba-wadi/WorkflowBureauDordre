@@ -23,16 +23,13 @@
             </a>
         </div>
         <div class="navbar-text">
-            Bureau d'Ordre - Paramètres
+            Bureau d'Ordre - Tableau de bord
         </div>
         <div class="user-menu">
             <div class="dropdown">
                 <button class="btn btn-transparent dropdown-toggle text-white d-flex align-items-center" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                     <i class="fas fa-user-circle me-2"></i>
-                    <!-- afficher ici le nom de l'utilisateur -->
-                    <div id="userName"></div>
-
-
+                    <span id="userName">Chargement...</span>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                     <li>
@@ -42,7 +39,7 @@
                         </a>
                     </li>
                     <li>
-                        <a class="dropdown-item" href="#" onclick="deconnexion()">
+                        <a href="#" id="logoutButton" class="dropdown-item" onclick="deconnexion()">
                             <i class="fas fa-sign-out-alt me-2"></i>
                             Déconnexion
                         </a>
@@ -178,6 +175,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/js/all.min.js"></script>
 <script src="/../static/js/dashboard.js"></script>
 <script src="/../static/js/parametres.js"></script>
+<script src="/../static/js/auth.js"></script>
 
 </body>
 </html>

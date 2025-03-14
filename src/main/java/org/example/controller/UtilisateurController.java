@@ -196,5 +196,18 @@ public class UtilisateurController {
         }
     }
 
+    /**
+     * Se deconnecter
+     */
 
+    @PostMapping("/deconnecter")
+    public ResponseEntity<?> deconnecter() {
+        // Nous retournons simplement un succès car la déconnexion sera gérée côté client
+        // avec suppression des données de session
+        return ResponseEntity.ok(Map.of(
+                "message", "Déconnexion réussie",
+                "success", true
+        ));
+    }
+    
 }

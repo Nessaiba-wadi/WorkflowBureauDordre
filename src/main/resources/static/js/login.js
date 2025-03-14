@@ -1,3 +1,26 @@
+// Vérifier si l'utilisateur est déjà connecté au chargement de la page
+document.addEventListener('DOMContentLoaded', function() {
+    const userInfo = sessionStorage.getItem('userInfo');
+    if (userInfo) {
+        const userData = JSON.parse(userInfo);
+        // Rediriger vers la page correspondante au rôle
+        switch(userData.role.toLowerCase()) {
+            case 'comptable':
+                window.location.href = '../../templates/comptable/index.html';
+                break;
+            case 'bureau d\'ordre':
+                window.location.href = '../../templates/BO/index.html';
+                break;
+            case 'trésorerie':
+                window.location.href = '../../templates/Tresorerie/index.html';
+                break;
+            default:
+                // Si rôle inconnu, forcer la déconnexion
+                sessionStorage.removeItem('userInfo');
+        }
+    }
+});
+
 document.getElementById('loginForm').addEventListener('submit', async function(e) {
     e.preventDefault();
 
