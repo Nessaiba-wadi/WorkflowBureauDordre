@@ -259,6 +259,11 @@ public class ComptabilisationController {
         }
     }
 
+    /**
+     * Afficher les commandes qui ont état validé pour les comptabilisées
+     * @param emailUtilisateur
+     * @return
+     */
     @GetMapping("/commandes-validees")
     public ResponseEntity<?> getCommandesValidees(@RequestHeader("Authorization") String emailUtilisateur) {
         try {

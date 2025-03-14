@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Formate une date au format français
     function formatDate(dateString) {
-        if (!dateString) return 'N/A';
+        if (!dateString) return '-';
         const date = new Date(dateString);
         return date.toLocaleDateString('fr-FR', {
             day: '2-digit',
@@ -202,12 +202,12 @@ document.addEventListener('DOMContentLoaded', function() {
         // Gère le cas où aucune commande n'est trouvée
         if (commandes.length === 0) {
             commandesBody.innerHTML = `
-                <tr>
-                    <td colspan="14" class="text-center text-muted py-4">
-                        Aucune commande trouvée
-                    </td>
-                </tr>
-            `;
+            <tr>
+                <td colspan="14" class="text-center text-muted py-4">
+                    Aucune commande trouvée
+                </td>
+            </tr>
+        `;
             return;
         }
 
@@ -218,28 +218,35 @@ document.addEventListener('DOMContentLoaded', function() {
                 '<span class="badge bg-success">Oui</span>' :
                 '<span class="badge bg-warning">Pas encore</span>';
 
+            // Bouton d'action différent selon l'état de comptabilisation
+            const actionButton = commande.comptabilise ?
+                `<button class="btn btn-sm btn-info" onclick="voirDetailsCommande('${btoa(JSON.stringify({id: commande.idCommande}))}')" title="Voir les détails">
+                <i class="fas fa-eye"></i>
+            </button>` :
+                `<button class="btn btn-sm btn-primary" onclick="creerComptabilisation('${btoa(JSON.stringify({id: commande.idCommande}))}')" title="Comptabiliser">
+                <i class="fas fa-calculator"></i>
+            </button>`;
+
             return `
-                <tr>
-                    <td>${formatDate(commande.dateReception)}</td>
-                    <td>${commande.raisonSocialeFournisseur || 'N/A'}</td>
-                    <td>${commande.raisonSocialeGBM || 'N/A'}</td>
-                    <td>${commande.numeroBC || 'N/A'}</td>
-                    <td>${commande.directionGBM || 'N/A'}</td>
-                    <td>${commande.souscripteur || 'N/A'}</td>
-                    <td>${commande.typeDocument || 'N/A'}</td>
-                    <td>${formatDate(commande.dateRelanceBR)}</td>
-                    <td>${commande.typeRelance || 'N/A'}</td>
-                    <td>${formatDate(commande.dateDossierComplet)}</td>
-                    <td>${formatDate(commande.dateTransmission)}</td>
-                    <td>${commande.personnesCollectrice || 'N/A'}</td>
-                    <td>${comptaStatus}</td>
-                    <td>
-                        <button class="btn btn-sm btn-info" onclick="voirDetailsCommande(${commande.idCommande})" title="Voir les détails">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                    </td>
-                </tr>
-            `;
+            <tr>
+                <td>${formatDate(commande.dateReception)}</td>
+                <td>${commande.raisonSocialeFournisseur || '-'}</td>
+                <td>${commande.raisonSocialeGBM || '-'}</td>
+                <td>${commande.numeroBC || '-'}</td>
+                <td>${commande.directionGBM || '-'}</td>
+                <td>${commande.souscripteur || '-'}</td>
+                <td>${commande.typeDocument || '-'}</td>
+                <td>${formatDate(commande.dateRelanceBR)}</td>
+                <td>${commande.typeRelance || '-'}</td>
+                <td>${formatDate(commande.dateDossierComplet)}</td>
+                <td>${formatDate(commande.dateTransmission)}</td>
+                <td>${commande.personnesCollectrice || '-'}</td>
+                <td>${comptaStatus}</td>
+                <td>
+                    ${actionButton}
+                </td>
+            </tr>
+        `;
         }).join('');
 
         // Insère les lignes dans le tableau
@@ -338,3 +345,25 @@ document.addEventListener('DOMContentLoaded', function() {
         return new bootstrap.Tooltip(tooltipTriggerEl);
     });
 });
+
+// Fonction globale pour voir les détails d'une commande
+window.voirDetailsCommande = function(encodedData) {
+    try {
+        const data = JSON.parse(atob(encodedData));
+        window.location.href = `details.html?ref=${btoa(JSON.stringify({id: data.id}))}`;
+    } catch (error) {
+        console.error('Erreur lors du décodage des données:', error);
+        showToast('Erreur lors de l\'accès aux détails', 'danger');
+    }
+}
+
+// Fonction globale pour créer une nouvelle comptabilisation
+window.creerComptabilisation = function(encodedData) {
+    try {
+        const data = JSON.parse(atob(encodedData));
+        window.location.href = `nouvelleComptabilisation.html?ref=${btoa(JSON.stringify({id: data.id}))}`;
+    } catch (error) {
+        console.error('Erreur lors du décodage des données:', error);
+        showToast('Erreur lors de la création de comptabilisation', 'danger');
+    }
+}
