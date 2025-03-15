@@ -202,12 +202,12 @@ document.addEventListener('DOMContentLoaded', function() {
         // Gère le cas où aucune commande n'est trouvée
         if (commandes.length === 0) {
             commandesBody.innerHTML = `
-            <tr>
-                <td colspan="14" class="text-center text-muted py-4">
-                    Aucune commande trouvée
-                </td>
-            </tr>
-        `;
+        <tr>
+            <td colspan="13" class="text-center text-muted py-4">
+                Aucune commande trouvée
+            </td>
+        </tr>
+    `;
             return;
         }
 
@@ -221,32 +221,32 @@ document.addEventListener('DOMContentLoaded', function() {
             // Bouton d'action différent selon l'état de comptabilisation
             const actionButton = commande.comptabilise ?
                 `<button class="btn btn-sm btn-info" onclick="voirDetailsCommande('${btoa(JSON.stringify({id: commande.idCommande}))}')" title="Voir les détails">
-                <i class="fas fa-eye"></i>
-            </button>` :
+            <i class="fas fa-eye"></i>
+        </button>` :
                 `<button class="btn btn-sm btn-primary" onclick="creerComptabilisation('${btoa(JSON.stringify({id: commande.idCommande}))}')" title="Comptabiliser">
-                <i class="fas fa-calculator"></i>
-            </button>`;
+            <i class="fas fa-calculator"></i>
+        </button>`;
 
             return `
-            <tr>
-                <td>${formatDate(commande.dateReception)}</td>
-                <td>${commande.raisonSocialeFournisseur || '-'}</td>
-                <td>${commande.raisonSocialeGBM || '-'}</td>
-                <td>${commande.numeroBC || '-'}</td>
-                <td>${commande.directionGBM || '-'}</td>
-                <td>${commande.souscripteur || '-'}</td>
-                <td>${commande.typeDocument || '-'}</td>
-                <td>${formatDate(commande.dateRelanceBR)}</td>
-                <td>${commande.typeRelance || '-'}</td>
-                <td>${formatDate(commande.dateDossierComplet)}</td>
-                <td>${formatDate(commande.dateTransmission)}</td>
-                <td>${commande.personnesCollectrice || '-'}</td>
-                <td>${comptaStatus}</td>
-                <td>
-                    ${actionButton}
-                </td>
-            </tr>
-        `;
+        <tr>
+            <td>${formatDate(commande.dateReception)}</td>
+            <td>${commande.raisonSocialeFournisseur || '-'}</td>
+            <td>${commande.raisonSocialeGBM || '-'}</td>
+            <td>${commande.numeroBC || '-'}</td>
+            <td>${commande.directionGBM || '-'}</td>
+            <td>${commande.souscripteur || '-'}</td>
+            <td>${commande.typeDocument || '-'}</td>
+            <td>${formatDate(commande.dateRelanceBR)}</td>
+            <td>${commande.typeRelance || '-'}</td>
+            <!-- Colonne dateDossierComplet supprimée -->
+            <td>${formatDate(commande.dateTransmission)}</td>
+            <td>${commande.personnesCollectrice || '-'}</td>
+            <td>${comptaStatus}</td>
+            <td>
+                ${actionButton}
+            </td>
+        </tr>
+    `;
         }).join('');
 
         // Insère les lignes dans le tableau

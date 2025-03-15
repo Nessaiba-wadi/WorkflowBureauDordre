@@ -1,4 +1,5 @@
 package org.example.controller;
+import jakarta.persistence.EntityManager;
 import org.example.repository.CommandeRepository;
 import org.springframework.core.io.Resource;
 
@@ -41,7 +42,8 @@ public class ComptabilisationController {
     private ComptabilisationRepository comptabilisationRepository;
 
 
-
+    @Autowired
+    private EntityManager entityManager;
     @Autowired
     private CommandeRepository commandeRepository;
 
@@ -260,9 +262,8 @@ public class ComptabilisationController {
     }
 
     /**
-     * Afficher les commandes qui ont état validé pour les comptabilisées
-     * @param emailUtilisateur
-     * @return
+     * Afficher les commandes qui ont état validé pour les comptabilisées,
+     * en excluant celles qui ont une comptabilisation en cours
      */
     @GetMapping("/commandes-validees")
     public ResponseEntity<?> getCommandesValidees(@RequestHeader("Authorization") String emailUtilisateur) {
@@ -270,24 +271,17 @@ public class ComptabilisationController {
             // Vérifier si l'utilisateur est autorisé
             Utilisateur utilisateur = utilisateurService.findByEmail(emailUtilisateur);
 
-            // Récupérer toutes les commandes avec status=true
-            List<Commande> commandes = commandeRepository.findByStatusTrue();
+            // Utiliser un repository personnalisé ou écrire une requête JPQL/native pour suivre exactement la logique SQL
+            // Voici une implémentation avec JPQL
+            String jpql = "SELECT c FROM Commande c WHERE c.status = true AND c.etatCommande = 'validé' " +
+                    "AND NOT EXISTS (SELECT 1 FROM Comptabilisation comp WHERE comp.commande.idCommande = c.idCommande " +
+                    "AND comp.etat = 'en cours')";
 
-            // Récupérer les comptabilisations avec etat="validé"
-            List<Comptabilisation> comptabilisations = comptabilisationRepository.findByEtat("validé");
+            List<Commande> commandesValidees = entityManager.createQuery(jpql, Commande.class).getResultList();
 
-            // Créer un Map pour accéder rapidement aux comptabilisations par id de commande
-            Map<Integer, Comptabilisation> comptabilisationMap = new HashMap<>();
-            for (Comptabilisation compta : comptabilisations) {
-                comptabilisationMap.put(compta.getCommande().getIdCommande(), compta);
-            }
-
-            // Transformer les commandes en DTOs enrichis avec les infos de comptabilisation
+            // Transformer les commandes en DTOs
             List<Map<String, Object>> result = new ArrayList<>();
-            for (Commande commande : commandes) {
-                Comptabilisation comptabilisation = comptabilisationMap.get(commande.getIdCommande());
-
-                // Création du DTO pour toutes les commandes avec status=true
+            for (Commande commande : commandesValidees) {
                 Map<String, Object> dto = new HashMap<>();
                 dto.put("idCommande", commande.getIdCommande());
                 dto.put("dateReception", commande.getDateModification());
@@ -299,16 +293,20 @@ public class ComptabilisationController {
                 dto.put("typeDocument", commande.getTypeDocument());
                 dto.put("dateRelanceBR", commande.getDateRelanceBR());
                 dto.put("typeRelance", commande.getTypeRelance());
-                dto.put("dateDossierComplet", commande.isDossierComplet() ? commande.getDateModification() : null);
 
-                // Vérification si la commande est comptabilisée ou non
-                if (comptabilisation != null) {
-                    // La commande a une comptabilisation avec état validé
+                // Vérifier si une comptabilisation validée existe pour cette commande
+                String jpqlCompta = "SELECT comp FROM Comptabilisation comp WHERE comp.commande.idCommande = :commandeId " +
+                        "AND comp.etat = 'validé'";
+                List<Comptabilisation> comptaValidees = entityManager.createQuery(jpqlCompta, Comptabilisation.class)
+                        .setParameter("commandeId", commande.getIdCommande())
+                        .getResultList();
+
+                if (!comptaValidees.isEmpty()) {
+                    Comptabilisation comptabilisation = comptaValidees.get(0);
                     dto.put("dateTransmission", comptabilisation.getDateTransmission());
                     dto.put("personnesCollectrice", comptabilisation.getPersonnesCollectrice());
                     dto.put("comptabilise", true);
                 } else {
-                    // La commande n'a pas de comptabilisation validée
                     dto.put("dateTransmission", null);
                     dto.put("personnesCollectrice", null);
                     dto.put("comptabilise", false);
