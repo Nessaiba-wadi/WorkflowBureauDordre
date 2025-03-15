@@ -254,11 +254,8 @@ document.addEventListener('DOMContentLoaded', function() {
             <td>${commande.typeRelance || '-'}</td>
             <td>${formatDate(commande.dateTransmission)}</td>
             <td>${commande.personnesCollectrice || '-'}</td>
-            <td>${comptaStatus}</td>
-            <td>
-                ${actionButton}
-            </td>
             <td>${fichierJointCell}</td>
+            <td>${actionButton}</td>
         </tr>
     `;
         }).join('');
