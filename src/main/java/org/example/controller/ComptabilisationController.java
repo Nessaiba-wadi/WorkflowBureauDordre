@@ -293,6 +293,7 @@ public class ComptabilisationController {
                 dto.put("typeDocument", commande.getTypeDocument());
                 dto.put("dateRelanceBR", commande.getDateRelanceBR());
                 dto.put("typeRelance", commande.getTypeRelance());
+                dto.put("fichierJoint", commande.getFichierJoint());
 
                 // Vérifier si une comptabilisation validée existe pour cette commande
                 String jpqlCompta = "SELECT comp FROM Comptabilisation comp WHERE comp.commande.idCommande = :commandeId " +

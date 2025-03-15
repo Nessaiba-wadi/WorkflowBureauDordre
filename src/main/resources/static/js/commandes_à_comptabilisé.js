@@ -203,7 +203,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (commandes.length === 0) {
             commandesBody.innerHTML = `
         <tr>
-            <td colspan="13" class="text-center text-muted py-4">
+            <td colspan="14" class="text-center text-muted py-4">
                 Aucune commande trouvée
             </td>
         </tr>
@@ -227,6 +227,20 @@ document.addEventListener('DOMContentLoaded', function() {
             <i class="fas fa-calculator"></i>
         </button>`;
 
+            // Gestion du fichier joint
+            // Gestion du fichier joint
+            let fichierJointCell = '-';
+            if (commande.fichierJoint) {
+                fichierJointCell = `
+                <a href="http://localhost:8082/api/files/${commande.fichierJoint}" 
+                   class="btn btn-sm btn-outline-secondary" 
+                   target="_blank" 
+                   title="Voir le fichier joint">
+                    <i class="fas fa-file-pdf"></i> Voir fichier
+                </a>
+            `;
+            }
+
             return `
         <tr>
             <td>${formatDate(commande.dateReception)}</td>
@@ -238,13 +252,13 @@ document.addEventListener('DOMContentLoaded', function() {
             <td>${commande.typeDocument || '-'}</td>
             <td>${formatDate(commande.dateRelanceBR)}</td>
             <td>${commande.typeRelance || '-'}</td>
-            <!-- Colonne dateDossierComplet supprimée -->
             <td>${formatDate(commande.dateTransmission)}</td>
             <td>${commande.personnesCollectrice || '-'}</td>
             <td>${comptaStatus}</td>
             <td>
                 ${actionButton}
             </td>
+            <td>${fichierJointCell}</td>
         </tr>
     `;
         }).join('');
