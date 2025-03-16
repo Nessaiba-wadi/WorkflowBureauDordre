@@ -2,10 +2,10 @@
  * KPI
  */
 
-// Fonction pour récupérer les statistiques des commandes
+// Fonction pour récupérer les statistiques des règlements
 function chargerStatistiquesCommandes() {
     // Récupération des données depuis l'API
-    fetch('http://localhost:8082/comptabilisations/statistiques')
+    fetch('http://localhost:8082/api/reglements/dashboard')
         .then(response => {
             if (!response.ok) {
                 throw new Error('Erreur lors de la récupération des statistiques');
@@ -15,20 +15,20 @@ function chargerStatistiquesCommandes() {
         .then(data => {
             console.log("Données reçues:", data); // Pour déboguer
 
-            // Mise à jour des compteurs avec le format "X/Total"
-            document.getElementById('commandesRecues').textContent = data.commandesRecues + ' Reçues';
-            document.getElementById('commandesComptabilisees').textContent = data.commandesComptabilisees + ' Comptabilisées';
-            document.getElementById('commandesNonComptabilisees').textContent = data.commandesNonComptabilisees + ' Non Comptabilisées';
-            document.getElementById('commandesCloturees').textContent = data.commandesCloturees + ' Clôturées ';
+            // Mise à jour des compteurs avec les nouvelles données
+            document.getElementById('commandesRecues').textContent = data.recues + ' Reçues';
+            document.getElementById('commandesEnCours').textContent = data.enCours + ' En cours';
+            document.getElementById('commandesCloturees').textContent = data.cloturees + ' Clôturées';
+            document.getElementById('tempsTraitementMoyen').textContent = data.tempsTraitementMoyen + ' jours';
         })
         .catch(error => {
             console.error('Erreur:', error);
 
             // En cas d'erreur, afficher un message
             document.getElementById('commandesRecues').textContent = 'Erreur';
-            document.getElementById('commandesComptabilisees').textContent = 'Erreur';
-            document.getElementById('commandesNonComptabilisees').textContent = 'Erreur';
+            document.getElementById('commandesEnCours').textContent = 'Erreur';
             document.getElementById('commandesCloturees').textContent = 'Erreur';
+            document.getElementById('tempsTraitementMoyen').textContent = 'Erreur';
         });
 }
 

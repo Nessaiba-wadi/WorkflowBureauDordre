@@ -5,6 +5,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
+
 public interface ReglementRepository extends JpaRepository<Reglement, Integer> {
     long countByEtatEnCoursValideEtc(String etat);
 
@@ -15,4 +17,6 @@ public interface ReglementRepository extends JpaRepository<Reglement, Integer> {
     @Query("SELECT COUNT(r) FROM Reglement r WHERE r.commande.status = :commandeStatus AND r.etatEnCoursValideEtc = :etat")
     long countByCommandeStatusAndEtat(boolean commandeStatus, String etat);
 
+
+    List<Reglement> findByEtatEnCoursValideEtc(String etat);
 }

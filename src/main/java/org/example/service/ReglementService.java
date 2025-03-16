@@ -13,11 +13,15 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -27,6 +31,7 @@ public class ReglementService {
 
     @Autowired
     private ReglementRepository reglementRepository;
+    private static final Logger log = LoggerFactory.getLogger(ReglementService.class);
 
     @Autowired
     private CommandeRepository commandeRepository;
@@ -195,5 +200,41 @@ public class ReglementService {
 
     public boolean existsByCommandeId(int commandeId) {
         return reglementRepository.existsByCommandeId(commandeId);
+    }
+
+    public double calculerTempsTraitementMoyen() {
+        List<Reglement> reglementsValides = reglementRepository.findByEtatEnCoursValideEtc("validé");
+
+        if (reglementsValides.isEmpty()) {
+            return 0.0;
+        }
+
+        double totalJours = 0.0;
+        int count = 0;
+
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+
+        for (Reglement reglement : reglementsValides) {
+            try {
+                // Date de préparation (réception)
+                Date datePreparation = dateFormat.parse(reglement.getDatePreparation());
+
+                // Date de transmission (validation)
+                Date dateTransmission = dateFormat.parse(reglement.getDateTransmission());
+
+                // Calculer la différence en jours
+                long diffTime = dateTransmission.getTime() - datePreparation.getTime();
+                double diffDays = diffTime / (1000.0 * 60 * 60 * 24);
+
+                totalJours += diffDays;
+                count++;
+            } catch (ParseException e) {
+                // Gérer l'exception si le format de date est incorrect
+                log.error("Erreur de format de date", e);
+            }
+        }
+
+        // Calculer la moyenne
+        return count > 0 ? Math.round((totalJours / count) * 10) / 10.0 : 0.0; // Arrondi à 1 décimale
     }
 }

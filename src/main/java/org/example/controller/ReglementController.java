@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -23,8 +24,12 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.temporal.TemporalAdjusters;
 import java.util.*;
-
+import java.util.stream.Collectors;
+import org.example.dto.ReglementDTO;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.multipart.MultipartFile;
@@ -314,5 +319,37 @@ public class ReglementController {
         } else {
             return "application/octet-stream"; // Type par défaut
         }
+    }
+
+    /**
+     * calcul dashboard
+     */
+    @GetMapping("/dashboard")
+    public ResponseEntity<Map<String, Object>> getDashboardStats() {
+        Map<String, Object> stats = new HashMap<>();
+
+        // Nombre de commandes transmises à la trésorerie pour traitement
+        long recues = reglementService.getAllReglements().size();
+        stats.put("recues", recues);
+
+        // Nombre de commandes en cours de traitement (non clôturées)
+        long enCours = reglementService.countReglementsByEtat("en cours");
+        stats.put("enCours", enCours);
+
+        // Nombre de commandes traitées et finalisées
+        long cloturees = reglementService.countReglementsByEtat("validé");
+        stats.put("cloturees", cloturees);
+
+        // 4ème calcul: Moyenne des temps de traitement (en jours) entre réception et validation
+        double tempsTraitementMoyen = reglementService.calculerTempsTraitementMoyen();
+        stats.put("tempsTraitementMoyen", tempsTraitementMoyen);
+
+        return new ResponseEntity<>(stats, HttpStatus.OK);
+    }
+
+    @GetMapping("/dashboard/temps-traitement")
+    public ResponseEntity<Double> getTempsTraitementMoyen() {
+        double tempsTraitementMoyen = reglementService.calculerTempsTraitementMoyen();
+        return new ResponseEntity<>(tempsTraitementMoyen, HttpStatus.OK);
     }
 }
