@@ -42,7 +42,7 @@ function chargerBonsDeCommande() {
             commandesNonComptabilisees.forEach(commande => {
                 const option = document.createElement('option');
                 option.value = commande.idCommande;
-                option.textContent = `BC-${commande.idCommande} - ${commande.reference || 'Sans référence'}`;
+                option.textContent = `${commande.numeroBC} / ${commande.raisonSocialeFournisseur}`;
                 selectElement.appendChild(option);
             });
 

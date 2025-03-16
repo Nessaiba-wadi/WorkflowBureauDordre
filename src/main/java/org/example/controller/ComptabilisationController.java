@@ -2,6 +2,8 @@ package org.example.controller;
 import com.fasterxml.jackson.core.JsonParser;
 import jakarta.persistence.EntityManager;
 import org.example.repository.CommandeRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.json.JsonParseException;
 import org.springframework.core.io.Resource;
 
@@ -30,6 +32,8 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
+
+@CrossOrigin(origins = {"http://127.0.0.1:8080", "http://localhost:8080"})
 @RestController
 @RequestMapping("/comptabilisations")
 public class ComptabilisationController {
@@ -48,6 +52,7 @@ public class ComptabilisationController {
     private EntityManager entityManager;
     @Autowired
     private CommandeRepository commandeRepository;
+    private static final Logger log = LoggerFactory.getLogger(ComptabilisationController.class);
 
     @Value("${file.upload-dir}")
     private String uploadDir;
@@ -266,6 +271,7 @@ public class ComptabilisationController {
         }
     }
 
+
     /**
      * Afficher les commandes qui ont état validé pour les comptabilisées,
      * en excluant celles qui ont une comptabilisation en cours
@@ -327,4 +333,146 @@ public class ComptabilisationController {
                     .body(Map.of("message", "Erreur: " + e.getMessage()));
         }
     }
+
+
+    /**
+     * Récupérer les détails d'une commande avec ses données de comptabilisation
+     */
+    @GetMapping("/commande/{commandeId}")
+    public ResponseEntity<?> getCommandeDetails(
+            @PathVariable("commandeId") Integer commandeId,
+            @RequestHeader("Authorization") String emailUtilisateur) {
+
+        try {
+            // Vérifier si l'utilisateur est authentifié
+            Utilisateur utilisateur = utilisateurService.findByEmail(emailUtilisateur);
+            if (utilisateur == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("message", "Utilisateur non authentifié"));
+            }
+
+            // Récupérer la commande
+            Optional<Commande> commandeOpt = commandeRepository.findById(commandeId);
+            if (!commandeOpt.isPresent()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("message", "Commande non trouvée"));
+            }
+
+            Commande commande = commandeOpt.get();
+
+            // Récupérer les données de comptabilisation associées à cette commande
+            Optional<Comptabilisation> comptabilisationOpt = comptabilisationRepository.findByCommande(commande);
+
+            // Créer l'objet de réponse
+            Map<String, Object> response = new HashMap<>();
+
+            // Informations de la commande (première section de l'interface)
+            response.put("numeroBC", commande.getNumeroBC());
+            response.put("dateReception", commande.getDateReception());
+            response.put("raisonSocialeFournisseur", commande.getRaisonSocialeFournisseur());
+            response.put("raisonSocialeGBM", commande.getRaisonSocialeGBM());
+            response.put("directionGBM", commande.getDirectionGBM());
+            response.put("souscripteur", commande.getSouscripteur());
+            response.put("typeDocument", commande.getTypeDocument());
+            response.put("commandeId", commande.getIdCommande());
+            response.put("status", commande.isStatus());
+
+            // Informations de suivi (deuxième section de l'interface)
+            response.put("dateRelanceBR", commande.getDateRelanceBR());
+            response.put("typeRelance", commande.getTypeRelance());
+            response.put("etatDossier", commande.getEtatCommande());
+            response.put("dateTransmission", commande.getDateTransmission());
+            response.put("personnesCollectrice", commande.getPersonnesCollectrice());
+
+            // Informations sur le fichier joint de la commande
+            response.put("fichierJointBO", commande.getFichierJoint());  // Bureau d'ordre
+
+            // Informations de comptabilisation (si disponibles)
+            if (comptabilisationOpt.isPresent()) {
+                Comptabilisation comptabilisation = comptabilisationOpt.get();
+
+                response.put("idComptabilisation", comptabilisation.getIdComptabilisation());
+                response.put("dateComptabilisation", comptabilisation.getDateComptabilisation());
+                response.put("dateTransmission", comptabilisation.getDateTransmission());
+                response.put("etat", comptabilisation.getEtat());
+                response.put("commentaire", comptabilisation.getCommentaire());
+                response.put("personnesCollectriceComptable", comptabilisation.getPersonnesCollectrice());
+                response.put("fichierJointComptabilisation", comptabilisation.getFichierJoint());
+            } else {
+                // Valeurs par défaut si la comptabilisation n'existe pas
+                response.put("idComptabilisation", null);
+                response.put("dateComptabilisation", null);
+                response.put("dateTransmission", null);
+                response.put("etat", null);
+                response.put("commentaire", null);
+                response.put("personnesCollectrice", null);
+                response.put("fichierJointComptabilisation", null);
+            }
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            log.error("Erreur lors de la récupération des détails de la commande: ", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "Erreur lors de la récupération des détails: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Récupérer toutes les commandes avec leurs données de comptabilisation
+     */
+    @GetMapping("/commandes")
+    public ResponseEntity<?> getAllCommandesWithComptabilisation(
+            @RequestHeader("Authorization") String emailUtilisateur) {
+
+        try {
+            // Vérifier si l'utilisateur est authentifié
+            Utilisateur utilisateur = utilisateurService.findByEmail(emailUtilisateur);
+            if (utilisateur == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("message", "Utilisateur non authentifié"));
+            }
+
+            // Récupérer toutes les commandes validées
+            List<Commande> commandes = commandeRepository.findByStatusTrue();
+
+            // Créer la liste des résultats
+            List<Map<String, Object>> resultList = new ArrayList<>();
+
+            for (Commande commande : commandes) {
+                // Récupérer la comptabilisation associée à chaque commande
+                Optional<Comptabilisation> comptabilisationOpt = comptabilisationRepository.findByCommande(commande);
+
+                // Si une comptabilisation existe pour cette commande
+                if (comptabilisationOpt.isPresent()) {
+                    Comptabilisation comptabilisation = comptabilisationOpt.get();
+
+                    Map<String, Object> commandeDetails = new HashMap<>();
+
+                    // Informations de la commande
+                    commandeDetails.put("commandeId", commande.getIdCommande());
+                    commandeDetails.put("numeroBC", commande.getNumeroBC());
+                    commandeDetails.put("raisonSocialeFournisseur", commande.getRaisonSocialeFournisseur());
+
+                    // Informations de comptabilisation
+                    commandeDetails.put("dateComptabilisation", comptabilisation.getDateComptabilisation());
+                    commandeDetails.put("dateTransmission", comptabilisation.getDateTransmission());
+                    commandeDetails.put("personnesCollectrice", comptabilisation.getPersonnesCollectrice());
+                    commandeDetails.put("commentaire", comptabilisation.getCommentaire());
+                    commandeDetails.put("etat", comptabilisation.getEtat());
+
+                    resultList.add(commandeDetails);
+                }
+            }
+
+            return ResponseEntity.ok(resultList);
+
+        } catch (Exception e) {
+            log.error("Erreur lors de la récupération des commandes avec comptabilisation: ", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "Erreur lors de la récupération des données: " + e.getMessage()));
+        }
+    }
+
+
 }

@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.core.io.Resource;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ComptabilisationRepository extends JpaRepository<Comptabilisation, Integer> {
@@ -20,4 +21,6 @@ public interface ComptabilisationRepository extends JpaRepository<Comptabilisati
     // Méthode alternative insensible à la casse
     @Query("SELECT c FROM Comptabilisation c WHERE LOWER(c.etat) = LOWER(:etat)")
     List<Comptabilisation> findByEtatIgnoreCase(String etat);
+
+    Optional<Comptabilisation> findByCommande(Commande commande);
 }
