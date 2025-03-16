@@ -61,7 +61,7 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
                     window.location.href = '../../templates/BO/index.html';
                     break;
                 case 'trésorerie':
-                    window.location.href = '../../templates/Tresorerie/parametres.html';
+                    window.location.href = '../../templates/Tresorerie/index.html';
                     break;
                 default:
                     throw new Error('Rôle non reconnu');
