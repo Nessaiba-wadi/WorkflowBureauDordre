@@ -1,6 +1,8 @@
 package org.example.controller;
+import com.fasterxml.jackson.core.JsonParser;
 import jakarta.persistence.EntityManager;
 import org.example.repository.CommandeRepository;
+import org.springframework.boot.json.JsonParseException;
 import org.springframework.core.io.Resource;
 
 import org.example.model.Commande;
@@ -66,6 +68,7 @@ public class ComptabilisationController {
         try {
             ObjectMapper mapper = new ObjectMapper();
             mapper.registerModule(new JavaTimeModule());
+            mapper.configure(JsonParser.Feature.ALLOW_UNQUOTED_CONTROL_CHARS, true);
             Comptabilisation comptabilisation = mapper.readValue(comptabilisationJson, Comptabilisation.class);
 
             // Vérifier l'utilisateur
@@ -116,6 +119,8 @@ public class ComptabilisationController {
            
             return ResponseEntity.ok("La comptabilisation a été créée avec succès.");
 
+        }catch (JsonParseException e) {
+            return ResponseEntity.badRequest().body("Erreur de format JSON: " + e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Une erreur technique est survenue lors de la création de la comptabilisation. " +

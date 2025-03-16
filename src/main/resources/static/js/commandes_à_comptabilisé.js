@@ -357,24 +357,25 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-// Fonction globale pour voir les détails d'une commande
-window.voirDetailsCommande = function(encodedData) {
+
+// Fonction globale pour créer une nouvelle comptabilisation
+window.creerComptabilisation = function(commandeIdEncoded) {
     try {
-        const data = JSON.parse(atob(encodedData));
+        const data = JSON.parse(atob(commandeIdEncoded));
+        window.location.href = `nouvelleComptabilisation.html?id=${commandeIdEncoded}`;
+    } catch (error) {
+        console.error('Erreur lors du décodage des données:', error);
+        showToast('Erreur lors de la création de comptabilisation', 'danger');
+    }
+}
+
+// Fonction globale pour voir les détails d'une commande
+window.voirDetailsCommande = function(commandeIdEncoded) {
+    try {
+        const data = JSON.parse(atob(commandeIdEncoded));
         window.location.href = `details.html?ref=${btoa(JSON.stringify({id: data.id}))}`;
     } catch (error) {
         console.error('Erreur lors du décodage des données:', error);
         showToast('Erreur lors de l\'accès aux détails', 'danger');
-    }
-}
-
-// Fonction globale pour créer une nouvelle comptabilisation
-window.creerComptabilisation = function(encodedData) {
-    try {
-        const data = JSON.parse(atob(encodedData));
-        window.location.href = `nouvelleComptabilisation.html?ref=${btoa(JSON.stringify({id: data.id}))}`;
-    } catch (error) {
-        console.error('Erreur lors du décodage des données:', error);
-        showToast('Erreur lors de la création de comptabilisation', 'danger');
     }
 }
