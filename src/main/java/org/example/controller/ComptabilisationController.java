@@ -26,6 +26,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -44,7 +45,7 @@ public class ComptabilisationController {
     @Autowired
     private UtilisateurService utilisateurService;
 
-    @Autowired // Injectez le repository ici
+    @Autowired
     private ComptabilisationRepository comptabilisationRepository;
 
 
@@ -270,7 +271,83 @@ public class ComptabilisationController {
                     .body(Map.of("message", "Erreur lors de la récupération du fichier: " + e.getMessage()));
         }
     }
+    @RestController
+    @RequestMapping("/api/comptabilisations")
+    public class ComptableFileController {
 
+        @Value("${file.upload-dir}")
+        private String uploadDir;
+
+        private static final Logger log = LoggerFactory.getLogger(ComptableFileController.class);
+
+        /**
+         * Endpoint pour accéder aux fichiers comptables par leur nom
+         */
+        @GetMapping("/fichier/{fileName:.+}")
+        public ResponseEntity<Resource> serveComptableFile(@PathVariable String fileName) {
+            try {
+                // Construction du chemin absolu vers le fichier
+                Path filePath = Paths.get(uploadDir).resolve("Comptable").resolve(fileName).normalize();
+                Resource resource = new UrlResource(filePath.toUri());
+
+                if (resource.exists()) {
+                    // Déterminer le type de contenu
+                    String contentType = null;
+                    try {
+                        contentType = Files.probeContentType(filePath);
+                    } catch (IOException e) {
+                        log.debug("Impossible de déterminer le type de contenu", e);
+                    }
+
+                    // Fallback si le type ne peut pas être déterminé
+                    if (contentType == null) {
+                        contentType = "application/octet-stream";
+
+                        // Essayer de déterminer le type par l'extension
+                        if (fileName.endsWith(".pdf")) {
+                            contentType = "application/pdf";
+                        } else if (fileName.endsWith(".xlsx") || fileName.endsWith(".xls")) {
+                            contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+                        } else if (fileName.endsWith(".csv")) {
+                            contentType = "text/csv";
+                        }
+                    }
+
+                    return ResponseEntity.ok()
+                            .contentType(MediaType.parseMediaType(contentType))
+                            .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + resource.getFilename() + "\"")
+                            .body(resource);
+                } else {
+                    return ResponseEntity.notFound().build();
+                }
+            } catch (MalformedURLException e) {
+                log.error("Erreur lors de la récupération du fichier comptable: {}", e.getMessage());
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            }
+        }
+
+        /**
+         * Endpoint pour lister tous les fichiers comptables disponibles
+         */
+        @GetMapping("/liste")
+        public ResponseEntity<List<String>> listComptableFiles() {
+            try {
+                Path dirPath = Paths.get(uploadDir).resolve("Comptable");
+                if (Files.exists(dirPath)) {
+                    List<String> fileNames = Files.list(dirPath)
+                            .filter(Files::isRegularFile)
+                            .map(path -> path.getFileName().toString())
+                            .collect(Collectors.toList());
+                    return ResponseEntity.ok(fileNames);
+                } else {
+                    return ResponseEntity.ok(new ArrayList<>());
+                }
+            } catch (IOException e) {
+                log.error("Erreur lors de la lecture du répertoire des fichiers comptables: {}", e.getMessage());
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            }
+        }
+    }
 
     /**
      * Afficher les commandes qui ont état validé pour les comptabilisées,

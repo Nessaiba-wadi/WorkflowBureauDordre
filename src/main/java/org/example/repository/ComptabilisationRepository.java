@@ -23,4 +23,6 @@ public interface ComptabilisationRepository extends JpaRepository<Comptabilisati
     List<Comptabilisation> findByEtatIgnoreCase(String etat);
 
     Optional<Comptabilisation> findByCommande(Commande commande);
+
+    Optional<Comptabilisation> findByCommandeIdCommande(Integer commandeId);
 }

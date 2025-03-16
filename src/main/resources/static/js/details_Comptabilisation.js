@@ -1,18 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
 
-    // Debug to check which elements exist
-    const elementsToCheck = [
-        'dateReception', 'raisonSocialeFournisseur', 'raisonSocialeGBM', 'numeroBC',
-        'directionGBM', 'souscripteur', 'typeDocument', 'dateRelanceBR',
-        'typeRelance', 'dateCompositionDossier', 'dateTransmission', 'personneCollectrice'
-    ];
-
-    console.log("DOM Elements Check:");
-    elementsToCheck.forEach(id => {
-        console.log(`${id}: ${document.getElementById(id) ? 'Found' : 'NOT FOUND'}`);
-    });
-
-
     // Initialise un conteneur pour les notifications toast
     function initToast() {
         const toastContainer = document.getElementById('toastContainer');
@@ -80,7 +67,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Fonction pour charger et afficher le fichier joint
-    function afficherFichierJoint(fichierJointNom, containerId, messageId, previewId, contentId) {
+// Fonction pour charger et afficher le fichier joint
+    function afficherFichierJoint(fichierJointNom, containerId, messageId, previewId, contentId, isComptabilisation = false) {
         const fichierJointContainer = document.getElementById(containerId);
         const fichierJointMessage = document.getElementById(messageId);
         const fichierJointPreview = document.getElementById(previewId);
@@ -92,8 +80,10 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        // Construire l'URL du fichier
-        const fichierUrl = `http://localhost:8082/api/files/${fichierJointNom}`;
+        // Construire l'URL du fichier en fonction du type (commande ou comptabilisation)
+        const fichierUrl = isComptabilisation
+            ? `http://localhost:8082/api/comptabilisations/fichier/${fichierJointNom}`
+            : ``;
 
         // Déterminer le type de fichier par l'extension
         const extension = fichierJointNom.split('.').pop().toLowerCase();
@@ -101,43 +91,49 @@ document.addEventListener('DOMContentLoaded', function() {
         // Afficher le message de chargement
         fichierJointMessage.textContent = 'Chargement du fichier...';
 
+        // Récupérer les informations utilisateur pour l'autorisation
+        const userInfo = JSON.parse(sessionStorage.getItem('userInfo'));
+        const headers = {
+            'Authorization': userInfo.email
+        };
+
         // Créer les éléments en fonction du type de fichier
         if (extension === 'pdf') {
-            // Pour les fichiers PDF, utiliser un iframe
+            // Pour les fichiers PDF, utiliser un iframe avec authentification
             fichierJointContent.innerHTML = `
-                <div class="mb-3">
-                    <a href="${fichierUrl}" class="btn btn-primary" target="_blank">
-                        <i class="fas fa-external-link-alt me-2"></i>Ouvrir dans un nouvel onglet
-                    </a>
-                </div>
-                <div class="embed-responsive embed-responsive-16by9">
-                    <iframe class="embed-responsive-item" src="${fichierUrl}" style="width: 100%; height: 500px; border: 1px solid #dee2e6;"></iframe>
-                </div>
-            `;
+            <div class="mb-3">
+                <a href="${fichierUrl}" class="btn btn-primary" target="_blank">
+                    <i class="fas fa-external-link-alt me-2"></i>Ouvrir dans un nouvel onglet
+                </a>
+            </div>
+            <div class="embed-responsive embed-responsive-16by9">
+                <iframe class="embed-responsive-item" src="${fichierUrl}" style="width: 100%; height: 500px; border: 1px solid #dee2e6;"></iframe>
+            </div>
+        `;
         } else if (extension === 'doc' || extension === 'docx') {
             // Pour les fichiers Word, proposer uniquement le téléchargement
             fichierJointContent.innerHTML = `
-                <div class="alert alert-info">
-                    <i class="fas fa-info-circle me-2"></i>Les fichiers Word ne peuvent pas être prévisualisés directement.
-                </div>
-                <div>
-                    <a href="${fichierUrl}" class="btn btn-primary" target="_blank">
-                        <i class="fas fa-download me-2"></i>Télécharger le fichier
-                    </a>
-                </div>
-            `;
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>Les fichiers Word ne peuvent pas être prévisualisés directement.
+            </div>
+            <div>
+                <a href="${fichierUrl}" class="btn btn-primary" download>
+                    <i class="fas fa-download me-2"></i>Télécharger le fichier
+                </a>
+            </div>
+        `;
         } else {
             // Pour les autres types de fichiers
             fichierJointContent.innerHTML = `
-                <div class="alert alert-info">
-                    <i class="fas fa-info-circle me-2"></i>Ce type de fichier ne peut pas être prévisualisé.
-                </div>
-                <div>
-                    <a href="${fichierUrl}" class="btn btn-primary" target="_blank">
-                        <i class="fas fa-download me-2"></i>Télécharger le fichier
-                    </a>
-                </div>
-            `;
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>Ce type de fichier ne peut pas être prévisualisé.
+            </div>
+            <div>
+                <a href="${fichierUrl}" class="btn btn-primary" download>
+                    <i class="fas fa-download me-2"></i>Télécharger le fichier
+                </a>
+            </div>
+        `;
         }
 
         // Afficher le contenu et masquer le message de chargement
@@ -145,7 +141,6 @@ document.addEventListener('DOMContentLoaded', function() {
         fichierJointPreview.classList.remove('d-none');
         fichierJointContent.classList.remove('d-none');
     }
-
     // Affiche les détails combinés de la commande et de la comptabilisation
 // Affiche les détails combinés de la commande et de la comptabilisation
     function displayCombinedDetails(data) {
@@ -175,37 +170,6 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             console.warn('Element "commandeEtat" not found');
         }
-
-        // Section Réception
-        updateElementIfExists('dateReception', formatDate(data.dateReception));
-        updateElementIfExists('raisonSocialeFournisseur', data.raisonSocialeFournisseur);
-        updateElementIfExists('raisonSocialeGBM', data.raisonSocialeGBM);
-        updateElementIfExists('numeroBC', data.numeroBC, 'N/A');
-        updateElementIfExists('directionGBM', data.directionGBM);
-        updateElementIfExists('souscripteur', data.souscripteur);
-        updateElementIfExists('typeDocument', data.typeDocument);
-
-        // Section Suivi Souscripteur
-        updateElementIfExists('dateRelanceBR', formatDate(data.dateRelanceBR));
-        updateElementIfExists('typeRelance', data.typeRelance);
-
-        // Modification pour afficher l'état du dossier
-        const dateCompositionElement = document.getElementById('dateCompositionDossier');
-        if (dateCompositionElement) {
-            if (data.etatDossier === 'validé' || data.status === true) {
-                dateCompositionElement.textContent = 'DOSSIER COMPLET';
-                dateCompositionElement.className = 'border-bottom pb-2 text-success fw-bold';
-            } else {
-                dateCompositionElement.textContent = 'EN COURS';
-                dateCompositionElement.className = 'border-bottom pb-2 text-warning fw-bold';
-            }
-        } else {
-            console.warn('Element "dateCompositionDossier" not found');
-        }
-
-        // Section Transmission DCF
-        updateElementIfExists('dateTransmission', formatDate(data.dateTransmission));
-        updateElementIfExists('personneCollectrice', data.personnesCollectrice);
 
         // Afficher le fichier joint de la commande
         if (document.getElementById('fichierJointContainer')) {
@@ -258,7 +222,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Afficher le fichier joint de la comptabilisation
             if (document.getElementById('fichierJointComptaContainer')) {
-                afficherFichierJoint(data.fichierJointComptabilisation, 'fichierJointComptaContainer', 'fichierJointComptaMessage', 'fichierJointComptaPreview', 'fichierJointComptaContent');
+                afficherFichierJoint(
+                    data.fichierJointComptabilisation,
+                    'fichierJointComptaContainer',
+                    'fichierJointComptaMessage',
+                    'fichierJointComptaPreview',
+                    'fichierJointComptaContent',
+                    true // Paramètre indiquant qu'il s'agit d'un fichier de comptabilisation
+                );
             }
         } else {
             // Si pas de comptabilisation, masquer la section
