@@ -25,4 +25,7 @@ public interface ComptabilisationRepository extends JpaRepository<Comptabilisati
     Optional<Comptabilisation> findByCommande(Commande commande);
 
     Optional<Comptabilisation> findByCommandeIdCommande(Integer commandeId);
+    // Nouvelle méthode pour compter les comptabilisations avec un état spécifique et un status de commande spécifique
+    @Query("SELECT COUNT(c) FROM Comptabilisation c WHERE c.commande.status = :commandeStatus AND c.etat = :etat")
+    long countByCommandeStatusAndEtat(boolean commandeStatus, String etat);
 }

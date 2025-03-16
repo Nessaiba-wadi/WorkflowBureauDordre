@@ -2,6 +2,7 @@ package org.example.controller;
 import com.fasterxml.jackson.core.JsonParser;
 import jakarta.persistence.EntityManager;
 import org.example.repository.CommandeRepository;
+import org.example.repository.ReglementRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.json.JsonParseException;
@@ -48,7 +49,8 @@ public class ComptabilisationController {
     @Autowired
     private ComptabilisationRepository comptabilisationRepository;
 
-
+    @Autowired
+    private ReglementRepository reglementRepository;
     @Autowired
     private EntityManager entityManager;
     @Autowired
@@ -551,5 +553,37 @@ public class ComptabilisationController {
         }
     }
 
+    /**
+     * calculs pour le dashboard
+     */
+    @GetMapping("/statistiques")
+    public ResponseEntity<Map<String, Object>> getStatistiquesComptable() {
+        try {
+            // Récupérer le nombre total de commandes reçues par le BO (avec status=true)
+            long commandesRecues = commandeRepository.countByStatusAndEtatCommande(true, "validé");
+
+            // Récupérer le nombre de commandes comptabilisées (avec status=true et état="validé" dans la table comptabilisations)
+            long commandesComptabilisees = comptabilisationRepository.countByCommandeStatusAndEtat(true, "validé");
+
+            // Récupérer le nombre de commandes non comptabilisées
+            // (commandes avec status=true et état="validé" qui n'ont pas d'entrée dans la table comptabilisations)
+            long commandesNonComptabilisees = commandeRepository.countNonComptabilisees(true, "validé");
+
+            // Récupérer le nombre de commandes clôturées
+            // (commandes avec status=true qui ont un règlement avec état="validé")
+            long commandesCloturees = reglementRepository.countByCommandeStatusAndEtat(true, "validé");
+
+            Map<String, Object> statistiques = new HashMap<>();
+            statistiques.put("commandesRecues", commandesRecues);
+            statistiques.put("commandesComptabilisees", commandesComptabilisees);
+            statistiques.put("commandesNonComptabilisees", commandesNonComptabilisees);
+            statistiques.put("commandesCloturees", commandesCloturees);
+
+            return ResponseEntity.ok(statistiques);
+        } catch (Exception e) {
+            log.error("Erreur lors de la récupération des statistiques comptables", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
 
 }
