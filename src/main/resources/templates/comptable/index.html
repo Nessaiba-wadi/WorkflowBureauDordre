@@ -490,7 +490,7 @@
                             <label for="typeDateFilter" class="form-label mb-1">Type de date :</label>
                             <select class="form-select" id="typeDateFilter">
                                 <option value="dateReception">Date de réception</option>
-                                <option value="dateRelance">Date de relance</option>
+                                <option value="dateRelanceBR">Date de relance</option>
                                 <option value="dateTransmission">Date de transmission</option>
                             </select>
                         </div>
@@ -516,11 +516,11 @@
                                 <th data-sort="directionGBM" class="sortable">Direction GBM concernées <i class="fas fa-sort"></i></th>
                                 <th data-sort="souscripteur" class="sortable">Souscripteur <i class="fas fa-sort"></i></th>
                                 <th data-sort="typeDocument" class="sortable">Type de documents reçus <i class="fas fa-sort"></i></th>
-                                <th data-sort="dateRelance" class="sortable">Date de relance pour BR <i class="fas fa-sort"></i></th>
+                                <th data-sort="dateRelanceBR" class="sortable">Date de relance pour BR <i class="fas fa-sort"></i></th>
                                 <th data-sort="typeRelance" class="sortable">Type de relance <i class="fas fa-sort"></i></th>
                                 <th data-sort="dossierComplet" class="sortable">Dossier complet <i class="fas fa-sort"></i></th>
                                 <th data-sort="dateTransmission" class="sortable">Date de transmission <i class="fas fa-sort"></i></th>
-                                <th data-sort="personneCollectrice" class="sortable">Personnes collectrice <i class="fas fa-sort"></i></th>
+                                <th data-sort="personnesCollectrice" class="sortable">Personnes collectrice <i class="fas fa-sort"></i></th>
                             </tr>
                             </thead>
                             <tbody id="commandesBody">
@@ -660,6 +660,8 @@
 <script src="/static/js/dashboard.js"></script>
 <script src="/static/js/auth.js"></script>
 <script src="/static/js/comptable-dashboard.js"></script>
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"></script>
 
 
 </body>
