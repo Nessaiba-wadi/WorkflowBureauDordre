@@ -67,11 +67,13 @@ function loadCommandesComptabilisees() {
 
 // Récupérer le statut de règlement pour une liste d'IDs de commandes
 // Modifier cette fonction pour normaliser les statuts
+// Récupérer le statut de règlement pour une liste d'IDs de commandes
 function getReglementsStatuses(commandeIds) {
     return fetch('http://localhost:8082/api/reglements/statuses', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
+            'Authorization': JSON.parse(sessionStorage.getItem('userInfo')).email
         },
         body: JSON.stringify(commandeIds)
     })
@@ -98,7 +100,6 @@ function getReglementsStatuses(commandeIds) {
             return {};
         });
 }
-
 // Initialiser les filtres avec les valeurs uniques
 function initializeFilters() {
     // Extraire les directions uniques
@@ -170,7 +171,6 @@ function resetFilters() {
 }
 
 // Afficher les commandes
-// Afficher les commandes
 function renderCommandes() {
     const tableBody = document.getElementById('commandesBody');
     tableBody.innerHTML = '';
@@ -192,19 +192,26 @@ function renderCommandes() {
         const commande = filteredCommandes[i];
         const row = document.createElement('tr');
 
+        // Crypter l'ID de la commande
+        const commandeEncodee = btoa(JSON.stringify({id: commande.idCommande}));
+
         // Formater les dates
         const dateReception = commande.dateTransmission ? new Date(commande.dateTransmission).toLocaleDateString('fr-FR') : 'N/A';
         const dateRelanceBR = commande.dateRelanceBR ? new Date(commande.dateRelanceBR).toLocaleDateString('fr-FR') : 'N/A';
         const dateTransmission = commande.dateTransmission ? new Date(commande.dateTransmission).toLocaleDateString('fr-FR') : 'N/A';
 
         // Déterminer le statut de règlement et sa couleur
-        let reglementStatus, reglementBadgeClass;
+        let reglementStatus, reglementBadgeClass, isDisabled, reglementAction;
         if (commande.reglementStatus === 'valide' || commande.reglementStatus === 'validé') {
             reglementStatus = 'Réglée';
             reglementBadgeClass = 'bg-success';
+            isDisabled = 'disabled';
+            reglementAction = 'javascript:void(0)';
         } else {
             reglementStatus = 'À régler';
             reglementBadgeClass = 'bg-warning text-dark';
+            isDisabled = '';
+            reglementAction = `reglement.html?id=${commandeEncodee}`;
         }
 
         // Construire le contenu de la ligne
@@ -223,27 +230,25 @@ function renderCommandes() {
             <td>
                 ${commande.fichierJoint ?
             `<a href="http://localhost:8082/api/files/${commande.fichierJoint}" target="_blank" class="btn btn-sm btn-outline-primary">
-                    <i class="fas fa-file-download"></i> Télécharger
+                    <i class="fas fa-file-download"></i>
                   </a>` :
             'Aucun fichier'}
             </td>
             <td>
-                <span class="badge ${reglementBadgeClass}">${reglementStatus}</span>
+                <a href="${reglementAction}" class="badge ${reglementBadgeClass} text-decoration-none w-100 py-2 d-inline-block text-center" ${isDisabled}>
+                    <i class="fas fa-money-bill-wave me-1"></i> ${reglementStatus}
+                </a>
             </td>
             <td>
-                <div class="btn-group">
-                    <button class="btn btn-sm btn-primary" onclick="showReglementModal(${commande.idCommande})" 
-                            ${commande.reglementStatus === 'valide' ? 'disabled' : ''}>
-                        <i class="fas fa-money-bill-wave"></i> Régler
-                    </button>
-                </div>
+                <a href="x.html?id=${commandeEncodee}" class="btn btn-sm btn-info">
+                    <i class="fas fa-eye"></i>
+                </a>
             </td>
         `;
 
         tableBody.appendChild(row);
     }
 }
-
 // Afficher la pagination
 function renderPagination() {
     const paginationContainer = document.getElementById('paginationContainer');
@@ -308,6 +313,7 @@ function changePage(page) {
 }
 
 // Afficher un message quand aucune commande n'est trouvée
+// Modifier la fonction displayNoCommandesMessage autour de la ligne 272
 function displayNoCommandesMessage() {
     const tableBody = document.getElementById('commandesBody');
     tableBody.innerHTML = `

@@ -1,5 +1,8 @@
 package org.example.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.example.dto.CommandeDTO;
 import org.example.dto.ReglementDTO;
 import org.example.model.Commande;
@@ -113,45 +116,61 @@ public class ReglementController {
 
     @PostMapping("/nouveau")
     public ResponseEntity<?> creerReglement(
-            @ModelAttribute ReglementDTO reglementDTO,
+            @RequestParam("commandeId") Integer commandeId,
+            @RequestParam("datePreparation") String datePreparation,
+            @RequestParam("modeReglement") String modeReglement,
+            @RequestParam("numeroCheque") String numeroCheque,
+            @RequestParam("dateTransmission") String dateTransmission,
+            @RequestParam("commentaire") String commentaire,
+            @RequestParam("etatEnCoursValideEtc") String etatEnCoursValideEtc,
+            @RequestParam(value = "fichier", required = false) MultipartFile fichier,
             @RequestHeader("Authorization") String emailUtilisateur) {
 
         try {
+            // Validation des paramètres obligatoires
+            if (commandeId == null || datePreparation == null || modeReglement == null || dateTransmission == null) {
+                return ResponseEntity.badRequest().body(Map.of("message", "Paramètres obligatoires manquants"));
+            }
+
+            // Créer manuellement l'objet DTO
+            ReglementDTO reglementDTO = new ReglementDTO();
+            reglementDTO.setCommandeId(commandeId);
+            reglementDTO.setDatePreparation(datePreparation);
+            reglementDTO.setModeReglement(modeReglement);
+            reglementDTO.setNumeroCheque(numeroCheque);
+            reglementDTO.setDateTransmission(dateTransmission);
+            reglementDTO.setCommentaire(commentaire);
+            reglementDTO.setEtatEnCoursValideEtc(etatEnCoursValideEtc);
 
             // Vérifier si un règlement existe déjà pour cette commande
             if (reglementService.existsByCommandeId(reglementDTO.getCommandeId())) {
-                return ResponseEntity.badRequest().body(Map.of(
-                        "message", "Un règlement existe déjà pour cette commande."
-                ));
+                return ResponseEntity.badRequest().body(Map.of("message", "Un règlement existe déjà pour cette commande."));
             }
+
             // Récupérer l'utilisateur connecté
             Utilisateur utilisateurConnecte = utilisateurService.findByEmail(emailUtilisateur);
+            if (utilisateurConnecte == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Utilisateur non authentifié"));
+            }
 
             // Récupérer la commande à partir de son ID
             Optional<Commande> commandeOpt = commandeService.findById(reglementDTO.getCommandeId());
             if (commandeOpt.isEmpty()) {
-                return ResponseEntity.badRequest().body(Map.of(
-                        "message", "La commande spécifiée n'existe pas."
-                ));
+                return ResponseEntity.badRequest().body(Map.of("message", "La commande spécifiée n'existe pas."));
             }
             Commande commande = commandeOpt.get();
 
             // Gestion du fichier
             String nomFichier = null;
-            if (reglementDTO.getFichier() != null && !reglementDTO.getFichier().isEmpty()) {
-                // Vérifier l'extension du fichier
-                if (!isExtensionAutorisee(reglementDTO.getFichier().getOriginalFilename()) ||
-                        !isContentTypeAutorise(reglementDTO.getFichier().getContentType())) {
-                    return ResponseEntity.badRequest().body(Map.of(
-                            "message", "Type de fichier non autorisé. Seuls les fichiers PDF et Word sont acceptés."
-                    ));
+            if (fichier != null && !fichier.isEmpty()) {
+                if (!isExtensionAutorisee(fichier.getOriginalFilename()) || !isContentTypeAutorise(fichier.getContentType())) {
+                    return ResponseEntity.badRequest().body(Map.of("message", "Type de fichier non autorisé. Seuls les fichiers PDF et Word sont acceptés."));
                 }
-                nomFichier = sauvegarderFichierSecurise(reglementDTO.getFichier());
+                nomFichier = sauvegarderFichierSecurise(fichier);
             }
 
             // Conversion du DTO en entité Reglement
             Reglement reglement = new Reglement();
-            // Remplir les propriétés du règlement depuis le DTO
             reglement.setDatePreparation(reglementDTO.getDatePreparation());
             reglement.setModeReglement(reglementDTO.getModeReglement());
             reglement.setNumeroCheque(reglementDTO.getNumeroCheque());
@@ -173,12 +192,31 @@ public class ReglementController {
             return ResponseEntity.ok(reponse);
 
         } catch (Exception e) {
-            Map<String, String> erreur = new HashMap<>();
-            erreur.put("message", "Erreur lors de la création du règlement : " + e.getMessage());
-            return ResponseEntity.badRequest().body(erreur);
+            log.error("Erreur lors de la création du règlement", e);
+            return ResponseEntity.badRequest().body(Map.of("message", "Erreur lors de la création du règlement : " + e.getMessage()));
         }
     }
+    @GetMapping("/commandes-a-regler")
+    public ResponseEntity<?> getCommandesARegler(@RequestHeader("Authorization") String emailUtilisateur) {
+        try {
+            // Vérifier l'authentification
+            Utilisateur utilisateur = utilisateurService.findByEmail(emailUtilisateur);
+            if (utilisateur == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
+                        "message", "Utilisateur non authentifié"
+                ));
+            }
 
+            // Récupérer les commandes validées mais non réglées
+            List<Commande> commandes = commandeService.findCommandesValideesPourReglement();
+
+            return ResponseEntity.ok(commandes);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                    "message", "Erreur lors de la récupération des commandes : " + e.getMessage()
+            ));
+        }
+    }
     private String sauvegarderFichierSecurise(MultipartFile fichier) throws IOException {
         // Extraire l'extension originale
         String originalFilename = fichier.getOriginalFilename();

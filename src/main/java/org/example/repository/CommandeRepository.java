@@ -24,4 +24,6 @@ public interface CommandeRepository extends JpaRepository<Commande, Integer> {
     long countNonComptabilisees(boolean status, String etat);
     long countByStatusAndEtatCommande(boolean status, String etatCommande);
 
+    List<Commande> findByStatusAndEtatCommande(boolean status, String etatCommande);
+
 }

@@ -1,24 +1,36 @@
 package org.example.service;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.JoinType;
+import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.Subquery;
 import jakarta.transaction.Transactional;
 import org.example.model.Commande;
-import org.example.model.Utilisateur;
+import org.example.model.Comptabilisation;
+import org.example.model.Reglement;
 import org.example.repository.CommandeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.time.LocalDateTime;
+
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+
 @Service
 public class CommandeService {
     @Autowired
     private CommandeRepository commandeRepository;
+    @Autowired
+    private final ReglementService reglementService;
+    @PersistenceContext
+    private EntityManager entityManager;
+    @Autowired
+    public CommandeService(CommandeRepository commandeRepository, ReglementService reglementService) {
+        this.commandeRepository = commandeRepository;
+        this.reglementService = reglementService;
+    }
 
     @Transactional
     public Commande creerCommande(Commande commande) {
@@ -45,4 +57,17 @@ public class CommandeService {
     public Optional<Commande> findById(int commandeId) {
         return commandeRepository.findById(commandeId);
     }
+
+    public List<Commande> findCommandesValideesPourReglement() {
+        String jpql = "SELECT c FROM Commande c " +
+                "INNER JOIN Comptabilisation cp ON cp.commande = c " +
+                "WHERE cp.etat = 'validé' " +
+                "AND c.etatCommande = 'validé' " +
+                "AND c.status = true " +
+                "AND NOT EXISTS (SELECT r FROM Reglement r WHERE r.commande = c)";
+
+        return entityManager.createQuery(jpql, Commande.class).getResultList();
+    }
+
+
 }
