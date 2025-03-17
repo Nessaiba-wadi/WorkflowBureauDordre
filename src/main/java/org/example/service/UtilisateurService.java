@@ -85,11 +85,6 @@ public class UtilisateurService {
         }
     }
 
-    public static class TelephoneDejaUtiliseException extends RuntimeException {
-        public TelephoneDejaUtiliseException(String message) {
-            super(message);
-        }
-    }
 
     // mot de passe
     public static class MotDePasseTropCourtException extends RuntimeException {
@@ -111,7 +106,7 @@ public class UtilisateurService {
         return utilisateur;
     }
     public Utilisateur creerUtilisateur(Utilisateur utilisateur) {
-        if (utilisateur.getNom() == null || utilisateur.getPrenom() == null || utilisateur.getEmail() == null || utilisateur.getMotDePasse() == null || utilisateur.getTelephone() == null || utilisateur.getRole() == null) {
+        if (utilisateur.getNom() == null || utilisateur.getPrenom() == null || utilisateur.getEmail() == null || utilisateur.getMotDePasse() == null || utilisateur.getRole() == null) {
             throw new ChampsRequisManquantsException("Tous les champs requis doivent être remplis.");
         }
 
@@ -123,10 +118,6 @@ public class UtilisateurService {
             throw new FormatEmailInvalideException("Le format de l'e-mail est invalide. L'e-mail doit être de la forme 'nom@domaine.com'.");
         }
 
-        // Validation du numéro de téléphone
-        if (!PHONE_PATTERN.matcher(utilisateur.getTelephone()).matches()) {
-            throw new FormatEmailInvalideException("Le format du numéro de téléphone est invalide. Le numéro doit être de la forme '+1234567890' ou '0123456789'.");
-        }
 
         if (utilisateurRepository.findByEmail(utilisateur.getEmail()) != null) {
             throw new EmailDejaUtiliseException("L'adresse e-mail est déjà utilisée.");
@@ -144,12 +135,8 @@ public class UtilisateurService {
         utilisateur.setMotDePasse(passwordEncoder.encode(utilisateur.getMotDePasse()));
 
 
-        try {
             return utilisateurRepository.save(utilisateur);
-        } catch (DataIntegrityViolationException e) {
-            // Si la violation de contrainte concerne le numéro de téléphone
-            throw new TelephoneDejaUtiliseException("Le numéro de téléphone est déjà utilisé.");
-        }
+
     }
 
     public Utilisateur getUtilisateurById(Integer id) {
@@ -218,17 +205,6 @@ public class UtilisateurService {
             utilisateurExistant.setEmail(utilisateurModifie.getEmail());
         }
 
-        // Vérifier et mettre à jour le téléphone si fourni
-        if (utilisateurModifie.getTelephone() != null) {
-            if (!PHONE_PATTERN.matcher(utilisateurModifie.getTelephone()).matches()) {
-                throw new FormatEmailInvalideException("Le format du numéro de téléphone est invalide.");
-            }
-            try {
-                utilisateurExistant.setTelephone(utilisateurModifie.getTelephone());
-            } catch (DataIntegrityViolationException e) {
-                throw new TelephoneDejaUtiliseException("Le numéro de téléphone est déjà utilisé.");
-            }
-        }
 
         // Vérifier et mettre à jour le rôle si fourni
         if (utilisateurModifie.getRole() != null) {

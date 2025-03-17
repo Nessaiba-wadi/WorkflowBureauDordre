@@ -35,12 +35,12 @@ public class UtilisateurController {
         try {
             // Vérifier si le rôle existe
             if (utilisateur.getRole() == null || utilisateur.getRole().getIdRole() <= 0) {
-                // Assuming 0 or negative values are invalid for an ID
                 return new ResponseEntity<>("Le rôle est requis", HttpStatus.BAD_REQUEST);
             }
 
-            // Vérifier si l'utilisateur est déjà actif pour éviter les doublons
+            // Set default status
             utilisateur.setStatut(true);
+
 
             Utilisateur nouvelUtilisateur = utilisateurService.creerUtilisateur(utilisateur);
             return new ResponseEntity<>(nouvelUtilisateur, HttpStatus.CREATED);
@@ -51,8 +51,6 @@ public class UtilisateurController {
         } catch (UtilisateurService.FormatEmailInvalideException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         } catch (UtilisateurService.EmailDejaUtiliseException e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.CONFLICT);
-        } catch (UtilisateurService.TelephoneDejaUtiliseException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.CONFLICT);
         } catch (UtilisateurService.MotDePasseTropCourtException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
@@ -83,7 +81,6 @@ public class UtilisateurController {
             Map<String, Object> response = new HashMap<>();
             response.put("nom", utilisateur.getNom());
             response.put("prenom", utilisateur.getPrenom());
-            response.put("telephone", utilisateur.getTelephone());
             response.put("email", utilisateur.getEmail());
             response.put("role", utilisateur.getRole().getNom()); // Récupérer le nom du rôle
 
@@ -124,7 +121,6 @@ public class UtilisateurController {
         } catch (UtilisateurNonTrouveException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
         } catch (UtilisateurService.NomPrenomInvalideException | UtilisateurService.FormatEmailInvalideException |
-                 UtilisateurService.EmailDejaUtiliseException | UtilisateurService.TelephoneDejaUtiliseException |
                  UtilisateurService.RoleNonTrouveException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         } catch (Exception e) {

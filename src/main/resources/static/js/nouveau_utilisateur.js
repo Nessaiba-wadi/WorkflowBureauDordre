@@ -26,16 +26,15 @@ document.addEventListener('DOMContentLoaded', function() {
         const nom = document.getElementById('nom').value;
         const prenom = document.getElementById('prenom').value;
         const email = document.getElementById('email').value;
-        const telephone = document.getElementById('telephone').value;
         const motDePasse = document.getElementById('motDePasse').value;
         const roleId = document.getElementById('role').value;
 
         // Préparer les données pour l'API
+        // Prepare the user data
         const userData = {
             nom: nom,
             prenom: prenom,
             email: email,
-            telephone: telephone,
             motDePasse: motDePasse,
             role: {
                 idRole: parseInt(roleId)

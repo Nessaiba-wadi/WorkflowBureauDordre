@@ -81,8 +81,8 @@
                 </a>
             </li>
             <li class="sidebar-item">
-                <a class="sidebar-link" href="commandes.html">
-                    <i class="fas fa-clipboard-list me-2"></i>Commandes
+                <a class="sidebar-link" href="Utilisateurs.html">
+                    <i class="fas fa-clipboard-list me-2"></i>Utilisateurs
                 </a>
             </li>
             <li class="sidebar-item">
@@ -110,73 +110,65 @@
             </div>
             <div class="card-body">
                 <form id="utilisateurForm" class="needs-validation" novalidate>
-            <div class="row g-3">
-                <!-- Colonne de gauche -->
-                <div class="col-md-6">
-                    <div class="mb-3">
-                        <label class="form-label">Nom *</label>
-                        <input type="text" class="form-control" id="nom" required>
-                        <div class="invalid-feedback">
-                            Veuillez saisir un nom.
+                    <div class="row g-3">
+                        <!-- Colonne de gauche -->
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Nom *</label>
+                                <input type="text" class="form-control" id="nom" required>
+                                <div class="invalid-feedback">
+                                    Veuillez saisir un nom.
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Prénom *</label>
+                                <input type="text" class="form-control" id="prenom" required>
+                                <div class="invalid-feedback">
+                                    Veuillez saisir un prénom.
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Email *</label>
+                                <input type="email" class="form-control" id="email" required>
+                                <div class="invalid-feedback">
+                                    Veuillez saisir une adresse email valide.
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Colonne de droite -->
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Mot de passe *</label>
+                                <input type="password" class="form-control" id="motDePasse" required>
+                                <div class="invalid-feedback">
+                                    Le mot de passe doit contenir au moins 8 caractères.
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Rôle *</label>
+                                <select class="form-select" id="role" required>
+                                    <option value="">Choisir un rôle...</option>
+                                    <option value="1">admin</option>
+                                    <option value="2">comptable</option>
+                                    <option value="3">Bureau d'ordre</option>
+                                    <option value="4">Trésorerie</option>
+                                </select>
+                                <div class="invalid-feedback">
+                                    Veuillez sélectionner un rôle.
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">Prénom *</label>
-                        <input type="text" class="form-control" id="prenom" required>
-                        <div class="invalid-feedback">
-                            Veuillez saisir un prénom.
-                        </div>
-                    </div>
+                    <div class="alert alert-danger d-none" id="errorMessage"></div>
+                    <div class="alert alert-success d-none" id="successMessage"></div>
 
-                    <div class="mb-3">
-                        <label class="form-label">Email *</label>
-                        <input type="email" class="form-control" id="email" required>
-                        <div class="invalid-feedback">
-                            Veuillez saisir une adresse email valide.
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Colonne de droite -->
-                <div class="col-md-6">
-                    <div class="mb-3">
-                        <label class="form-label">Téléphone *</label>
-                        <input type="tel" class="form-control" id="telephone" required>
-                        <div class="invalid-feedback">
-                            Veuillez saisir un numéro de téléphone.
-                        </div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Mot de passe *</label>
-                        <input type="password" class="form-control" id="motDePasse" required>
-                        <div class="invalid-feedback">
-                            Le mot de passe doit contenir au moins 8 caractères.
-                        </div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Rôle *</label>
-                        <select class="form-select" id="role" required>
-                            <option value="">Choisir un rôle...</option>
-                            <option value="1">admin</option>
-                            <option value="2">comptable</option>
-                            <option value="3">Bureau d'ordre</option>
-                            <option value="4">Trésorerie</option>
-                        </select>
-                        <div class="invalid-feedback">
-                            Veuillez sélectionner un rôle.
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="alert alert-danger d-none" id="errorMessage"></div>
-            <div class="alert alert-success d-none" id="successMessage"></div>
-
-            <button type="submit" class="btn btn-primary">Enregistrer</button>
-        </form>
+                    <button type="submit" class="btn btn-primary">Enregistrer</button>
+                </form>
             </div>
         </div>
     </div>
