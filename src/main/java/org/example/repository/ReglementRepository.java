@@ -26,4 +26,6 @@ public interface ReglementRepository extends JpaRepository<Reglement, Integer> {
     // Alternative avec une requête JPQL explicite
     @Query("SELECT r FROM Reglement r WHERE r.commande.idCommande = :idCommande")
     Optional<Reglement> findByCommandeId(@Param("idCommande") Integer idCommande);
+
+    Optional<Reglement> findByCommandeIdCommande(Integer commandeId);
 }

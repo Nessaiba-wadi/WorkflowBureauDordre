@@ -586,4 +586,44 @@ public class ComptabilisationController {
         }
     }
 
+
+    @GetMapping("/commandeTre/{commandeId}")
+    public ResponseEntity<?> getComptabilisationByCommandeId(
+            @PathVariable("commandeId") Integer commandeId) {
+
+        try {
+            // Récupérer la commande
+            Optional<Commande> commandeOpt = commandeRepository.findById(commandeId);
+            if (!commandeOpt.isPresent()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("message", "Commande non trouvée"));
+            }
+
+            Commande commande = commandeOpt.get();
+
+            // Récupérer les données de comptabilisation associées à cette commande
+            Optional<Comptabilisation> comptabilisationOpt = comptabilisationRepository.findByCommande(commande);
+            if (!comptabilisationOpt.isPresent()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("message", "Comptabilisation non trouvée"));
+            }
+
+            Comptabilisation comptabilisation = comptabilisationOpt.get();
+
+            // Créer l'objet de réponse
+            Map<String, Object> response = new HashMap<>();
+            response.put("idComptabilisation", comptabilisation.getIdComptabilisation());
+            response.put("dateComptabilisation", comptabilisation.getDateComptabilisation());
+            response.put("dateTransmission", comptabilisation.getDateTransmission());
+            response.put("commentaire", comptabilisation.getCommentaire());
+            response.put("personnesCollectriceComptable", comptabilisation.getPersonnesCollectrice());
+            response.put("fichierJointComptabilisation", comptabilisation.getFichierJoint());
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("Erreur lors de la récupération des détails de comptabilisation: ", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "Erreur lors de la récupération des détails: " + e.getMessage()));
+        }
+    }
 }

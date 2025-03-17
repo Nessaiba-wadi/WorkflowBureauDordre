@@ -196,9 +196,9 @@ function renderCommandes() {
         const commandeEncodee = btoa(JSON.stringify({id: commande.idCommande}));
 
         // Formater les dates
-        const dateReception = commande.dateTransmission ? new Date(commande.dateTransmission).toLocaleDateString('fr-FR') : 'N/A';
-        const dateRelanceBR = commande.dateRelanceBR ? new Date(commande.dateRelanceBR).toLocaleDateString('fr-FR') : 'N/A';
-        const dateTransmission = commande.dateTransmission ? new Date(commande.dateTransmission).toLocaleDateString('fr-FR') : 'N/A';
+        const dateReception = commande.dateTransmission ? new Date(commande.dateTransmission).toLocaleDateString('fr-FR') : '-';
+        const dateRelanceBR = commande.dateRelanceBR ? new Date(commande.dateRelanceBR).toLocaleDateString('fr-FR') : '-';
+        const dateTransmission = commande.dateTransmission ? new Date(commande.dateTransmission).toLocaleDateString('fr-FR') : '-';
 
         // Déterminer le statut de règlement et sa couleur
         let reglementStatus, reglementBadgeClass, isDisabled, reglementAction;
@@ -217,16 +217,16 @@ function renderCommandes() {
         // Construire le contenu de la ligne
         row.innerHTML = `
             <td>${dateReception}</td>
-            <td>${commande.raisonSocialeFournisseur || 'N/A'}</td>
-            <td>${commande.raisonSocialeGBM || 'N/A'}</td>
-            <td>${commande.numeroBC || 'N/A'}</td>
-            <td>${commande.directionGBM || 'N/A'}</td>
-            <td>${commande.souscripteur || 'N/A'}</td>
-            <td>${commande.typeDocument || 'N/A'}</td>
+            <td>${commande.raisonSocialeFournisseur || '-'}</td>
+            <td>${commande.raisonSocialeGBM || '-'}</td>
+            <td>${commande.numeroBC || '-'}</td>
+            <td>${commande.directionGBM || '-'}</td>
+            <td>${commande.souscripteur || '-'}</td>
+            <td>${commande.typeDocument || '-'}</td>
             <td>${dateRelanceBR}</td>
-            <td>${commande.typeRelance || 'N/A'}</td>
+            <td>${commande.typeRelance || '-'}</td>
             <td>${dateTransmission}</td>
-            <td>${commande.personnesCollectrice || 'N/A'}</td>
+            <td>${commande.personnesCollectrice || '-'}</td>
             <td>
                 ${commande.fichierJoint ?
             `<a href="http://localhost:8082/api/files/${commande.fichierJoint}" target="_blank" class="btn btn-sm btn-outline-primary">
@@ -240,7 +240,7 @@ function renderCommandes() {
                 </a>
             </td>
             <td>
-                <a href="x.html?id=${commandeEncodee}" class="btn btn-sm btn-info">
+                <a href="detailsReglement.html?id=${commandeEncodee}" class="btn btn-sm btn-info">
                     <i class="fas fa-eye"></i>
                 </a>
             </td>

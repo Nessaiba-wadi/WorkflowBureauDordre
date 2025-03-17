@@ -510,4 +510,34 @@ public class ReglementController {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+    /**
+     * Récupère l'ID du règlement associé à une commande
+     * ajouter la cerification que l'etat de reglement est validé (pas encore fait)
+     */
+    @GetMapping("/commande/{commandeId}")
+    public ResponseEntity<?> getReglementIdByCommandeId(@PathVariable int commandeId) {
+        try {
+            Optional<Reglement> reglementOpt = reglementService.findByCommandeId(commandeId);
+
+            if (reglementOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("message", "Aucun règlement trouvé pour cette commande"));
+            }
+
+            Reglement reglement = reglementOpt.get();
+
+            // Vérifier si l'état du règlement est "validé"
+            if (!"validé".equalsIgnoreCase(reglement.getEtatEnCoursValideEtc())) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("message", "Aucun règlement validé trouvé pour cette commande"));
+            }
+
+            return ResponseEntity.ok(reglement.getIdReglement());
+        } catch (Exception e) {
+            log.error("Erreur lors de la récupération de l'ID du règlement", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "Erreur lors de la récupération de l'ID du règlement: " + e.getMessage()));
+        }
+    }
 }

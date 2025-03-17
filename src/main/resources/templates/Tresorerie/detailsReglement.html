@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SBM - Détails de la Commande</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/../static/css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+<body>
+<!-- Bouton menu mobile -->
+<button class="menu-toggle d-lg-none" onclick="toggleMenu()">
+  <i class="fas fa-bars"></i>
+</button>
+
+<nav class="top-navbar">
+  <div class="container-fluid">
+    <div class="d-flex align-items-center">
+      <button class="menu-toggle d-lg-none me-3" onclick="toggleMenu()">
+        <i class="fas fa-bars"></i>
+      </button>
+      <a class="navbar-brand" href="#">
+        <img src="/../static/images/logo.png" alt="SBM Logo" height="40">
+      </a>
+    </div>
+    <div class="navbar-text">
+      Trésorerie - Détails des Commandes
+    </div>
+    <div class="user-menu">
+      <div class="dropdown">
+        <button class="btn btn-transparent dropdown-toggle text-white d-flex align-items-center" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+          <i class="fas fa-user-circle me-2"></i>
+          <span id="userName">Chargement...</span>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+          <li>
+            <a class="dropdown-item" href="parametres.html" onclick="openUserSettings()">
+              <i class="fas fa-cog me-2"></i>
+              Paramètres
+            </a>
+          </li>
+          <li>
+            <a href="#" id="logoutButton" class="dropdown-item" onclick="deconnexion()">
+              <i class="fas fa-sign-out-alt me-2"></i>
+              Déconnexion
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- Sidebar pour la navigation -->
+<div class="sidebar">
+  <div class="sidebar-body">
+    <ul class="sidebar-nav">
+      <li class="sidebar-item">
+        <a class="sidebar-link" href="index.html">
+          <i class="fas fa-tachometer-alt me-2"></i>Tableau de bord
+        </a>
+      </li>
+      <li class="sidebar-item">
+        <a class="sidebar-link active" href="commandes_à_régler.html">
+          <i class="fas fa-clipboard-list me-2"></i>Commandes
+        </a>
+      </li>
+      <li class="sidebar-item">
+        <a class="sidebar-link" href="reglement.html">
+          <i class="fas fa-plus-circle me-2"></i>Reglement
+        </a>
+      </li>
+      <li class="sidebar-item">
+        <a class="sidebar-link" href="parametres.html">
+          <i class="fas fa-cog me-2"></i>Paramètres
+        </a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<!-- Contenu principal -->
+<div class="content-wrapper">
+  <div class="container-fluid mt-4 px-4">
+    <!-- En-tête avec bouton retour -->
+    <!-- Ajouter ce bouton dans la partie d'en-tête -->
+    <div class="d-flex justify-content-between mb-4 align-items-center">
+      <div class="d-flex align-items-center">
+        <a href="commandes_à_régler.html" class="btn btn-outline-secondary me-3">
+          <i class="fas fa-arrow-left"></i> Retour
+        </a>
+        <h4 class="mb-0">Détails des Commandes</h4>
+      </div>
+
+      <div class="d-flex align-items-center">
+        <div id="commandeEtat" class="badge bg-warning fs-6 p-2 me-3" style="visibility: hidden"></div>
+
+      </div>
+    </div>
+
+    <!-- Section Comptabilisation -->
+    <div id="sectionComptabilisation" class="card shadow-sm mb-4">
+      <div class="card-header bg-primary text-white">
+        <h5 class="mb-0"><i class="fas fa-calculator me-2"></i>Détails de la Comptabilisation</h5>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <div class="form-group">
+              <label class="fw-bold">Date de comptabilisation</label>
+              <p id="dateComptabilisation" class="border-bottom pb-2">Chargement...</p>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="form-group">
+              <label class="fw-bold">Date de transmission</label>
+              <p id="dateTransmissionCompta" class="border-bottom pb-2">Chargement...</p>
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <div class="form-group">
+              <label class="fw-bold">Personne collectrice</label>
+              <p id="personneCollectriceCompta" class="border-bottom pb-2">Chargement...</p>
+            </div>
+          </div>
+          <div class="col-md-12">
+            <div class="form-group">
+              <label class="fw-bold">Commentaire</label>
+              <p id="commentaireComptabilisation" class="border-bottom pb-2">Chargement...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section Fichier Joint Comptabilisation -->
+    <div class="card shadow-sm mb-4">
+      <div class="card-header bg-info text-white">
+        <h5 class="mb-0"><i class="fas fa-file-invoice me-2"></i>Fichier Joint Comptabilisation</h5>
+      </div>
+      <div class="card-body">
+        <div id="fichierJointComptaContainer" class="text-center">
+          <p id="fichierJointComptaMessage" class="mb-3">Chargement...</p>
+          <div id="fichierJointComptaPreview" class="d-none">
+            <div id="fichierJointComptaContent" class="d-none">
+              <!-- Le contenu sera ajouté dynamiquement par JS -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section Règlement (visible uniquement si la commande est réglée) -->
+    <div id="sectionReglement" class="card shadow-sm mb-4" style="display: none;">
+      <div class="card-header bg-success text-white">
+        <h5 class="mb-0"><i class="fas fa-money-bill-wave me-2"></i>Détails du Règlement</h5>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <div class="form-group">
+              <label class="fw-bold">Date de préparation</label>
+              <p id="datePreparation" class="border-bottom pb-2">Chargement...</p>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="form-group">
+              <label class="fw-bold">Date de transmission</label>
+              <p id="dateTransmissionReglement" class="border-bottom pb-2">Chargement...</p>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="form-group">
+              <label class="fw-bold">Mode de règlement</label>
+              <p id="modeReglement" class="border-bottom pb-2">Chargement...</p>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="form-group">
+              <label class="fw-bold">Numéro de chèque</label>
+              <p id="numeroCheque" class="border-bottom pb-2">Chargement...</p>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="form-group">
+              <label class="fw-bold">État du règlement</label>
+              <p id="etatReglement" class="border-bottom pb-2">
+                <span id="etatReglementBadge" class="badge">Chargement...</span>
+              </p>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="form-group">
+              <label class="fw-bold">Préparé par</label>
+              <p id="utilisateurReglement" class="border-bottom pb-2">Chargement...</p>
+            </div>
+          </div>
+          <div class="col-md-12">
+            <div class="form-group">
+              <label class="fw-bold">Commentaire</label>
+              <p id="commentaireReglement" class="border-bottom pb-2">Chargement...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section Fichier Joint Règlement -->
+    <div id="sectionFichierReglement" class="card shadow-sm mb-4" style="display: none;">
+      <div class="card-header bg-success text-white">
+        <h5 class="mb-0"><i class="fas fa-file-invoice me-2"></i>Fichier Joint Règlement</h5>
+      </div>
+      <div class="card-body">
+        <div id="fichierJointReglementContainer" class="text-center">
+          <p id="fichierJointReglementMessage" class="mb-3">Chargement...</p>
+          <div id="fichierJointReglementPreview" class="d-none">
+            <a id="fichierJointReglementLink" href="#" class="btn btn-primary mb-3" target="_blank">
+              <i class="fas fa-download me-2"></i>Télécharger le fichier
+            </a>
+            <div id="fichierJointReglementContent" class="d-none">
+              <!-- Le contenu sera ajouté dynamiquement par JS -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Container pour les Toasts -->
+
+<div id="toastContainer" class="toast-container position-fixed top-0 end-0 p-3"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/../static/js/auth.js"></script>
+<script src="/../static/js/dashboard.js"></script>
+<script src="/../static/js/details_Reglement.js"></script>
+
+</body>
+</html>
