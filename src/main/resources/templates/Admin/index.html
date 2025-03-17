@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SBM - Liste des Commandes</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/../static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+    <style>
+        /* Styles pour les cartes de statistiques modernisées */
+        .stat-card {
+            border-radius: 12px;
+            border: none;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s, box-shadow 0.2s;
+            overflow: hidden;
+            margin-bottom: 20px;
+            height: 100%;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Couleurs de fond pour chaque carte */
+        .bg-light-blue {
+            background-color: #e6f7ff;
+        }
+
+        .bg-light-green {
+            background-color: #e6fff2;
+        }
+
+        .bg-light-purple {
+            background-color: #f0e6ff;
+        }
+
+        .bg-light-orange {
+            background-color: #fff2e6;
+        }
+
+        /* Style pour les icônes */
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+        }
+
+        .icon-blue {
+            background-color: #2196f3;
+            color: white;
+        }
+
+        .icon-green {
+            background-color: #4caf50;
+            color: white;
+        }
+
+        .icon-purple {
+            background-color: #9c27b0;
+            color: white;
+        }
+
+        .icon-orange {
+            background-color: #ff9800;
+            color: white;
+        }
+
+        /* Style pour les valeurs et tendances */
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: #333;
+        }
+
+        .stat-trend {
+            font-size: 0.85rem;
+            font-weight: 600;
+            border-radius: 15px;
+            padding: 0.15rem 0.5rem;
+            display: inline-block;
+        }
+
+        .trend-up {
+            background-color: rgba(76, 175, 80, 0.1);
+            color: #4caf50;
+        }
+
+        .trend-down {
+            background-color: rgba(244, 67, 54, 0.1);
+            color: #f44336;
+        }
+
+        .card-title {
+            font-size: 1rem;
+            color: #666;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+
+
+        :root {
+            --primary: #2d5ba1;
+            --secondary: #6c757d;
+            --success: #28a745;
+            --warning: #ffc107;
+            --danger: #dc3545;
+            --info: #17a2b8;
+            --light-blue: rgba(45, 91, 161, 0.1);
+            --light-green: rgba(40, 167, 69, 0.1);
+            --light-purple: rgba(121, 82, 179, 0.1);
+            --light-orange: rgba(255, 151, 0, 0.1);
+        }
+        .workflow-container {
+            margin-top: 30px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            padding: 20px;
+        }
+
+        .workflow-header {
+            padding: 15px;
+            border-bottom: 1px solid #e9ecef;
+            margin-bottom: 20px;
+        }
+
+        .nav-tabs .nav-link {
+            border: none;
+            border-bottom: 3px solid transparent;
+            color: var(--secondary);
+            font-weight: 600;
+        }
+
+        .nav-tabs .nav-link.active {
+            background-color: transparent;
+            border-bottom: 3px solid var(--primary);
+            color: var(--primary);
+        }
+
+        .stage-header {
+            background-color: var(--primary);
+            color: white;
+            padding: 12px 15px;
+            border-radius: 6px 6px 0 0;
+            font-weight: 600;
+        }
+
+        .dossier-card {
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            overflow: hidden;
+        }
+
+        .dossier-header {
+            background-color: #f8f9fa;
+            padding: 10px 15px;
+            border-bottom: 1px solid #e9ecef;
+            font-weight: 600;
+        }
+
+        .dossier-body {
+            padding: 15px;
+        }
+
+        .dossier-footer {
+            background-color: #f8f9fa;
+            padding: 10px 15px;
+            border-top: 1px solid #e9ecef;
+            font-size: 0.9rem;
+        }
+
+        .status-badge {
+            padding: 5px 10px;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .search-filters {
+            background-color: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .timeline {
+            list-style-type: none;
+            position: relative;
+            padding-left: 30px;
+        }
+
+        .timeline:before {
+            content: ' ';
+            background: #dee2e6;
+            display: inline-block;
+            position: absolute;
+            left: 9px;
+            width: 2px;
+            height: 100%;
+            z-index: 1;
+        }
+
+        .timeline-item {
+            margin: 20px 0;
+            position: relative;
+        }
+
+        .timeline-badge {
+            width: 20px;
+            height: 20px;
+            position: absolute;
+            left: -30px;
+            top: 0;
+            border-radius: 50%;
+            z-index: 2;
+        }
+
+        .badge-reception {
+            background-color: var(--primary);
+        }
+
+        .badge-suivi {
+            background-color: var(--warning);
+        }
+
+        .badge-dcf {
+            background-color: var(--info);
+        }
+
+        .badge-comptabilite {
+            background-color: var(--success);
+        }
+
+        .badge-tresorerie {
+            background-color: var(--danger);
+        }
+
+        table.detail-table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
+
+        /* tables */
+        /* Styles pour le tableau triable */
+        .sortable {
+            cursor: pointer;
+            position: relative;
+            user-select: none;
+        }
+
+        .sortable:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+
+        .sortable i {
+            margin-left: 5px;
+            opacity: 0.5;
+        }
+
+        .sortable:hover i {
+            opacity: 1;
+        }
+
+        th.sortable i.fa-sort-up,
+        th.sortable i.fa-sort-down {
+            opacity: 1;
+            color: #0d6efd;
+        }
+
+        /* Styles ajoutés pour les filtres */
+        .form-label {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: #6c757d;
+        }
+
+        #searchInput {
+            height: 38px;
+        }
+
+        /* Styles pour rendre l'interface responsive sur petits écrans */
+        @media (max-width: 767.98px) {
+            .row.align-items-end > div {
+                margin-bottom: 0.5rem;
+            }
+        }
+    </style>
+
+</head>
+<body>
+<!-- Bouton menu mobile -->
+<button class="menu-toggle d-lg-none" onclick="toggleMenu()">
+    <i class="fas fa-bars"></i>
+</button>
+
+
+<nav class="top-navbar">
+    <div class="container-fluid">
+        <div class="d-flex align-items-center">
+            <button class="menu-toggle d-lg-none me-3" onclick="toggleMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <a class="navbar-brand" href="#">
+                <img src="/../static/images/logo.png" alt="SBM Logo" height="40">
+            </a>
+        </div>
+        <div class="navbar-text">
+            Administrateur - Tableau de bord
+        </div>
+        <div class="user-menu">
+            <div class="dropdown">
+                <button class="btn btn-transparent dropdown-toggle text-white d-flex align-items-center" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fas fa-user-circle me-2"></i>
+                    <span id="userName">Chargement...</span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                    <li>
+                        <a class="dropdown-item" href="parametres.html" onclick="openUserSettings()">
+                            <i class="fas fa-cog me-2"></i>
+                            Paramètres
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" id="logoutButton" class="dropdown-item" onclick="deconnexion()">
+                            <i class="fas fa-sign-out-alt me-2"></i>
+                            Déconnexion
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- Sidebar pour la navigation -->
+<div class="sidebar">
+    <div class="sidebar-body">
+        <ul class="sidebar-nav">
+            <li class="sidebar-item">
+                <a class="sidebar-link active" href="index.html">
+                    <i class="fas fa-tachometer-alt me-2"></i>Tableau de bord
+                </a>
+            </li>
+            <li class="sidebar-item">
+                <a class="sidebar-link" href="commandes_à_régler.html">
+                    <i class="fas fa-clipboard-list me-2"></i>Commandes
+                </a>
+            </li>
+            <li class="sidebar-item">
+                <a class="sidebar-link" href="Nouveau_utilisateur.html">
+                    <i class="fas fa-plus-circle me-2"></i>Nouveau Utilisateur
+                </a>
+            </li>
+            <li class="sidebar-item">
+                <a class="sidebar-link" href="parametres.html">
+                    <i class="fas fa-cog me-2"></i>Paramètres
+                </a>
+            </li>
+        </ul>
+    </div>
+</div>
+
+<!-- Dashboard Stats Cards -->
+<div class="content-wrapper">
+    <div class="container-fluid mt-4 px-4">
+        <div class="row mt-4">
+
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="card stat-card bg-light-blue">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="stat-icon icon-blue">
+                                <i class="fas fa-hourglass-half"></i>
+                            </div>
+                            <h5 class="card-title">Total Commandes en Attente</h5>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-end">
+                            <div>
+                                <h3 class="stat-value" id="commandesEnAttente">Chargement...</h3>
+                                <p class="text-muted">Commandes en attente de validation</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="card stat-card bg-light-green">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="stat-icon icon-green">
+                                <i class="fas fa-paper-plane"></i>
+                            </div>
+                            <h5 class="card-title">Total Commandes Validées</h5>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-end">
+                            <div>
+                                <h3 class="stat-value" id="commandesValidees">Chargement...</h3>
+                                <p class="text-muted">Commandes envoyées au comptable</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="card stat-card bg-light-purple">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="stat-icon icon-purple">
+                                <i class="fas fa-calculator"></i>
+                            </div>
+                            <h5 class="card-title">Commandes Comptabilisées</h5>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-end">
+                            <div>
+                                <h3 class="stat-value" id="commandesComptabilisees">Chargement...</h3>
+                                <p class="text-muted">Commandes validées en comptabilité</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="card stat-card bg-light-orange">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="stat-icon icon-orange">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <h5 class="card-title">Commandes Clôturées</h5>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-end">
+                            <div>
+                                <h3 class="stat-value" id="commandesCloturees">Chargement...</h3>
+                                <p class="text-muted">Commandes traitées par la Trésorerie</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- afficher les insertions ici -->
+        <!-- Zone d'onglets pour les différentes vues -->
+        <div class="workflow-container">
+            <ul class="nav nav-tabs mb-4" id="workflowTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="reception-tab" data-bs-toggle="tab" data-bs-target="#reception" type="button" role="tab">
+                        <i class="fas fa-file-import me-2"></i>Réception
+                    </button>
+                </li>
+
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="comptabilite-tab" data-bs-toggle="tab" data-bs-target="#comptabilite" type="button" role="tab">
+                        <i class="fas fa-calculator me-2"></i>Comptabilité
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="tresorerie-tab" data-bs-toggle="tab" data-bs-target="#tresorerie" type="button" role="tab">
+                        <i class="fas fa-money-check-alt me-2"></i>Trésorerie
+                    </button>
+                </li>
+            </ul>
+
+            <!-- Contenu des onglets -->
+            <div class="tab-content" id="workflowTabsContent">
+
+                <!-- Onglet Réception -->
+                <div class="tab-pane fade show active" id="reception" role="tabpanel">
+                    <!-- Filtres -->
+                    <div class="row mb-3 align-items-end">
+                        <div class="col-md-5">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                <input type="text" class="form-control" id="searchInput" placeholder="Rechercher...">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="typeDateFilter" class="form-label mb-1">Type de date :</label>
+                            <select class="form-select" id="typeDateFilter">
+                                <option value="dateReception">Date de réception</option>
+                                <option value="dateRelance">Date de relance</option>
+                                <option value="dateTransmission">Date de transmission</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label for="dateExacteFilter" class="form-label mb-1">Date exacte :</label>
+                            <input type="date" class="form-control" id="dateExacteFilter">
+                        </div>
+                        <div class="col-md-2">
+                            <button id="resetFilters" class="btn btn-outline-secondary w-100">
+                                <i class="fas fa-times"></i> Réinitialiser
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-hover detail-table" id="tableCommandes">
+                            <thead>
+                            <tr>
+                                <th data-sort="dateReception" class="sortable">Date de réception <i class="fas fa-sort"></i></th>
+                                <th data-sort="raisonSocialeFournisseur" class="sortable">Raison sociale fournisseurs <i class="fas fa-sort"></i></th>
+                                <th data-sort="raisonSocialeGBM" class="sortable">Raison sociale société GBM <i class="fas fa-sort"></i></th>
+                                <th data-sort="numeroBC" class="sortable">N° de BC <i class="fas fa-sort"></i></th>
+                                <th data-sort="directionGBM" class="sortable">Direction GBM concernées <i class="fas fa-sort"></i></th>
+                                <th data-sort="souscripteur" class="sortable">Souscripteur <i class="fas fa-sort"></i></th>
+                                <th data-sort="typeDocument" class="sortable">Type de documents reçus <i class="fas fa-sort"></i></th>
+                                <th data-sort="dateRelance" class="sortable">Date de relance pour BR <i class="fas fa-sort"></i></th>
+                                <th data-sort="typeRelance" class="sortable">Type de relance <i class="fas fa-sort"></i></th>
+                                <th data-sort="dossierComplet" class="sortable">Dossier complet <i class="fas fa-sort"></i></th>
+                                <th data-sort="dateTransmission" class="sortable">Date de transmission <i class="fas fa-sort"></i></th>
+                                <th data-sort="personneCollectrice" class="sortable">Personnes collectrice <i class="fas fa-sort"></i></th>
+                            </tr>
+                            </thead>
+                            <tbody id="commandesBody">
+                            <tr id="loadingRow">
+                                <td colspan="12" class="text-center">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Chargement...</span>
+                                    </div>
+                                    <p>Chargement des commandes...</p>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="paginationContainer" class="mt-3"></div>
+                </div>
+
+                <!-- Onglet comptabilite -->
+                <div class="tab-pane fade" id="comptabilite" role="tabpanel">
+                    <!-- Filtres -->
+                    <div class="row mb-3 align-items-end">
+                        <div class="col-md-5">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                <input type="text" class="form-control" id="searchInputCompta" placeholder="Rechercher...">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="typeDateFilterCompta" class="form-label mb-1">Type de date :</label>
+                            <select class="form-select" id="typeDateFilterCompta">
+                                <option value="dateComptabilisation">Date de comptabilisation</option>
+                                <option value="dateTransmission">Date de transmission</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label for="dateExacteFilterCompta" class="form-label mb-1">Date exacte :</label>
+                            <input type="date" class="form-control" id="dateExacteFilterCompta">
+                        </div>
+                        <div class="col-md-2">
+                            <button id="resetFiltersCompta" class="btn btn-outline-secondary w-100">
+                                <i class="fas fa-times"></i> Réinitialiser
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-hover detail-table" id="tableComptabilisations">
+                            <thead>
+                            <tr>
+                                <th data-sort="numeroBC" class="sortable">N° de BC <i class="fas fa-sort"></i></th>
+                                <th data-sort="dateComptabilisation" class="sortable">Date de comptabilisation <i class="fas fa-sort"></i></th>
+                                <th data-sort="dateTransmission" class="sortable">Date de transmission <i class="fas fa-sort"></i></th>
+                                <th data-sort="personneCollectrice" class="sortable">Personnes collectrice <i class="fas fa-sort"></i></th>
+                                <th data-sort="commentaire" class="sortable">Commentaire <i class="fas fa-sort"></i></th>
+                                <th>Fichier joint</th>
+                            </tr>
+                            </thead>
+                            <tbody id="comptabilisationsBody">
+                            <tr id="loadingRowCompta">
+                                <td colspan="6" class="text-center">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Chargement...</span>
+                                    </div>
+                                    <p>Chargement des comptabilisations...</p>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="paginationContainerCompta" class="mt-3"></div>
+                </div>
+
+                <!-- Onglet trésorerie -->
+                <div class="tab-pane fade" id="tresorerie" role="tabpanel">
+                    <!-- Filtres -->
+                    <div class="row mb-3 align-items-end">
+                        <div class="col-md-5">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                <input type="text" class="form-control" id="searchInputTresorerie" placeholder="Rechercher...">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="typeDateFilterTresorerie" class="form-label mb-1">Type de date :</label>
+                            <select class="form-select" id="typeDateFilterTresorerie">
+                                <option value="datePreparation">Date de préparation</option>
+                                <option value="dateTransmission">Date de transmission</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label for="dateExacteFilterTresorerie" class="form-label mb-1">Date exacte :</label>
+                            <input type="date" class="form-control" id="dateExacteFilterTresorerie">
+                        </div>
+                        <div class="col-md-2">
+                            <button id="resetFiltersTresorerie" class="btn btn-outline-secondary w-100">
+                                <i class="fas fa-times"></i> Réinitialiser
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-hover detail-table" id="tableReglements">
+                            <thead>
+                            <tr>
+                                <th data-sort="numeroBC" class="sortable">N° de BC <i class="fas fa-sort"></i></th>
+                                <th data-sort="datePreparation" class="sortable">Date de préparation <i class="fas fa-sort"></i></th>
+                                <th data-sort="modeReglement" class="sortable">Mode de règlement <i class="fas fa-sort"></i></th>
+                                <th data-sort="numeroCheque" class="sortable">N° de chèque <i class="fas fa-sort"></i></th>
+                                <th data-sort="dateTransmission" class="sortable">Date de transmission <i class="fas fa-sort"></i></th>
+                                <th data-sort="commentaire" class="sortable">Commentaire <i class="fas fa-sort"></i></th>
+                                <th>Fichier joint</th>
+                            </tr>
+                            </thead>
+                            <tbody id="reglementsBody">
+                            <tr id="loadingRowTresorerie">
+                                <td colspan="7" class="text-center">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Chargement...</span>
+                                    </div>
+                                    <p>Chargement des règlements...</p>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="paginationContainerTresorerie" class="mt-3"></div>
+                </div>
+
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"></script>
+<script src="/static/js/auth.js"></script>
+<script src="/static/js/dashboard.js"></script>
+<script src="/static/js/infos.js"></script>
+
+</body>
+</html>

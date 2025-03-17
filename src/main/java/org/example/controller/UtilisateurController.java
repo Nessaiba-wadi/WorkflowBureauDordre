@@ -1,7 +1,9 @@
 package org.example.controller;
 
 import org.antlr.v4.runtime.Token;
+import org.example.model.Role;
 import org.example.model.Utilisateur;
+import org.example.service.RoleService;
 import org.example.service.UtilisateurService;
 import org.example.service.UtilisateurService.UtilisateurNonTrouveException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 
@@ -20,13 +23,25 @@ public class UtilisateurController {
 
     @Autowired
     private final UtilisateurService utilisateurService;
+    private final RoleService roleService;
+
     @Autowired
-    public UtilisateurController(UtilisateurService utilisateurService) {
+    public UtilisateurController(UtilisateurService utilisateurService, RoleService roleService) {
         this.utilisateurService = utilisateurService;
+        this.roleService = roleService;
     }
     @PostMapping
     public ResponseEntity<?> creerUtilisateur(@RequestBody Utilisateur utilisateur) {
         try {
+            // Vérifier si le rôle existe
+            if (utilisateur.getRole() == null || utilisateur.getRole().getIdRole() <= 0) {
+                // Assuming 0 or negative values are invalid for an ID
+                return new ResponseEntity<>("Le rôle est requis", HttpStatus.BAD_REQUEST);
+            }
+
+            // Vérifier si l'utilisateur est déjà actif pour éviter les doublons
+            utilisateur.setStatut(true);
+
             Utilisateur nouvelUtilisateur = utilisateurService.creerUtilisateur(utilisateur);
             return new ResponseEntity<>(nouvelUtilisateur, HttpStatus.CREATED);
         } catch (UtilisateurService.ChampsRequisManquantsException e) {
@@ -41,8 +56,21 @@ public class UtilisateurController {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.CONFLICT);
         } catch (UtilisateurService.MotDePasseTropCourtException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
-        }catch (Exception e) {
-            return new ResponseEntity<>("Une erreur interne est survenue", HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Une erreur interne est survenue: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    // Endpoint pour récupérer la liste des rôles
+    @GetMapping("/roles")
+    public ResponseEntity<?> getAllRoles() {
+        try {
+            // Use one of the correct methods that exists in RoleService
+            List<Role> roles = roleService.getAllRoles(); // or use roleService.findAllRoles()
+            return new ResponseEntity<>(roles, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Erreur lors de la récupération des rôles: " + e.getMessage(),
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 

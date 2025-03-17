@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SBM - Bureau d'Ordre</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/../static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        .required-label::after {
+            content: ' *';
+            color: red;
+        }
+        .file-drop-area {
+            border: 2px dashed #ccc;
+            border-radius: 5px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .file-drop-area:hover {
+            background-color: #f8f9fa;
+        }
+        .file-info {
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
+    </style>
+
+</head>
+<body>
+
+
+<nav class="top-navbar">
+    <div class="container-fluid">
+        <div class="d-flex align-items-center">
+            <button class="menu-toggle d-lg-none me-3" onclick="toggleMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <a class="navbar-brand" href="#">
+                <img src="/../static/images/logo.png" alt="SBM Logo" height="40">
+            </a>
+        </div>
+        <div class="navbar-text">
+            Administrateur - Nouveau Utilisateur
+        </div>
+        <div class="user-menu">
+            <div class="dropdown">
+                <button class="btn btn-transparent dropdown-toggle text-white d-flex align-items-center" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fas fa-user-circle me-2"></i>
+                    <span id="userName">Chargement...</span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                    <li>
+                        <a class="dropdown-item" href="parametres.html" onclick="openUserSettings()">
+                            <i class="fas fa-cog me-2"></i>
+                            Paramètres
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" id="logoutButton" class="dropdown-item" onclick="deconnexion()">
+                            <i class="fas fa-sign-out-alt me-2"></i>
+                            Déconnexion
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- Sidebar pour la navigation -->
+<div class="sidebar">
+    <div class="sidebar-body">
+        <ul class="sidebar-nav">
+            <li class="sidebar-item">
+                <a class="sidebar-link" href="index.html">
+                    <i class="fas fa-tachometer-alt me-2"></i>Tableau de bord
+                </a>
+            </li>
+            <li class="sidebar-item">
+                <a class="sidebar-link" href="commandes.html">
+                    <i class="fas fa-clipboard-list me-2"></i>Commandes
+                </a>
+            </li>
+            <li class="sidebar-item">
+                <a class="sidebar-link active" href="Nouveau_utilisateur.html">
+                    <i class="fas fa-plus-circle me-2"></i>Nouveau Utilisateur
+                </a>
+            </li>
+            <li class="sidebar-item">
+                <a class="sidebar-link" href="parametres.html">
+                    <i class="fas fa-cog me-2"></i>Paramètres
+                </a>
+            </li>
+        </ul>
+    </div>
+</div>
+
+<div class="content-wrapper">
+    <div class="container-fluid mt-4 px-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="mb-4">Création d'un Utilisateur</h2>
+        </div>
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-edit me-2"></i>Formulaire de création d'un nouveau utilisateur</h5>
+            </div>
+            <div class="card-body">
+                <form id="utilisateurForm" class="needs-validation" novalidate>
+            <div class="row g-3">
+                <!-- Colonne de gauche -->
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">Nom *</label>
+                        <input type="text" class="form-control" id="nom" required>
+                        <div class="invalid-feedback">
+                            Veuillez saisir un nom.
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Prénom *</label>
+                        <input type="text" class="form-control" id="prenom" required>
+                        <div class="invalid-feedback">
+                            Veuillez saisir un prénom.
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Email *</label>
+                        <input type="email" class="form-control" id="email" required>
+                        <div class="invalid-feedback">
+                            Veuillez saisir une adresse email valide.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Colonne de droite -->
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">Téléphone *</label>
+                        <input type="tel" class="form-control" id="telephone" required>
+                        <div class="invalid-feedback">
+                            Veuillez saisir un numéro de téléphone.
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Mot de passe *</label>
+                        <input type="password" class="form-control" id="motDePasse" required>
+                        <div class="invalid-feedback">
+                            Le mot de passe doit contenir au moins 8 caractères.
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Rôle *</label>
+                        <select class="form-select" id="role" required>
+                            <option value="">Choisir un rôle...</option>
+                            <option value="1">admin</option>
+                            <option value="2">comptable</option>
+                            <option value="3">Bureau d'ordre</option>
+                            <option value="4">Trésorerie</option>
+                        </select>
+                        <div class="invalid-feedback">
+                            Veuillez sélectionner un rôle.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="alert alert-danger d-none" id="errorMessage"></div>
+            <div class="alert alert-success d-none" id="successMessage"></div>
+
+            <button type="submit" class="btn btn-primary">Enregistrer</button>
+        </form>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="toastContainer" class="toast-container position-fixed top-0 end-0 p-3"></div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/js/all.min.js"></script>
+<script src="/../static/js/auth.js"></script>
+<script src="/../static/js/dashboard.js"></script>
+<script src="/../static/js/nouveau_utilisateur.js"></script>
+
+</body>
+</html>

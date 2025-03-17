@@ -6,13 +6,16 @@ document.addEventListener('DOMContentLoaded', function() {
         // Rediriger vers la page correspondante au rôle
         switch(userData.role.toLowerCase()) {
             case 'comptable':
-                window.location.href = '../../templates/comptable/commandes_à_comptabilisées.html';
+                window.location.href = '../../templates/comptable/index.html';
                 break;
             case 'bureau d\'ordre':
                 window.location.href = '../../templates/BO/index.html';
                 break;
             case 'trésorerie':
                 window.location.href = '../../templates/Tresorerie/index.html';
+                break;
+            case 'admin':
+                window.location.href = '../../templates/Admin/index.html';
                 break;
             default:
                 // Si rôle inconnu, forcer la déconnexion
@@ -62,6 +65,9 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
                     break;
                 case 'trésorerie':
                     window.location.href = '../../templates/Tresorerie/index.html';
+                    break;
+                case 'admin':
+                    window.location.href = '../../templates/Admin/index.html';
                     break;
                 default:
                     throw new Error('Rôle non reconnu');
