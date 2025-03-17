@@ -65,4 +65,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const utilisateur = getUtilisateurConnecte();
         userNameElement.textContent = `${utilisateur.prenom} ${utilisateur.nom}`;
     }
+    // Temporairement ignorer la vérification d'authentification pour tester
+    loadCommandesComptabilisees();
+
+    // Initialiser les écouteurs d'événements
+    initEventListeners();
 });

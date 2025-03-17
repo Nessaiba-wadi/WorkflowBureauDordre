@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface ReglementRepository extends JpaRepository<Reglement, Integer> {
     long countByEtatEnCoursValideEtc(String etat);
@@ -19,4 +20,10 @@ public interface ReglementRepository extends JpaRepository<Reglement, Integer> {
 
 
     List<Reglement> findByEtatEnCoursValideEtc(String etat);
+
+    //Optional<Reglement> findByCommande_IdCommande(Integer idCommande);
+
+    // Alternative avec une requête JPQL explicite
+    @Query("SELECT r FROM Reglement r WHERE r.commande.idCommande = :idCommande")
+    Optional<Reglement> findByCommandeId(@Param("idCommande") Integer idCommande);
 }

@@ -38,4 +38,5 @@ public class CommandeDTO {
     public void setStatus(boolean status) {
         this.status = status;
     }
+
 }

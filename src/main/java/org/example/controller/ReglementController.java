@@ -1,9 +1,12 @@
 package org.example.controller;
 
+import org.example.dto.CommandeDTO;
 import org.example.dto.ReglementDTO;
 import org.example.model.Commande;
+import org.example.model.Comptabilisation;
 import org.example.model.Reglement;
 import org.example.model.Utilisateur;
+import org.example.repository.ComptabilisationRepository;
 import org.example.service.*;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -43,6 +46,8 @@ public class ReglementController {
     @Autowired
     private ReglementService reglementService;
 
+    @Autowired
+    private ComptabilisationRepository comptabilisationRepository;
     @Autowired
     private UtilisateurService utilisateurService;
 
@@ -351,5 +356,120 @@ public class ReglementController {
     public ResponseEntity<Double> getTempsTraitementMoyen() {
         double tempsTraitementMoyen = reglementService.calculerTempsTraitementMoyen();
         return new ResponseEntity<>(tempsTraitementMoyen, HttpStatus.OK);
+    }
+
+    /**
+     * afficher les commandes comptabilisé
+     */
+    @GetMapping("/commandes-comptabilisees")
+    public ResponseEntity<?> getCommandesComptabilisees() {
+        log.info("Récupération des commandes comptabilisées avec état validé");
+
+        try {
+            // Récupérer les comptabilisations avec état "validé"
+            List<Comptabilisation> comptabilisations = comptabilisationRepository.findByEtat("validé");
+
+            // Transformer les comptabilisations en réponses avec les informations du fichier
+            List<Map<String, Object>> result = comptabilisations.stream()
+                    .filter(comp -> comp.getCommande() != null && comp.getCommande().isStatus())
+                    .map(comp -> {
+                        Commande commande = comp.getCommande();
+                        CommandeDTO commandeDTO = convertToCommandeDTO(comp);
+
+                        // Créer un map pour la réponse
+                        Map<String, Object> response = new HashMap<>();
+                        // Ajouter tous les champs du DTO
+                        response.put("idCommande", commandeDTO.getIdCommande());
+                        response.put("raisonSocialeFournisseur", commandeDTO.getRaisonSocialeFournisseur());
+                        response.put("numeroBC", commandeDTO.getNumeroBC());
+                        response.put("directionGBM", commandeDTO.getDirectionGBM());
+                        response.put("typeDocument", commandeDTO.getTypeDocument());
+                        response.put("dateRelanceBR", commandeDTO.getDateRelanceBR());
+                        response.put("dateTransmission", commandeDTO.getDateTransmission());
+                        response.put("raisonSocialeGBM", commandeDTO.getRaisonSocialeGBM());
+                        response.put("souscripteur", commandeDTO.getSouscripteur());
+                        response.put("typeRelance", commandeDTO.getTypeRelance());
+                        response.put("personnesCollectrice", commandeDTO.getPersonnesCollectrice());
+                        response.put("dossierComplet", commandeDTO.isDossierComplet());
+                        response.put("status", commandeDTO.isStatus());
+
+                        // Ajouter le nom du fichier joint
+                        response.put("fichierJoint", commande.getFichierJoint());
+
+                        return response;
+                    })
+                    .collect(Collectors.toList());
+
+            if (result.isEmpty()) {
+                log.info("Aucune commande comptabilisée trouvée avec l'état validé");
+                return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+            }
+
+            return new ResponseEntity<>(result, HttpStatus.OK);
+        } catch (Exception e) {
+            log.error("Erreur lors de la récupération des commandes comptabilisées: {}", e.getMessage());
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    private CommandeDTO convertToCommandeDTO(Comptabilisation comptabilisation) {
+        Commande commande = comptabilisation.getCommande();
+        CommandeDTO commandeDTO = new CommandeDTO();
+
+        commandeDTO.setIdCommande(commande.getIdCommande());
+        commandeDTO.setRaisonSocialeFournisseur(commande.getRaisonSocialeFournisseur());
+        commandeDTO.setNumeroBC(commande.getNumeroBC());
+        commandeDTO.setDirectionGBM(commande.getDirectionGBM());
+        commandeDTO.setTypeDocument(commande.getTypeDocument());
+        commandeDTO.setDateRelanceBR(commande.getDateRelanceBR());
+        commandeDTO.setDateTransmission(commande.getDateTransmission());
+        commandeDTO.setRaisonSocialeGBM(commande.getRaisonSocialeGBM());
+        commandeDTO.setSouscripteur(commande.getSouscripteur());
+        commandeDTO.setTypeRelance(commande.getTypeRelance());
+        commandeDTO.setPersonnesCollectrice(commande.getPersonnesCollectrice());
+        commandeDTO.setDossierComplet(commande.isDossierComplet());
+        commandeDTO.setStatus(commande.isStatus());
+
+        // Ajout du fichier joint (sous forme de chaîne de caractères)
+        // Vous ne pouvez pas directement convertir un String en MultipartFile
+        // Vous devez donc stocker cette valeur d'une autre manière
+        String fichierJoint = commande.getFichierJoint();
+        // Créer un attribut dans la réponse JSON pour stocker le nom du fichier
+        // ou simplement l'URL du fichier
+
+        return commandeDTO;
+    }
+
+    /**
+     * Récupère le statut des règlements pour une liste d'IDs de commandes
+     * @param commandeIds Liste des IDs de commandes
+     * @return Map associant l'ID de la commande à son statut de règlement
+     */
+    @PostMapping("/statuses")
+    public ResponseEntity<Map<Integer, String>> getReglementsStatuses(@RequestBody List<Integer> commandeIds) {
+        log.info("Récupération des statuts de règlement pour {} commandes", commandeIds.size());
+
+        try {
+            Map<Integer, String> statuses = new HashMap<>();
+
+            // Récupérer tous les règlements pour les commandes demandées
+            for (Integer commandeId : commandeIds) {
+                // Vous devez implémenter cette méthode dans votre service
+                Optional<Reglement> reglement = reglementService.findByCommandeId(commandeId);
+
+                if (reglement.isPresent()) {
+                    // Si un règlement existe, stocker son état
+                    statuses.put(commandeId, reglement.get().getEtatEnCoursValideEtc());
+                } else {
+                    // Si pas de règlement, indiquer "non-regle"
+                    statuses.put(commandeId, "non-regle");
+                }
+            }
+
+            return new ResponseEntity<>(statuses, HttpStatus.OK);
+        } catch (Exception e) {
+            log.error("Erreur lors de la récupération des statuts de règlement: {}", e.getMessage());
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 }

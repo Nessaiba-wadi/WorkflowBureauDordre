@@ -237,4 +237,8 @@ public class ReglementService {
         // Calculer la moyenne
         return count > 0 ? Math.round((totalJours / count) * 10) / 10.0 : 0.0; // Arrondi à 1 décimale
     }
+
+    public Optional<Reglement> findByCommandeId(Integer commandeId) {
+        return reglementRepository.findByCommandeId(commandeId);
+    }
 }
