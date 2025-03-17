@@ -88,7 +88,7 @@ function loadComptabilisationDetails(commandeId) {
             // Traiter le fichier joint de comptabilisation
             if (data.fichierJointComptabilisation) {
                 document.getElementById('fichierJointComptaMessage').innerHTML = `
-                    <a href="http://localhost:8082/api/files/${data.fichierJointComptabilisation}" class="btn btn-primary" target="_blank">
+                    <a href="http://localhost:8082/api/comptabilisations/fichier/${data.fichierJointComptabilisation}" class="btn btn-primary" target="_blank">
                         <i class="fas fa-download me-2"></i>Télécharger le fichier
                     </a>`;
             } else {
