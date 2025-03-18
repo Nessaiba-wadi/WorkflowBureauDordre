@@ -19,7 +19,7 @@ function chargerStatistiquesCommandes() {
             document.getElementById('commandesRecues').textContent = data.recues + ' Reçues';
             document.getElementById('commandesEnCours').textContent = data.enCours + ' En cours';
             document.getElementById('commandesCloturees').textContent = data.cloturees + ' Clôturées';
-            document.getElementById('tempsTraitementMoyen').textContent = data.tempsTraitementMoyen + ' jours';
+            //document.getElementById('tempsTraitementMoyen').textContent = data.tempsTraitementMoyen + ' jours';
         })
         .catch(error => {
             console.error('Erreur:', error);
@@ -28,7 +28,7 @@ function chargerStatistiquesCommandes() {
             document.getElementById('commandesRecues').textContent = 'Erreur';
             document.getElementById('commandesEnCours').textContent = 'Erreur';
             document.getElementById('commandesCloturees').textContent = 'Erreur';
-            document.getElementById('tempsTraitementMoyen').textContent = 'Erreur';
+            //document.getElementById('tempsTraitementMoyen').textContent = 'Erreur';
         });
 }
 
