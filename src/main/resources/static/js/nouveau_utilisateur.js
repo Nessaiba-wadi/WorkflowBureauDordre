@@ -69,7 +69,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 // Rediriger vers la liste des utilisateurs après 2 secondes
                 setTimeout(() => {
-                    window.location.href = '/admin/utilisateurs';
+                    window.location.href = '../../templates/Admin/Utilisateurs.html';
                 }, 2000);
             })
             .catch(error => {

@@ -11,6 +11,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
@@ -283,5 +284,8 @@ public class UtilisateurService {
 
         // Sauvegarder les modifications
         utilisateurRepository.save(utilisateur);
+    }
+    public List<Utilisateur> getAllUtilisateurs() {
+        return utilisateurRepository.findAll();
     }
 }
