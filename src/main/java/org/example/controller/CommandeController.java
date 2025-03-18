@@ -496,24 +496,25 @@ public class CommandeController {
         }
     }
 
-    // calcul de dashbaord
+    // calcul de dashboard
     @GetMapping("/statistiques")
     public ResponseEntity<Map<String, Object>> getStatistiquesCommandes() {
         try {
-            // Récupérer le nombre total de commandes
-            long totalCommandes = commandeRepository.count();
+            // Récupérer le nombre total de commandes avec status = true
+            long totalCommandes = commandeRepository.countByStatus(true);
 
-            // Récupérer le nombre de commandes en attente (état = "en cours")
-            long commandesEnAttente = commandeRepository.countByEtatCommande("en cours");
+            // Récupérer le nombre de commandes en attente (état = "en cours") avec status = true
+            long commandesEnAttente = commandeRepository.countByEtatCommandeAndStatus("en cours", true);
 
-            // Récupérer le nombre de commandes validées mais non clôturées
-            long commandesValidees = commandeRepository.countByEtatCommande("validé");
+            // Récupérer le nombre de commandes validées mais non clôturées avec status = true
+            long commandesValidees = commandeRepository.countByEtatCommandeAndStatus("validé", true);
 
-            // Récupérer le nombre de commandes clôturées
-            long commandesCloturees = reglementRepository.countByEtatEnCoursValideEtc("validé");
+            // Récupérer le nombre de commandes clôturées avec status = true
+            long commandesCloturees = reglementRepository.countByCommandeStatusAndEtat(true, "validé");
 
-            // Récupérer le nombre de commandes comptabilisées (état = "validé" dans la table comptabilisations)
-            long commandesComptabilisees = comptabilisationRepository.countByEtat("validé");
+            // Récupérer le nombre de commandes comptabilisées (état = "validé" dans la table comptabilisations) avec status = true
+            // Utilisation de la méthode correcte qui existe déjà dans votre repo
+            long commandesComptabilisees = comptabilisationRepository.countByCommandeStatusAndEtat(true, "validé");
 
             Map<String, Object> statistiques = new HashMap<>();
             statistiques.put("totalCommandes", totalCommandes);

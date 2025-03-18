@@ -35,5 +35,4 @@ public interface ComptabilisationRepository extends JpaRepository<Comptabilisati
     @Query("SELECT c FROM Comptabilisation c WHERE c.etat = :etat AND c.commande.status = :status")
     List<Comptabilisation> findByEtatAndCommandeStatus(@Param("etat") String etat, @Param("status") boolean status);
 
-
 }
