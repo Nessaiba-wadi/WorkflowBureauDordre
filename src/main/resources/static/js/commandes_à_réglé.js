@@ -84,11 +84,11 @@ function getReglementsStatuses(commandeIds) {
             return response.json();
         })
         .then(statuses => {
-            // Normaliser les statuts - convertir "validé" en "valide"
+            // Normaliser les statuts - convertir "validé" en "validé"
             const normalizedStatuses = {};
             for (const id in statuses) {
                 if (statuses[id] === "validé") {
-                    normalizedStatuses[id] = "valide";
+                    normalizedStatuses[id] = "validé";
                 } else {
                     normalizedStatuses[id] = statuses[id];
                 }
@@ -147,9 +147,9 @@ function applyFilters() {
         // Filtre de règlement
         let matchesReglementStatus = true;
         if (comptabilisationFilter === 'true') {
-            matchesReglementStatus = commande.reglementStatus === 'valide';
+            matchesReglementStatus = commande.reglementStatus === 'validé';
         } else if (comptabilisationFilter === 'false') {
-            matchesReglementStatus = commande.reglementStatus !== 'valide';
+            matchesReglementStatus = commande.reglementStatus !== 'validé';
         }
 
         return matchesSearch && matchesDirection && matchesReglementStatus;
@@ -202,7 +202,7 @@ function renderCommandes() {
 
         // Déterminer le statut de règlement et sa couleur
         let reglementStatus, reglementBadgeClass, isDisabled, reglementAction;
-        if (commande.reglementStatus === 'valide' || commande.reglementStatus === 'validé') {
+        if (commande.reglementStatus === 'validé' || commande.reglementStatus === 'validé') {
             reglementStatus = 'Réglée';
             reglementBadgeClass = 'bg-success';
             isDisabled = 'disabled';

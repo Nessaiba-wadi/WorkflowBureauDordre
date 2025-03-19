@@ -507,7 +507,7 @@ public class CommandeController {
             long commandesEnAttente = commandeRepository.countByEtatCommandeAndStatus("en cours", true);
 
             // Récupérer le nombre de commandes validées mais non clôturées avec status = true
-            long commandesValidees = commandeRepository.countByEtatCommandeAndStatus("validé", true);
+            long commandesValidees = commandeRepository.countByEtatCommandeAndStatus("validé" , true);
 
             // Récupérer le nombre de commandes clôturées avec status = true
             long commandesCloturees = reglementRepository.countByCommandeStatusAndEtat(true, "validé");

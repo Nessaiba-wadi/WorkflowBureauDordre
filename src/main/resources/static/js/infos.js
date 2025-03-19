@@ -95,7 +95,7 @@ function formatDate(dateString) {
 
 // Fonction pour afficher l'état du dossier
 function getEtatDossier(dossierComplet) {
-    return dossierComplet ? 'Complet' : 'En cours';
+    return dossierComplet ? 'Validé' : 'En cours';
 }
 
 // Filtrage des commandes
@@ -1176,8 +1176,6 @@ function updatePaginationControlsTresorerie() {
     });
 }
 
-// Assurez-vous que la fonction formatDate existe
-// Si elle n'existe pas déjà dans votre code, ajoutez-la :
 if (typeof formatDate !== 'function') {
     function formatDate(dateString) {
         if (!dateString) return '-';

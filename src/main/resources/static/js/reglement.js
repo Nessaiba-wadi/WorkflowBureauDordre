@@ -64,7 +64,7 @@ function chargerBonsDeCommande() {
             }
 
             const commandesNonReglees = data.filter(commande =>
-                commande.reglementStatus !== 'valide' && commande.reglementStatus !== 'validé');
+                commande.reglementStatus !== 'validé' && commande.reglementStatus !== 'validé');
 
             commandesNonReglees.forEach(commande => {
                 const option = document.createElement('option');
@@ -117,7 +117,7 @@ function envoyerReglement() {
     formData.append('dateTransmission', dateTransmission);
     formData.append('commentaire', commentaire);
     // Ajout: utiliser 'valide' au lieu de 'validé'
-    formData.append('etatEnCoursValideEtc', 'valide');
+    formData.append('etatEnCoursValideEtc', 'validé');
 
     if (fichier) {
         formData.append('fichier', fichier);

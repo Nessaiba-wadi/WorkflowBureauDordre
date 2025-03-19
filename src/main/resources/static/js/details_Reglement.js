@@ -176,10 +176,10 @@ function loadReglementDetails(reglementId) {
                 document.getElementById('utilisateurReglement').textContent = 'Non spécifié';
             }
 
-            // Normaliser l'état du règlement (convertir "validé" en "valide" si nécessaire)
+            // Normaliser l'état du règlement (convertir "valide" en "validé ,,,," si nécessaire)
             let etatReglement = data.etatEnCoursValideEtc || 'Non spécifié';
-            if (etatReglement === 'validé') {
-                etatReglement = 'valide';
+            if (etatReglement === 'valide') {
+                etatReglement = 'validé';
             }
 
             // Afficher l'état du règlement avec un badge coloré
@@ -187,7 +187,7 @@ function loadReglementDetails(reglementId) {
             etatReglementBadge.textContent = etatReglement;
 
             // Définir la classe du badge en fonction de l'état
-            if (etatReglement === 'valide') {
+            if (etatReglement === 'validé') {
                 etatReglementBadge.className = 'badge bg-success';
             } else if (etatReglement === 'en cours') {
                 etatReglementBadge.className = 'badge bg-warning text-dark';
