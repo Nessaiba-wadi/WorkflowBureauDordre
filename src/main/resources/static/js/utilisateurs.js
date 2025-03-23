@@ -1,46 +1,53 @@
-// Gestion des utilisateurs
 document.addEventListener('DOMContentLoaded', function() {
     // Variables globales
     let utilisateursData = [];
     let selectedUtilisateurId = null;
-// Vérifier si nous sommes sur la page de gestion des utilisateurs
+    let rolesMap = {};
+
+    // Vérifier si nous sommes sur la page de gestion des utilisateurs
     const utilisateursTableBody = document.getElementById('utilisateursTableBody');
 
     if (!utilisateursTableBody) {
         console.log("Page de gestion des utilisateurs non détectée, initialisation annulée");
         return; // Sortir de la fonction si l'élément clé n'est pas trouvé
     }
+
     // Initialisation
-    chargerUtilisateurs();
-    chargerRoles();
+    chargerRoles();  // Charger d'abord les rôles
+    chargerUtilisateurs();  // Puis les utilisateurs
     setupEventListeners();
 
-    // Charger la liste des utilisateurs
-    function chargerUtilisateurs() {
-        fetch('http://localhost:8082/utilisateurs/tous', {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Erreur lors de la récupération des utilisateurs');
-                }
-                return response.json();
-            })
-            .then(data => {
-                utilisateursData = data;
-                renderUtilisateursTable(data);
-            })
-            .catch(error => {
-                showToast('Erreur', error.message, 'danger');
-            });
+    function appliquerFiltres() {
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        const roleFiltre = document.getElementById('roleFilter').value;
+        const statutFiltre = document.getElementById('statutFilter').value;
+
+        // Filtrer les données selon les critères
+        const utilisateursFiltre = utilisateursData.filter(user => {
+            // Filtre de recherche textuelle
+            const matchSearch = searchTerm === '' ||
+                user.nom?.toLowerCase().includes(searchTerm) ||
+                user.prenom?.toLowerCase().includes(searchTerm) ||
+                user.email?.toLowerCase().includes(searchTerm);
+
+            // Filtre par rôle
+            const matchRole = roleFiltre === '' ||
+                (user.role && user.role.idRole == roleFiltre);
+
+            // Filtre par statut
+            const matchStatut = statutFiltre === '' ||
+                user.statut.toString() === statutFiltre;
+
+            return matchSearch && matchRole && matchStatut;
+        });
+
+        // Afficher les résultats filtrés
+        renderUtilisateursTable(utilisateursFiltre);
     }
 
-    // Charger les rôles pour le formulaire
+    // Charger les rôles avant de charger les utilisateurs
     function chargerRoles() {
-        fetch('http://localhost:8082/utilisateurs/roles', {
+        return fetch('http://localhost:8082/utilisateurs/roles', {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json'
@@ -53,22 +60,84 @@ document.addEventListener('DOMContentLoaded', function() {
                 return response.json();
             })
             .then(data => {
-                const roleSelect = document.getElementById('role');
-                roleSelect.innerHTML = '';
-
+                console.log("Rôles chargés:", data);
+                // Create a map of roles for faster lookups
+                rolesMap = {};
                 data.forEach(role => {
-                    const option = document.createElement('option');
-                    option.value = role.idRole;
-                    option.textContent = role.nom;
-                    roleSelect.appendChild(option);
+                    rolesMap[role.idRole] = role.nom;
                 });
+
+                // Remplir le select du modal
+                const roleSelect = document.getElementById('role');
+                if (roleSelect) {
+                    roleSelect.innerHTML = '';
+                    data.forEach(role => {
+                        const option = document.createElement('option');
+                        option.value = role.idRole;
+                        option.textContent = role.nom;
+                        roleSelect.appendChild(option);
+                    });
+                }
+
+                return data;
             })
             .catch(error => {
-                showToast('Erreur', error.message, 'danger');
+                showToast('Erreur', 'Erreur lors du chargement des rôles: ' + error.message, 'danger');
+                console.error("Erreur lors du chargement des rôles:", error);
             });
     }
 
-    // Afficher les utilisateurs dans le tableau
+    // Charger la liste des utilisateurs
+    function chargerUtilisateurs() {
+        fetch('http://localhost:8082/utilisateurs/tous-avec-roles', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Erreur lors de la récupération des utilisateurs');
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log("Utilisateurs chargés:", data);
+                utilisateursData = data;
+                renderUtilisateursTable(data);
+
+                initializeRoleFilter(data);
+            })
+            .catch(error => {
+                showToast('Erreur', 'Erreur lors du chargement des utilisateurs: ' + error.message, 'danger');
+                console.error("Erreur lors du chargement des utilisateurs:", error);
+            });
+    }
+
+    // Initialise le filtre de rôle à partir des données des utilisateurs
+    function initializeRoleFilter(utilisateurs) {
+        const roleFilter = document.getElementById('roleFilter');
+        if (!roleFilter) return;
+
+        // Récupérer tous les rôles uniques des utilisateurs
+        const uniqueRoles = [...new Set(utilisateurs
+            .filter(u => u.role && u.role.idRole) // S'assurer que le rôle existe
+            .map(u => JSON.stringify({id: u.role.idRole, nom: u.role.nom || rolesMap[u.role.idRole] || 'Non défini'})))];
+
+        // Vider le select existant sauf l'option par défaut
+        roleFilter.innerHTML = '<option value="">Tous les rôles</option>';
+
+        // Ajouter chaque rôle unique
+        uniqueRoles.forEach(roleString => {
+            const role = JSON.parse(roleString);
+            const option = document.createElement('option');
+            option.value = role.id;
+            option.textContent = role.nom;
+            roleFilter.appendChild(option);
+        });
+    }
+
+    // Modifier la fonction renderUtilisateursTable pour prendre en compte la structure de données correcte
     function renderUtilisateursTable(utilisateurs) {
         const tableBody = document.getElementById('utilisateursTableBody');
         tableBody.innerHTML = '';
@@ -76,27 +145,45 @@ document.addEventListener('DOMContentLoaded', function() {
         utilisateurs.forEach(utilisateur => {
             const row = document.createElement('tr');
 
+            // Obtenir l'ID et le nom du rôle correctement
+            const roleId = utilisateur.role ? utilisateur.role.idRole : null;
+
+            // Priorité: utiliser le nom du rôle de l'utilisateur s'il existe,
+            // sinon utiliser le nom du rôle à partir de rolesMap,
+            // sinon afficher 'Non défini'
+            let roleName = 'Non défini';
+            if (utilisateur.role) {
+                if (utilisateur.role.nom) {
+                    roleName = utilisateur.role.nom;
+                } else if (roleId && rolesMap[roleId]) {
+                    roleName = rolesMap[roleId];
+                }
+            }
+
             row.innerHTML = `
-        <td>${utilisateur.idUtilisateur}</td>
-        <td>${utilisateur.nom}</td>
-        <td>${utilisateur.prenom}</td>
-        <td>${utilisateur.email}</td>
-        <td>${utilisateur.role && utilisateur.role.nom ? utilisateur.role.nom : 'Non défini'}</td>
-        <td>
-          <span class="badge ${utilisateur.statut ? 'bg-success' : 'bg-danger'}">
-            ${utilisateur.statut ? 'Actif' : 'Inactif'}
-          </span>
-        </td>
-        <td>
-          <button class="btn btn-sm btn-primary btn-edit" data-id="${utilisateur.idUtilisateur}">
-            <i class="bi bi-pencil"></i> Modifier
-          </button>
-          ${utilisateur.statut ?
-                `<button class="btn btn-sm btn-danger btn-deactivate" data-id="${utilisateur.idUtilisateur}">
-              <i class="bi bi-trash"></i> Désactiver
-            </button>` : ''}
-        </td>
-      `;
+            <td>${utilisateur.nom || ''}</td>
+            <td>${utilisateur.prenom || ''}</td>
+            <td>${utilisateur.email || ''}</td>
+            <td data-role-id="${roleId || ''}">${roleName}</td>
+            <td>
+              <span class="badge ${utilisateur.statut ? 'bg-success' : 'bg-danger'}">
+                ${utilisateur.statut ? 'Actif' : 'Inactif'}
+              </span>
+            </td>
+            <td>
+              <div class="d-flex">
+                <button class="btn btn-sm btn-link text-primary me-2 btn-edit" title="Modifier" data-id="${utilisateur.idUtilisateur}">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn btn-sm btn-link ${utilisateur.statut ? 'text-danger' : 'text-success'} btn-toggle-status" 
+                        title="${utilisateur.statut ? 'Désactiver' : 'Activer'}" 
+                        data-id="${utilisateur.idUtilisateur}" 
+                        data-status="${utilisateur.statut}">
+                  <i class="fas ${utilisateur.statut ? 'fa-toggle-on' : 'fa-toggle-off'}"></i>
+                </button>
+              </div>
+            </td>
+        `;
 
             tableBody.appendChild(row);
         });
@@ -105,59 +192,89 @@ document.addEventListener('DOMContentLoaded', function() {
         addTableButtonsEventListeners();
     }
 
+    function updateTableRoles() {
+        const roleCells = document.querySelectorAll('[data-role-id]');
+        roleCells.forEach(cell => {
+            const roleId = cell.getAttribute('data-role-id');
+            if (roleId && rolesMap[roleId]) {
+                cell.textContent = rolesMap[roleId];
+            }
+        });
+    }
+
     // Configuration des écouteurs d'événements
     function setupEventListeners() {
-        // Vérifier si les éléments existent avant d'ajouter des écouteurs
-        const btnAddUtilisateur = document.getElementById('btnAddUtilisateur');
+        // Bouton pour enregistrer un utilisateur (modification)
         const saveUtilisateur = document.getElementById('saveUtilisateur');
-        const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
-
-        if (btnAddUtilisateur) {
-            btnAddUtilisateur.addEventListener('click', () => {
-        // Bouton pour ouvrir le modal d'ajout d'utilisateur
-        document.getElementById('btnAddUtilisateur').addEventListener('click', () => {
-            document.getElementById('utilisateurModalLabel').textContent = 'Ajouter un utilisateur';
-            document.getElementById('utilisateurForm').reset();
-            document.getElementById('idUtilisateur').value = '';
-
-            const utilisateurModal = new bootstrap.Modal(document.getElementById('utilisateurModal'));
-            utilisateurModal.show();
-        });
-
-        // Bouton pour enregistrer un utilisateur (ajout ou modification)
-        document.getElementById('saveUtilisateur').addEventListener('click', saveUtilisateur);
+        if (saveUtilisateur) {
+            saveUtilisateur.addEventListener('click', sauvegarderUtilisateur);
+        }
 
         // Bouton pour confirmer la désactivation
-        document.getElementById('confirmDeleteBtn').addEventListener('click', desactiverUtilisateur);
-            });
-        }
-
-        if (saveUtilisateur) {
-            saveUtilisateur.addEventListener('click', saveUtilisateur);
-        }
-
+        const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
         if (confirmDeleteBtn) {
             confirmDeleteBtn.addEventListener('click', desactiverUtilisateur);
         }
-    }
 
+        // Écouteurs pour les filtres
+        const searchInput = document.getElementById('searchInput');
+        const roleFilter = document.getElementById('roleFilter');
+        const statutFilter = document.getElementById('statutFilter');
+        const resetFilters = document.getElementById('resetFilters');
+
+        if (searchInput) {
+            searchInput.addEventListener('input', appliquerFiltres);
+        }
+
+        if (roleFilter) {
+            roleFilter.addEventListener('change', appliquerFiltres);
+        }
+
+        if (statutFilter) {
+            statutFilter.addEventListener('change', appliquerFiltres);
+        }
+
+        if (resetFilters) {
+            resetFilters.addEventListener('click', () => {
+                if (searchInput) searchInput.value = '';
+                if (roleFilter) roleFilter.value = '';
+                if (statutFilter) statutFilter.value = '';
+                appliquerFiltres();
+            });
+        }
+    }
 
     // Ajouter les écouteurs d'événements aux boutons du tableau
     function addTableButtonsEventListeners() {
-        // Boutons de modification
+        // Boutons d'édition
         document.querySelectorAll('.btn-edit').forEach(button => {
-            button.addEventListener('click', function() {
-                const utilisateurId = this.getAttribute('data-id');
-                chargerUtilisateurPourModification(utilisateurId);
+            button.addEventListener('click', (e) => {
+                const id = e.currentTarget.getAttribute('data-id');
+                chargerUtilisateurPourModification(id);
             });
         });
 
-        // Boutons de désactivation
-        document.querySelectorAll('.btn-deactivate').forEach(button => {
-            button.addEventListener('click', function() {
-                selectedUtilisateurId = this.getAttribute('data-id');
-                const deleteModal = new bootstrap.Modal(document.getElementById('confirmDeleteModal'));
-                deleteModal.show();
+        // Boutons de toggle statut (activer/désactiver)
+        document.querySelectorAll('.btn-toggle-status').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const id = e.currentTarget.getAttribute('data-id');
+                const currentStatus = e.currentTarget.getAttribute('data-status') === 'true';
+
+                selectedUtilisateurId = id;
+
+                if (currentStatus) {
+                    // Afficher le modal de confirmation pour désactiver
+                    document.getElementById('confirmDeleteModalLabel').textContent = 'Confirmation de désactivation';
+                    document.getElementById('confirmDeleteBtn').textContent = 'Désactiver';
+                    document.querySelector('#confirmDeleteModal .modal-body').textContent =
+                        'Êtes-vous sûr de vouloir désactiver cet utilisateur ? Cette action peut être annulée ultérieurement.';
+
+                    const confirmModal = new bootstrap.Modal(document.getElementById('confirmDeleteModal'));
+                    confirmModal.show();
+                } else {
+                    // Pour activer, pas besoin de confirmation, on appelle directement activerUtilisateur
+                    activerUtilisateur(id);
+                }
             });
         });
     }
@@ -172,17 +289,21 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('nom').value = utilisateur.nom;
             document.getElementById('prenom').value = utilisateur.prenom;
             document.getElementById('email').value = utilisateur.email;
-            document.getElementById('role').value = utilisateur.role.idRole;
+
+            // S'assurer que le rôle existe
+            if (utilisateur.role && utilisateur.role.idRole) {
+                document.getElementById('role').value = utilisateur.role.idRole;
+            }
 
             const utilisateurModal = new bootstrap.Modal(document.getElementById('utilisateurModal'));
             utilisateurModal.show();
         }
     }
 
-    // Enregistrer un utilisateur (ajout ou modification)
-    function saveUtilisateur() {
+    // Enregistrer un utilisateur (modification)
+    function sauvegarderUtilisateur() {
         const idUtilisateur = document.getElementById('idUtilisateur').value;
-        const isUpdate = idUtilisateur !== '';
+        if (!idUtilisateur) return;
 
         // Récupérer les données du formulaire
         const utilisateurData = {
@@ -194,18 +315,12 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         };
 
-        // Ajouter l'ID si c'est une modification
-        if (isUpdate) {
-            utilisateurData.idUtilisateur = parseInt(idUtilisateur);
-        }
-
-        // URL et méthode en fonction de l'action (ajout ou modification)
-        const url = isUpdate ? `http://localhost:8082/utilisateurs/modifier-utilisateur/${idUtilisateur}` : 'http://localhost:8082/utilisateurs';
-        const method = isUpdate ? 'PUT' : 'POST';
+        // Ajouter l'ID
+        utilisateurData.idUtilisateur = parseInt(idUtilisateur);
 
         // Envoyer la requête
-        fetch(url, {
-            method: method,
+        fetch(`http://localhost:8082/utilisateurs/modifier-utilisateur/${idUtilisateur}`, {
+            method: 'PUT',
             headers: {
                 'Content-Type': 'application/json'
             },
@@ -217,11 +332,11 @@ document.addEventListener('DOMContentLoaded', function() {
                         throw new Error(text);
                     });
                 }
-                return response.json();
+                return response.text();
             })
             .then(data => {
                 bootstrap.Modal.getInstance(document.getElementById('utilisateurModal')).hide();
-                showToast('Succès', `Utilisateur ${isUpdate ? 'modifié' : 'ajouté'} avec succès`, 'success');
+                showToast('Succès', 'Utilisateur modifié avec succès', 'success');
                 chargerUtilisateurs(); // Rafraîchir la liste
             })
             .catch(error => {
@@ -250,6 +365,31 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 bootstrap.Modal.getInstance(document.getElementById('confirmDeleteModal')).hide();
                 showToast('Succès', 'Utilisateur désactivé avec succès', 'success');
+                chargerUtilisateurs(); // Rafraîchir la liste
+            })
+            .catch(error => {
+                showToast('Erreur', error.message, 'danger');
+            });
+    }
+
+    // Activer un utilisateur (nouvelle fonction)
+    function activerUtilisateur(utilisateurId) {
+        fetch(`http://localhost:8082/utilisateurs/activer/${utilisateurId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+            .then(response => {
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        throw new Error(text);
+                    });
+                }
+                return response.text();
+            })
+            .then(data => {
+                showToast('Succès', 'Utilisateur activé avec succès', 'success');
                 chargerUtilisateurs(); // Rafraîchir la liste
             })
             .catch(error => {

@@ -11,15 +11,16 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 
-    @CrossOrigin(origins = {"http://127.0.0.1:8080", "http://localhost:8080"})
-    @RestController
-    @RequestMapping("/utilisateurs")
-    public class UtilisateurController {
+@CrossOrigin(origins = {"http://127.0.0.1:8080", "http://localhost:8080"})
+@RestController
+@RequestMapping("/utilisateurs")
+public class UtilisateurController {
 
         @Autowired
         private final UtilisateurService utilisateurService;
@@ -61,14 +62,13 @@ import java.util.Map;
 
         // Endpoint pour récupérer la liste des rôles
         @GetMapping("/roles")
-        public ResponseEntity<?> getAllRoles() {
+        public ResponseEntity<List<Role>> getAllRoles() {
             try {
-                // Use one of the correct methods that exists in RoleService
-                List<Role> roles = roleService.getAllRoles(); // or use roleService.findAllRoles()
+                // Make sure this method exists in your RoleService
+                List<Role> roles = roleService.findAllRoles(); // Use the correct method name
                 return new ResponseEntity<>(roles, HttpStatus.OK);
             } catch (Exception e) {
-                return new ResponseEntity<>("Erreur lors de la récupération des rôles: " + e.getMessage(),
-                        HttpStatus.INTERNAL_SERVER_ERROR);
+                return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
             }
         }
 
@@ -145,7 +145,25 @@ import java.util.Map;
             }
         }
 
-
+        /**
+         * Activer un utilisateur
+         */
+        @PutMapping("/activer/{id}")
+        public ResponseEntity<?> activerUtilisateur(@PathVariable Integer id) {
+            try {
+                Utilisateur utilisateur = utilisateurService.activerUtilisateur(id);
+                return new ResponseEntity<>("Utilisateur activé avec succès: " + utilisateur.getNom() + " " + utilisateur.getPrenom(), HttpStatus.OK);
+            } catch (UtilisateurService.UtilisateurNonTrouveException e) {
+                return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+            } catch (UtilisateurService.UtilisateurDejaActifException e) {
+                return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+            } catch (Exception e) {
+                // Log l'exception complète pour diagnostic
+                e.printStackTrace();
+                return new ResponseEntity<>("Une erreur est survenue lors de l'activation de l'utilisateur: " + e.getMessage(),
+                        HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+        }
 
         /**
          * Vérifie si le mot de passe actuel est correct
@@ -235,16 +253,49 @@ import java.util.Map;
         }
 
         /**
-         * Récupérer tous les utilisateurs
+         * Récupérer tous les utilisateurs sauf les admins
          */
         @GetMapping("/tous")
         public ResponseEntity<?> getAllUtilisateurs() {
             try {
-                List<Utilisateur> utilisateurs = utilisateurService.getAllUtilisateurs();
+                List<Utilisateur> utilisateurs = utilisateurService.getAllUtilisateursExceptAdmins();
                 return new ResponseEntity<>(utilisateurs, HttpStatus.OK);
             } catch (Exception e) {
                 return new ResponseEntity<>("Une erreur est survenue lors de la récupération des utilisateurs: " + e.getMessage(),
                         HttpStatus.INTERNAL_SERVER_ERROR);
             }
         }
+
+    @GetMapping("/tous-avec-roles")
+    public ResponseEntity<List<Map<String, Object>>> getAllUtilisateursAvecRoles() {
+        try {
+            List<Utilisateur> utilisateurs = utilisateurService.getAllUtilisateurs();
+            List<Map<String, Object>> utilisateursAvecRoles = new ArrayList<>();
+
+            for (Utilisateur u : utilisateurs) {
+                Map<String, Object> utilisateurMap = new HashMap<>();
+                utilisateurMap.put("idUtilisateur", u.getIdUtilisateur());
+                utilisateurMap.put("nom", u.getNom());
+                utilisateurMap.put("prenom", u.getPrenom());
+                utilisateurMap.put("email", u.getEmail());
+                utilisateurMap.put("statut", u.isStatut());
+
+                // Créer un objet pour le rôle
+                if (u.getRole() != null) {
+                    Map<String, Object> roleMap = new HashMap<>();
+                    roleMap.put("idRole", u.getRole().getIdRole());
+                    roleMap.put("nom", u.getRole().getNom());
+                    utilisateurMap.put("role", roleMap);
+                } else {
+                    utilisateurMap.put("role", null);
+                }
+
+                utilisateursAvecRoles.add(utilisateurMap);
+            }
+
+            return new ResponseEntity<>(utilisateursAvecRoles, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
     }

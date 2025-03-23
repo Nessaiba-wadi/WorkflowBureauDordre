@@ -40,7 +40,7 @@ public class Utilisateur {
 
     @ManyToOne
     @JoinColumn(name = "role_id", nullable = false)
-    @JsonBackReference
+    @JsonManagedReference
     private Role role;
 
     @Column(name = "statut", nullable = false)

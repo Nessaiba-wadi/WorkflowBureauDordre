@@ -32,4 +32,7 @@ public class RoleService {
     }
 
 
+    public List<Role> findAllRoles() {
+        return roleRepository.findAll();
+    }
 }

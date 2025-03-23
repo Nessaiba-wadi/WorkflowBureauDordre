@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Service
 public class UtilisateurService {
@@ -35,6 +36,25 @@ public class UtilisateurService {
     private static final Pattern PASSWORD_PATTERN = Pattern.compile("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$");
     private static final Pattern NAME_PATTERN = Pattern.compile("^[a-zA-Z]+$");
     private static final Pattern PHONE_PATTERN = Pattern.compile("^(\\+\\d{1,3}[- ]?)?\\d{10}$");
+
+    public Utilisateur activerUtilisateur(Integer id) throws UtilisateurNonTrouveException {
+        Utilisateur utilisateur = findUtilisateurById(id);
+
+        if (utilisateur.isStatut()) {
+            throw new UtilisateurDejaActifException("L'utilisateur est déjà actif");
+        }
+
+        // Si on arrive ici, l'utilisateur est inactif et on peut l'activer
+        utilisateur.setStatut(true);
+        return utilisateurRepository.save(utilisateur);
+    }
+
+    // Ajouter cette classe d'exception
+    public static class UtilisateurDejaActifException extends RuntimeException {
+        public UtilisateurDejaActifException(String message) {
+            super(message);
+        }
+    }
 
     public static class UtilisateurNonTrouveException extends RuntimeException {
         public UtilisateurNonTrouveException(String message) {
@@ -287,5 +307,18 @@ public class UtilisateurService {
     }
     public List<Utilisateur> getAllUtilisateurs() {
         return utilisateurRepository.findAll();
+    }
+
+    // recuperer tous les utilisateurs sauf les admins
+    public List<Utilisateur> getAllUtilisateursExceptAdmins() {
+        // Supposons que le rôle d'administrateur a l'ID 1
+        int adminRoleId = 1;
+        return utilisateurRepository.findAllExceptAdmins(adminRoleId);
+    }
+
+    // méthode qui récupère un utilisateur sans vérifier son statut
+    public Utilisateur findUtilisateurById(Integer id) {
+        return utilisateurRepository.findById(id)
+                .orElseThrow(() -> new UtilisateurNonTrouveException("Utilisateur non trouvé"));
     }
 }
