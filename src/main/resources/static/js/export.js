@@ -1,271 +1,213 @@
-// Fonction pour collecter et consolider les données des trois tables
-async function exporterDonneesPDF() {
-    // Vérifier l'authentification
-    const userInfo = JSON.parse(sessionStorage.getItem('userInfo'));
-    if (!userInfo || !userInfo.email) {
-        alert('Vous devez être connecté pour exporter les données');
-        return;
-    }
+/**
+ * Fonctions d'exportation PDF pour la vision globale
+ */
 
-    // Afficher un indicateur de chargement
-    const btnExport = document.querySelector('button.exporter-pdf');
-    const btnTextOriginal = btnExport.innerHTML;
-    btnExport.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Génération du PDF...';
-    btnExport.disabled = true;
+// Fonction principale pour l'exportation PDF
+function exportTableToPDF() {
+    // Informations d'en-tête
+    const title = "Export des données de suivi GBM";
+    const date = new Date().toLocaleDateString('fr-FR');
 
-    try {
-        // 1. Charger les données des trois onglets si elles ne sont pas déjà chargées
-        if (!allCommandes || allCommandes.length === 0) {
-            await chargerCommandesAvecPagination();
-        }
-        if (!allComptabilisations || allComptabilisations.length === 0) {
-            await chargerComptabilisationsAvecPagination();
-        }
-        if (!allReglements || allReglements.length === 0) {
-            await chargerReglementsAvecPagination();
-        }
-
-        // 2. Créer un objet de consolidation par numéro de BC
-        const donneesPar_BC = {};
-
-        // Parcourir les commandes
-        allCommandes.forEach(commande => {
-            if (commande.numeroBC) {
-                // Créer une entrée pour ce BC s'il n'existe pas encore
-                if (!donneesPar_BC[commande.numeroBC]) {
-                    donneesPar_BC[commande.numeroBC] = {
-                        reception: null,
-                        comptabilite: null,
-                        tresorerie: null
-                    };
-                }
-                donneesPar_BC[commande.numeroBC].reception = commande;
-            }
-        });
-
-        // Parcourir les comptabilisations
-        allComptabilisations.forEach(compta => {
-            if (compta.numeroBC) {
-                // Créer une entrée pour ce BC s'il n'existe pas encore
-                if (!donneesPar_BC[compta.numeroBC]) {
-                    donneesPar_BC[compta.numeroBC] = {
-                        reception: null,
-                        comptabilite: null,
-                        tresorerie: null
-                    };
-                }
-                donneesPar_BC[compta.numeroBC].comptabilite = compta;
-            }
-        });
-
-        // Parcourir les règlements
-        allReglements.forEach(reglement => {
-            // Récupérer le numéro de BC à partir de la commande associée
-            const numeroBC = reglement.commande && reglement.commande.numeroBC
-                ? reglement.commande.numeroBC
-                : (reglement.numeroBC || null);
-
-            if (numeroBC) {
-                // Créer une entrée pour ce BC s'il n'existe pas encore
-                if (!donneesPar_BC[numeroBC]) {
-                    donneesPar_BC[numeroBC] = {
-                        reception: null,
-                        comptabilite: null,
-                        tresorerie: null
-                    };
-                }
-                donneesPar_BC[numeroBC].tresorerie = reglement;
-            }
-        });
-
-        // 3. Générer le PDF avec les données consolidées
-        genererPDF(donneesPar_BC);
-
-    } catch (error) {
-        console.error('Erreur lors de l\'exportation des données:', error);
-        alert('Une erreur est survenue lors de l\'exportation: ' + error.message);
-    } finally {
-        // Restaurer l'état du bouton
-        btnExport.innerHTML = btnTextOriginal;
-        btnExport.disabled = false;
-    }
-}
-
-// Fonction pour générer le PDF à partir des données consolidées
-function genererPDF(donneesPar_BC) {
-    // Créer un nouveau document jsPDF
+    // Déterminer quelles données exporter (filtrées ou toutes)
+    const dataToExport = filteredGlobalData.length > 0 ? filteredGlobalData : allGlobalData;
     const { jsPDF } = window.jspdf;
-    const doc = new jsPDF('landscape', 'mm', 'a4');
+    // Créer un nouvel objet jsPDF
+    const doc = new jsPDF('l', 'mm', 'a3'); // Format paysage (landscape) en A3
 
-    // Définir les propriétés du document
-    const dateGeneration = new Date().toLocaleDateString('fr-FR');
-    doc.setProperties({
-        title: 'Suivi des commandes - ' + dateGeneration,
-        subject: 'Rapport consolidé de suivi des commandes',
-        author: 'Application GBM'
+    // Ajouter l'en-tête
+    doc.setFontSize(18);
+    doc.text(title, 20, 20);
+
+    doc.setFontSize(12);
+    doc.text(`Date d'exportation: ${date}`, 20, 30);
+    doc.text(`Nombre d'éléments: ${dataToExport.length}`, 20, 37);
+
+    // Information sur le filtrage
+    if (filteredGlobalData.length < allGlobalData.length && filteredGlobalData.length > 0) {
+        const searchTerm = document.getElementById('searchInputGlobal').value;
+        const dateExacte = document.getElementById('dateExacteFilterGlobal').value;
+        const typeDate = document.getElementById('typeDateFilterGlobal').value;
+
+        let filterInfo = "Filtres appliqués: ";
+        if (searchTerm) filterInfo += `Recherche: "${searchTerm}" `;
+        if (dateExacte) filterInfo += `Date ${typeDate.replace('date', '')}: ${formatDate(dateExacte)} `;
+
+        doc.text(filterInfo, 20, 44);
+    }
+
+    // Configuration des colonnes pour le tableau PDF
+    const columns = [
+        // Réception
+        { header: 'N° BC', dataKey: 'numeroBC' },
+        { header: 'Date réception', dataKey: 'dateReception' },
+        { header: 'Fournisseur', dataKey: 'raisonSocialeFournisseur' },
+        { header: 'Société GBM', dataKey: 'raisonSocialeGBM' },
+        { header: 'Direction', dataKey: 'directionGBM' },
+        { header: 'Souscripteur', dataKey: 'souscripteur' },
+        { header: 'Type doc.', dataKey: 'typeDocument' },
+        { header: 'Date relance', dataKey: 'dateRelanceBR' },
+        { header: 'Type relance', dataKey: 'typeRelance' },
+        { header: 'Dossier', dataKey: 'dossierComplet' },
+        { header: 'Date trans. BO', dataKey: 'dateTransmissionBO' },
+
+        // Comptabilité
+        { header: 'Date compta.', dataKey: 'dateComptabilisation' },
+        { header: 'Date trans. compta', dataKey: 'dateTransmissionCompta' },
+        { header: 'Commentaire', dataKey: 'commentaireCompta' },
+
+        // Trésorerie
+        { header: 'Date préparation', dataKey: 'datePreparation' },
+        { header: 'Mode règl.', dataKey: 'modeReglement' },
+        { header: 'N° chèque', dataKey: 'numeroCheque' },
+        { header: 'Date trans. règl.', dataKey: 'dateTransmissionRegl' },
+        { header: 'Commentaire', dataKey: 'commentaireRegl' }
+    ];
+
+    // Formater les données pour le tableau PDF
+    const tableData = dataToExport.map(item => {
+        return {
+            numeroBC: item.numeroBC || '-',
+            dateReception: formatDateForPDF(item.dateReception),
+            raisonSocialeFournisseur: (item.raisonSocialeFournisseur || '-').substring(0, 15),
+            raisonSocialeGBM: (item.raisonSocialeGBM || '-').substring(0, 15),
+            directionGBM: (item.directionGBM || '-').substring(0, 15),
+            souscripteur: (item.souscripteur || '-').substring(0, 15),
+            typeDocument: (item.typeDocument || '-').substring(0, 10),
+            dateRelanceBR: formatDateForPDF(item.dateRelanceBR),
+            typeRelance: (item.typeRelance || '-').substring(0, 10),
+            dossierComplet: item.dossierComplet === true ? 'Complet' :
+                item.dossierComplet === false ? 'Incomplet' : '-',
+            dateTransmissionBO: formatDateForPDF(item.dateTransmissionBO),
+
+            dateComptabilisation: formatDateForPDF(item.dateComptabilisation),
+            dateTransmissionCompta: formatDateForPDF(item.dateTransmissionCompta),
+            commentaireCompta: (item.commentaireCompta || '-').substring(0, 15),
+
+            datePreparation: formatDateForPDF(item.datePreparation),
+            modeReglement: (item.modeReglement || '-').substring(0, 10),
+            numeroCheque: (item.numeroCheque || '-').substring(0, 10),
+            dateTransmissionRegl: formatDateForPDF(item.dateTransmissionRegl),
+            commentaireRegl: (item.commentaireRegl || '-').substring(0, 15)
+        };
     });
 
-    // Ajouter un titre
-    doc.setFontSize(18);
-    doc.text('Rapport consolidé de suivi des commandes', 150, 15, { align: 'center' });
-    doc.setFontSize(12);
-    doc.text('Date de génération: ' + dateGeneration, 150, 22, { align: 'center' });
+    // Ajouter le tableau au document PDF
+    doc.autoTable({
+        startY: 50,
+        head: [columns.map(column => column.header)],
+        body: tableData.map(item => columns.map(column => item[column.dataKey])),
+        theme: 'grid',
+        styles: {
+            fontSize: 8,
+            cellPadding: 1,
+            overflow: 'linebreak'
+        },
+        columnStyles: {
+            // Ajuster la largeur des colonnes selon les besoins
+            0: { cellWidth: 20 }, // N° BC
+            1: { cellWidth: 18 }, // Date réception
+            2: { cellWidth: 25 }, // Fournisseur
+            3: { cellWidth: 25 }, // Société GBM
+            4: { cellWidth: 20 }, // Direction
+            5: { cellWidth: 20 }, // Souscripteur
+            6: { cellWidth: 15 }, // Type doc
+            7: { cellWidth: 18 }, // Date relance
+            8: { cellWidth: 15 }, // Type relance
+            9: { cellWidth: 15 }, // Dossier
+            10: { cellWidth: 18 }, // Date trans. BO
 
-    // Ajouter une ligne de séparation
-    doc.setLineWidth(0.5);
-    doc.line(10, 25, 287, 25);
+            11: { cellWidth: 18 }, // Date compta
+            12: { cellWidth: 18 }, // Date trans. compta
+            13: { cellWidth: 25 }, // Commentaire compta
 
-    // Position de départ pour le contenu
-    let y = 35;
-
-    // Vérifier si des données sont disponibles
-    const numerosBCs = Object.keys(donneesPar_BC);
-    if (numerosBCs.length === 0) {
-        doc.setFontSize(14);
-        doc.text('Aucune donnée disponible pour l\'export', 150, y, { align: 'center' });
-        doc.save('rapport-suivi-commandes.pdf');
-        return;
-    }
-
-    // Parcourir chaque BC pour créer une section dans le PDF
-    numerosBCs.forEach((numeroBC, index) => {
-        const donnees = donneesPar_BC[numeroBC];
-
-        // Vérifier s'il faut ajouter une nouvelle page
-        if (y > 180) {
-            doc.addPage();
-            y = 15;
-        }
-
-        // Titre de la section - Numéro de BC
-        doc.setFontSize(14);
-        doc.setTextColor(66, 133, 244);
-        doc.text(`Commande N° ${numeroBC}`, 10, y);
-        y += 8;
-
-        // Remise à la couleur normale
-        doc.setTextColor(0, 0, 0);
-        doc.setFontSize(11);
-
-        // Section Réception
-        if (donnees.reception) {
-            doc.setFontSize(12);
-            doc.text('Informations de Réception:', 10, y);
-            y += 6;
-            doc.setFontSize(10);
-
-            const receptionData = [
-                [`Date de réception: ${formatDate(donnees.reception.dateReception) || '-'}`],
-                [`Fournisseur: ${donnees.reception.raisonSocialeFournisseur || '-'}`],
-                [`Société GBM: ${donnees.reception.raisonSocialeGBM || '-'}`],
-                [`Direction GBM: ${donnees.reception.directionGBM || '-'}`],
-                [`Type de document: ${donnees.reception.typeDocument || '-'}`],
-                [`Dossier complet: ${getEtatDossier(donnees.reception.dossierComplet) || '-'}`],
-                [`Date de transmission: ${formatDate(donnees.reception.dateTransmission) || '-'}`]
-            ];
-
-            // Utiliser autoTable pour un affichage plus propre
-            doc.autoTable({
-                startY: y,
-                margin: { left: 15 },
-                body: receptionData,
-                theme: 'plain',
-                styles: { fontSize: 9, cellPadding: 1 },
-                columnStyles: { 0: { cellWidth: 'auto' } }
-            });
-
-            y = doc.lastAutoTable.finalY + 5;
-        } else {
-            doc.text('Aucune information de réception disponible', 10, y);
-            y += 7;
-        }
-
-        // Section Comptabilité
-        if (donnees.comptabilite) {
-            doc.setFontSize(12);
-            doc.text('Informations de Comptabilisation:', 10, y);
-            y += 6;
-            doc.setFontSize(10);
-
-            const comptaData = [
-                [`Date de comptabilisation: ${formatDate(donnees.comptabilite.dateComptabilisation) || '-'}`],
-                [`Date de transmission: ${formatDate(donnees.comptabilite.dateTransmission) || '-'}`],
-                [`Personne collectrice: ${donnees.comptabilite.personneCollectrice || '-'}`],
-                [`Commentaire: ${donnees.comptabilite.commentaire || '-'}`]
-            ];
-
-            doc.autoTable({
-                startY: y,
-                margin: { left: 15 },
-                body: comptaData,
-                theme: 'plain',
-                styles: { fontSize: 9, cellPadding: 1 },
-                columnStyles: { 0: { cellWidth: 'auto' } }
-            });
-
-            y = doc.lastAutoTable.finalY + 5;
-        } else {
-            doc.text('Aucune information de comptabilisation disponible', 10, y);
-            y += 7;
-        }
-
-        // Section Trésorerie
-        if (donnees.tresorerie) {
-            doc.setFontSize(12);
-            doc.text('Informations de Règlement:', 10, y);
-            y += 6;
-            doc.setFontSize(10);
-
-            const tresData = [
-                [`Date de préparation: ${formatDate(donnees.tresorerie.datePreparation) || '-'}`],
-                [`Mode de règlement: ${donnees.tresorerie.modeReglement || '-'}`],
-                [`N° de chèque: ${donnees.tresorerie.numeroCheque || '-'}`],
-                [`Date de transmission: ${formatDate(donnees.tresorerie.dateTransmission) || '-'}`],
-                [`Commentaire: ${donnees.tresorerie.commentaire || '-'}`]
-            ];
-
-            doc.autoTable({
-                startY: y,
-                margin: { left: 15 },
-                body: tresData,
-                theme: 'plain',
-                styles: { fontSize: 9, cellPadding: 1 },
-                columnStyles: { 0: { cellWidth: 'auto' } }
-            });
-
-            y = doc.lastAutoTable.finalY + 5;
-        } else {
-            doc.text('Aucune information de règlement disponible', 10, y);
-            y += 7;
-        }
-
-        // Ajouter une ligne de séparation entre les commandes (sauf pour la dernière)
-        if (index < numerosBCs.length - 1) {
-            doc.setLineWidth(0.2);
-            doc.line(10, y, 287, y);
-            y += 10;
+            14: { cellWidth: 18 }, // Date préparation
+            15: { cellWidth: 15 }, // Mode règlement
+            16: { cellWidth: 15 }, // N° chèque
+            17: { cellWidth: 18 }, // Date trans. règl
+            18: { cellWidth: 25 }  // Commentaire règl
+        },
+        headStyles: {
+            fillColor: [41, 128, 185],
+            textColor: 255,
+            fontStyle: 'bold',
+            halign: 'center'
+        },
+        didDrawPage: function(data) {
+            // Ajouter un pied de page avec numérotation
+            const pageSize = doc.internal.pageSize;
+            const pageHeight = pageSize.height ? pageSize.height : pageSize.getHeight();
+            doc.text('Page ' + data.pageNumber + '/' + doc.internal.getNumberOfPages(), data.settings.margin.left, pageHeight - 10);
         }
     });
 
     // Enregistrer le PDF
-    doc.save('rapport-suivi-commandes.pdf');
+    const filename = `Suivi_GBM_${new Date().toISOString().split('T')[0]}.pdf`;
+    doc.save(filename);
+
+    // Afficher un message de confirmation
+    afficherToast('Exportation PDF réussie', 'Le fichier PDF a été généré avec succès.', 'success');
 }
 
-// Fonction pour obtenir l'état du dossier formaté
-function getEtatDossier(dossierComplet) {
-    if (dossierComplet === true || dossierComplet === 'true' || dossierComplet === 'Validé') {
-        return 'Validé';
-    } else if (dossierComplet === false || dossierComplet === 'false' || dossierComplet === 'En cours') {
-        return 'En cours';
+// Fonction auxiliaire pour formater les dates pour le PDF
+function formatDateForPDF(dateString) {
+    if (!dateString) return '-';
+
+    try {
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return '-';
+
+        return date.toLocaleDateString('fr-FR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        });
+    } catch (e) {
+        return '-';
     }
-    return dossierComplet || '-';
 }
 
-// Initialisation de l'écouteur d'événements pour le bouton d'export
+// Fonction pour afficher un toast/notification
+function afficherToast(titre, message, type = 'info') {
+    const toastContainer = document.getElementById('toastContainer');
+    if (!toastContainer) {
+        // Créer le conteneur de toast s'il n'existe pas
+        const newToastContainer = document.createElement('div');
+        newToastContainer.id = 'toastContainer';
+        newToastContainer.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+        document.body.appendChild(newToastContainer);
+    }
+
+    const toastId = 'toast' + Date.now();
+    const toastHTML = `
+        <div id="${toastId}" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header bg-${type} text-white">
+                <strong class="me-auto">${titre}</strong>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Fermer"></button>
+            </div>
+            <div class="toast-body">
+                ${message}
+            </div>
+        </div>
+    `;
+
+    document.getElementById('toastContainer').insertAdjacentHTML('beforeend', toastHTML);
+    const toastElement = document.getElementById(toastId);
+    const toast = new bootstrap.Toast(toastElement, { delay: 5000 });
+    toast.show();
+
+    // Supprimer le toast après qu'il ait été masqué
+    toastElement.addEventListener('hidden.bs.toast', function() {
+        toastElement.remove();
+    });
+}
+
+// Ajouter l'écouteur d'événement pour le bouton d'exportation
 document.addEventListener('DOMContentLoaded', function() {
-    // Attacher l'événement au bouton d'export
-    const boutonExport = document.querySelector('button.exporter-pdf');
-    if (boutonExport) {
-        boutonExport.addEventListener('click', exporterDonneesPDF);
+    // Vérifier si le bouton existe
+    const exportButton = document.getElementById('exportPdfGlobal');
+    if (exportButton) {
+        exportButton.addEventListener('click', function() {
+            exportTableToPDF();
+        });
     }
 });
