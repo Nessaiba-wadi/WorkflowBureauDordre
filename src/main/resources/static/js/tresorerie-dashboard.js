@@ -1190,3 +1190,479 @@ if (typeof formatDate !== 'function') {
         });
     }
 }
+
+
+/**
+ * Partie Vision Globale
+ */
+// Variables pour la vision globale
+let allGlobalData = [];
+let filteredGlobalData = [];
+let currentPageGlobal = 1;
+let totalPagesGlobal = 1;
+let rowsPerPageGlobal = 10;
+let currentSortGlobal = { column: 'dateReception', direction: 'desc' };
+
+// Charger et combiner les données pour la vision globale
+async function chargerDonneesGlobales() {
+    try {
+        // Afficher l'indicateur de chargement
+        const globalBody = document.getElementById('globalBody');
+        globalBody.innerHTML = `
+            <tr id="loadingRowGlobal">
+                <td colspan="23" class="text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Chargement...</span>
+                    </div>
+                    <p>Chargement des données globales...</p>
+                </td>
+            </tr>
+        `;
+
+        // Vérifier l'authentification
+        const userInfo = JSON.parse(sessionStorage.getItem('userInfo'));
+        if (!userInfo || !userInfo.email) {
+            throw new Error('Utilisateur non authentifié');
+        }
+
+        // 1. Charger les commandes (BO)
+        const responseCommandes = await fetch('http://localhost:8082/BO/commandes', {
+            method: 'GET',
+            headers: {
+                'Authorization': userInfo.email
+            }
+        });
+        const commandes = await responseCommandes.json();
+
+        // 2. Charger les comptabilisations
+        const responseComptabilisations = await fetch('http://localhost:8082/comptabilisations', {
+            method: 'GET',
+            headers: {
+                'Authorization': userInfo.email,
+                'Content-Type': 'application/json'
+            }
+        });
+        const comptabilisations = await responseComptabilisations.json();
+
+        // 3. Charger les règlements
+        const responseReglements = await fetch('http://localhost:8082/api/reglements', {
+            method: 'GET',
+            headers: {
+                'Authorization': userInfo.email,
+                'Content-Type': 'application/json'
+            }
+        });
+        const reglementsData = await responseReglements.json();
+
+        // Filtrer pour ne garder que les règlements validés
+        const reglements = reglementsData.filter(reglement =>
+            reglement.etatEnCoursValideEtc &&
+            reglement.etatEnCoursValideEtc.toLowerCase() === 'validé'
+        );
+
+        // Créer une structure de données combinée en utilisant le numéro BC comme clé
+        const combinedData = {};
+
+        // Ajouter les commandes
+        commandes.forEach(commande => {
+            const numeroBC = commande.numeroBC;
+            if (numeroBC) {
+                combinedData[numeroBC] = {
+                    numeroBC: numeroBC,
+                    // Données de réception
+                    dateReception: commande.dateReception,
+                    raisonSocialeFournisseur: commande.raisonSocialeFournisseur,
+                    raisonSocialeGBM: commande.raisonSocialeGBM,
+                    directionGBM: commande.directionGBM,
+                    souscripteur: commande.souscripteur,
+                    typeDocument: commande.typeDocument,
+                    dateRelanceBR: commande.dateRelanceBR,
+                    typeRelance: commande.typeRelance,
+                    dossierComplet: commande.dossierComplet,
+                    dateTransmissionBO: commande.dateTransmission,
+                    personnesCollectrice: commande.personnesCollectrice
+                };
+            }
+        });
+
+        // Ajouter les données de comptabilisation
+        comptabilisations.forEach(compta => {
+            const numeroBC = compta.numeroBC;
+            if (numeroBC && combinedData[numeroBC]) {
+                combinedData[numeroBC].dateComptabilisation = compta.dateComptabilisation;
+                combinedData[numeroBC].dateTransmissionCompta = compta.dateTransmission;
+                combinedData[numeroBC].personneCollectriceCompta = compta.personneCollectrice;
+                combinedData[numeroBC].commentaireCompta = compta.commentaire;
+                combinedData[numeroBC].comptaId = compta.id;
+                combinedData[numeroBC].comptaFileId = compta.fichierJoint ? compta.id : null;
+            } else if (numeroBC) {
+                // Si la commande n'existe pas encore dans combinedData
+                combinedData[numeroBC] = {
+                    numeroBC: numeroBC,
+                    dateComptabilisation: compta.dateComptabilisation,
+                    dateTransmissionCompta: compta.dateTransmission,
+                    personneCollectriceCompta: compta.personneCollectrice,
+                    commentaireCompta: compta.commentaire,
+                    comptaId: compta.id,
+                    comptaFileId: compta.fichierJoint ? compta.id : null
+                };
+            }
+        });
+
+        // Ajouter les données de règlement
+        reglements.forEach(reglement => {
+            const numeroBC = reglement.commande ? reglement.commande.numeroBC : null;
+            if (numeroBC && combinedData[numeroBC]) {
+                combinedData[numeroBC].datePreparation = reglement.datePreparation;
+                combinedData[numeroBC].modeReglement = reglement.modeReglement;
+                combinedData[numeroBC].numeroCheque = reglement.numeroCheque;
+                combinedData[numeroBC].dateTransmissionRegl = reglement.dateTransmission;
+                combinedData[numeroBC].commentaireRegl = reglement.commentaire;
+                combinedData[numeroBC].reglId = reglement.idReglement;
+                combinedData[numeroBC].reglFileId = reglement.fichierJoint ? reglement.idReglement : null;
+            } else if (numeroBC) {
+                // Si la commande n'existe pas encore dans combinedData
+                combinedData[numeroBC] = {
+                    numeroBC: numeroBC,
+                    datePreparation: reglement.datePreparation,
+                    modeReglement: reglement.modeReglement,
+                    numeroCheque: reglement.numeroCheque,
+                    dateTransmissionRegl: reglement.dateTransmission,
+                    commentaireRegl: reglement.commentaire,
+                    reglId: reglement.idReglement,
+                    reglFileId: reglement.fichierJoint ? reglement.idReglement : null
+                };
+            }
+        });
+
+        // Convertir l'objet en tableau
+        allGlobalData = Object.values(combinedData);
+        filteredGlobalData = [...allGlobalData];
+
+        // Supprimer l'indicateur de chargement
+        const loadingRow = document.getElementById('loadingRowGlobal');
+        if (loadingRow) {
+            loadingRow.remove();
+        }
+
+        // Calculer le nombre total de pages
+        totalPagesGlobal = Math.ceil(filteredGlobalData.length / rowsPerPageGlobal);
+
+        // Trier les données selon le tri par défaut
+        sortGlobalData(currentSortGlobal.column, currentSortGlobal.direction);
+
+        // Mettre à jour l'interface utilisateur
+        renderGlobalDataPage();
+
+        // Mettre à jour les icônes de tri
+        updateSortIconsGlobal(currentSortGlobal.column, currentSortGlobal.direction);
+
+        // Configuration des écouteurs d'événements pour la recherche et le filtrage
+        document.getElementById('searchInputGlobal').addEventListener('input', _.debounce(filterGlobalData, 300));
+        document.getElementById('dateExacteFilterGlobal').addEventListener('change', filterGlobalData);
+        document.getElementById('typeDateFilterGlobal').addEventListener('change', filterGlobalData);
+
+        // Réinitialiser les filtres
+        document.getElementById('resetFiltersGlobal').addEventListener('click', () => {
+            document.getElementById('searchInputGlobal').value = '';
+            document.getElementById('dateExacteFilterGlobal').value = '';
+            document.getElementById('typeDateFilterGlobal').value = 'dateReception';
+
+            filteredGlobalData = [...allGlobalData];
+            currentPageGlobal = 1;
+            sortGlobalData('dateReception', 'desc');
+            updateSortIconsGlobal('dateReception', 'desc');
+            renderGlobalDataPage();
+        });
+
+        // Ajouter le tri par en-tête de colonne
+        document.querySelectorAll('#tableGlobal th.sortable').forEach(header => {
+            header.addEventListener('click', function() {
+                const column = this.getAttribute('data-sort');
+                // Inverser la direction si on clique sur la même colonne
+                const direction = (column === currentSortGlobal.column && currentSortGlobal.direction === 'desc') ? 'asc' : 'desc';
+
+                sortGlobalData(column, direction);
+                updateSortIconsGlobal(column, direction);
+                renderGlobalDataPage();
+            });
+        });
+
+    } catch (error) {
+        console.error('Erreur lors du chargement des données globales:', error);
+        const globalBody = document.getElementById('globalBody');
+        globalBody.innerHTML = `
+            <tr>
+                <td colspan="23" class="text-center text-danger py-4">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Erreur: ${error.message}
+                </td>
+            </tr>
+        `;
+    }
+}
+
+// Fonction pour filtrer les données globales
+function filterGlobalData() {
+    const searchTerm = document.getElementById('searchInputGlobal').value.toLowerCase();
+    const dateExacte = document.getElementById('dateExacteFilterGlobal').value;
+    const typeDate = document.getElementById('typeDateFilterGlobal').value;
+
+    console.log(`Filtrage des données globales - searchTerm: ${searchTerm}, dateExacte: ${dateExacte}, typeDate: ${typeDate}`);
+
+    filteredGlobalData = allGlobalData.filter(item => {
+        // Recherche texte - vérifier chaque propriété pour le texte de recherche
+        const searchMatch = searchTerm ? Object.values(item).some(value => {
+            return value && String(value).toLowerCase().includes(searchTerm);
+        }) : true;
+
+        // Filtrage par date exacte
+        let dateMatch = true;
+        if (dateExacte && item[typeDate]) {
+            const dateItem = new Date(item[typeDate]);
+            // Formater la date sans l'heure pour une comparaison exacte par jour
+            const dateItemFormatted = dateItem.toISOString().split('T')[0];
+            dateMatch = dateItemFormatted === dateExacte;
+        }
+
+        return searchMatch && dateMatch;
+    });
+
+    // Trier les données selon les critères actuels
+    sortGlobalData(currentSortGlobal.column, currentSortGlobal.direction);
+
+    // Réinitialise la pagination
+    currentPageGlobal = 1;
+    totalPagesGlobal = Math.ceil(filteredGlobalData.length / rowsPerPageGlobal);
+
+    console.log(`Résultat du filtrage: ${filteredGlobalData.length} éléments trouvés`);
+
+    // Affiche les résultats
+    renderGlobalDataPage();
+}
+
+// Fonction pour trier les données globales
+function sortGlobalData(column, direction) {
+    currentSortGlobal.column = column;
+    currentSortGlobal.direction = direction;
+
+    filteredGlobalData.sort((a, b) => {
+        let valueA = a[column] || '';
+        let valueB = b[column] || '';
+
+        // Convertir les dates en objets Date pour les comparer
+        if (column.includes('date') && valueA && valueB) {
+            valueA = new Date(valueA);
+            valueB = new Date(valueB);
+        }
+
+        // Comparer les valeurs
+        if (valueA < valueB) {
+            return direction === 'asc' ? -1 : 1;
+        }
+        if (valueA > valueB) {
+            return direction === 'asc' ? 1 : -1;
+        }
+        return 0;
+    });
+}
+
+// Fonction pour mettre à jour les icônes de tri
+function updateSortIconsGlobal(column, direction) {
+    // Réinitialiser toutes les icônes
+    document.querySelectorAll('#tableGlobal th.sortable i').forEach(icon => {
+        icon.className = 'fas fa-sort';
+    });
+
+    // Mettre à jour l'icône de la colonne triée
+    const header = document.querySelector(`#tableGlobal th[data-sort="${column}"]`);
+    if (header) {
+        const icon = header.querySelector('i');
+        icon.className = direction === 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down';
+    }
+}
+
+// Fonction pour rendre les données globales par page
+function renderGlobalDataPage() {
+    // Calculer les indices de début et de fin pour la pagination
+    const startIndex = (currentPageGlobal - 1) * rowsPerPageGlobal;
+    const endIndex = Math.min(startIndex + rowsPerPageGlobal, filteredGlobalData.length);
+
+    // Récupérer les données pour la page actuelle
+    const currentPageData = filteredGlobalData.slice(startIndex, endIndex);
+
+    // Rendre les données
+    renderGlobalData(currentPageData);
+
+    // Mettre à jour la pagination
+    updatePaginationControlsGlobal();
+}
+
+// Fonction pour rendre le tableau de données globales
+// Fonction pour rendre le tableau de données globales avec toutes les colonnes
+function renderGlobalData(data) {
+    const globalBody = document.getElementById('globalBody');
+    globalBody.innerHTML = '';
+
+    // Aucune donnée trouvée
+    if (data.length === 0) {
+        globalBody.innerHTML = `
+            <tr>
+                <td colspan="23" class="text-center text-muted py-4">
+                    Aucune donnée trouvée
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    // Créer les lignes pour chaque élément
+    const rows = data.map(item => {
+        // Identifier si des fichiers sont joints
+        const hasComptaFile = item.hasOwnProperty('comptaFileId') && item.comptaFileId;
+        const hasReglFile = item.hasOwnProperty('reglFileId') && item.reglFileId;
+
+        return `
+            <tr>
+                <!-- Colonnes de Réception (BO) -->
+                <td>${item.numeroBC || '-'}</td>
+                <td>${formatDate(item.dateReception)}</td>
+                <td>${item.raisonSocialeFournisseur || '-'}</td>
+                <td>${item.raisonSocialeGBM || '-'}</td>
+                <td>${item.directionGBM || '-'}</td>
+                <td>${item.souscripteur || '-'}</td>
+                <td>${item.typeDocument || '-'}</td>
+                <td>${formatDate(item.dateRelanceBR)}</td>
+                <td>${item.typeRelance || '-'}</td>
+                <td>${getEtatDossier(item.dossierComplet)}</td>
+                <td>${formatDate(item.dateTransmissionBO)}</td>
+                <td>${item.personnesCollectrice || '-'}</td>
+                
+                <!-- Colonnes de Comptabilité -->
+                <td>${formatDate(item.dateComptabilisation)}</td>
+                <td>${formatDate(item.dateTransmissionCompta)}</td>
+                <td>${item.personneCollectriceCompta || '-'}</td>
+                <td>${item.commentaireCompta || '-'}</td>
+                <td class="text-center">${hasComptaFile ?
+            `<a href="#" onclick="voirFichierComptabilisation(${item.comptaId}); return false;" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-eye"></i>
+                    </a>` : '-'}
+                </td>
+                
+                <!-- Colonnes de Trésorerie -->
+                <td>${formatDate(item.datePreparation)}</td>
+                <td>${item.modeReglement || '-'}</td>
+                <td>${item.numeroCheque || '-'}</td>
+                <td>${formatDate(item.dateTransmissionRegl)}</td>
+                <td>${item.commentaireRegl || '-'}</td>
+                <td class="text-center">${hasReglFile ?
+            `<a href="#" onclick="voirFichierReglement(${item.reglId}); return false;" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-eye"></i>
+                    </a>` : '-'}
+                </td>
+            </tr>
+        `;
+    }).join('');
+
+    globalBody.innerHTML = rows;
+}
+
+// Fonction pour mettre à jour les contrôles de pagination pour la vision globale
+function updatePaginationControlsGlobal() {
+    const paginationContainer = document.getElementById('paginationContainerGlobal');
+
+    if (totalPagesGlobal <= 1) {
+        paginationContainer.innerHTML = '';
+        return;
+    }
+
+    // Créer les contrôles de pagination
+    let paginationHTML = `
+        <nav aria-label="Navigation des pages de données globales">
+            <ul class="pagination justify-content-center">
+                <li class="page-item ${currentPageGlobal === 1 ? 'disabled' : ''}">
+                    <a class="page-link" href="#" data-page="prev" aria-label="Précédent">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+    `;
+
+    // Afficher les numéros de page
+    let startPage = Math.max(1, currentPageGlobal - 2);
+    let endPage = Math.min(totalPagesGlobal, startPage + 4);
+
+    if (endPage - startPage < 4) {
+        startPage = Math.max(1, endPage - 4);
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+        paginationHTML += `
+            <li class="page-item ${i === currentPageGlobal ? 'active' : ''}">
+                <a class="page-link" href="#" data-page="${i}">${i}</a>
+            </li>
+        `;
+    }
+
+    paginationHTML += `
+        </nav>
+        <div class="text-center text-muted">
+            <small>Affichage de ${Math.min(filteredGlobalData.length, (currentPageGlobal - 1) * rowsPerPageGlobal + 1)} à ${Math.min(currentPageGlobal * rowsPerPageGlobal, filteredGlobalData.length)} sur ${filteredGlobalData.length} éléments</small>
+        </div>
+        <div class="text-center mt-2">
+            <small class="text-muted">Faites défiler horizontalement pour voir toutes les colonnes</small>
+        </div>
+    `;
+
+    paginationContainer.innerHTML = paginationHTML;
+
+    // Ajouter les gestionnaires d'événements pour la pagination
+    document.querySelectorAll('#paginationContainerGlobal .pagination .page-link').forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const page = this.getAttribute('data-page');
+
+            if (page === 'prev') {
+                if (currentPageGlobal > 1) currentPageGlobal--;
+            } else if (page === 'next') {
+                if (currentPageGlobal < totalPagesGlobal) currentPageGlobal++;
+            } else {
+                currentPageGlobal = parseInt(page);
+            }
+
+            renderGlobalDataPage();
+        });
+    });
+}
+
+// Ajouter un écouteur d'événements pour charger les données globales lorsque l'onglet est activé
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('button[data-bs-toggle="tab"]').forEach(function(button) {
+        button.addEventListener('shown.bs.tab', function(event) {
+            const targetId = event.target.getAttribute('data-bs-target');
+
+            // Si l'onglet vision globale est activé
+            if (targetId === '#global') {
+                console.log("Onglet vision globale activé, chargement des données...");
+                chargerDonneesGlobales();
+            }
+        });
+    });
+
+    // Charger les données globales si l'onglet vision globale est actif par défaut
+    if (document.querySelector('.tab-pane.fade.active.show#global')) {
+        chargerDonneesGlobales();
+    }
+});
+
+// S'assurer que la fonction getEtatDossier existe
+if (typeof getEtatDossier !== 'function') {
+    function getEtatDossier(etat) {
+        if (etat === true || etat === 'true') {
+            return '<span class="badge bg-success">Complet</span>';
+        } else if (etat === false || etat === 'false') {
+            return '<span class="badge bg-danger">Incomplet</span>';
+        } else {
+            return '-';
+        }
+    }
+}

@@ -295,6 +295,73 @@
                 margin-bottom: 0.5rem;
             }
         }
+
+
+        /* Style pour la table avec scrollbar horizontal */
+        .table-responsive {
+            scrollbar-width: thin; /* Pour Firefox */
+            scrollbar-color: #6c757d #f8f9fa; /* Pour Firefox */
+        }
+
+        .table-responsive::-webkit-scrollbar {
+            height: 8px; /* Hauteur de la scrollbar */
+        }
+
+        .table-responsive::-webkit-scrollbar-track {
+            background: #f8f9fa; /* Couleur de fond */
+            border-radius: 4px;
+        }
+
+        .table-responsive::-webkit-scrollbar-thumb {
+            background-color: #6c757d; /* Couleur du thumb */
+            border-radius: 4px;
+        }
+
+        /* Amélioration des en-têtes de sections */
+        #tableGlobal th.bg-light {
+            background-color: #e9ecef !important;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        /* Style pour les en-têtes de colonnes */
+        #tableGlobal th.sortable {
+            white-space: nowrap;
+            background-color: #f8f9fa;
+            position: sticky;
+            top: 38px; /* Hauteur de la première ligne d'en-tête */
+            z-index: 10;
+        }
+
+        /* Style pour les cellules */
+        #tableGlobal td {
+            white-space: nowrap;
+            max-width: 150px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Colonisations pour les sections */
+        #tableGlobal th[colspan="12"] {
+            background-color: #e2f0d9 !important; /* Vert clair pour Réception */
+        }
+
+        #tableGlobal th[colspan="5"] {
+            background-color: #deebf7 !important; /* Bleu clair pour Comptabilité */
+        }
+
+        #tableGlobal th[colspan="6"] {
+            background-color: #fff2cc !important; /* Jaune clair pour Trésorerie */
+        }
+
+        /* Style pour indiquer la présence du scrollbar */
+        .scroll-indicator {
+            text-align: center;
+            color: #6c757d;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+        }
     </style>
 
 </head>
@@ -450,6 +517,11 @@
                 <li class="nav-item" role="presentation">
                     <button class="nav-link" id="tresorerie-tab" data-bs-toggle="tab" data-bs-target="#tresorerie" type="button" role="tab">
                         <i class="fas fa-money-check-alt me-2"></i>Trésorerie
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="global-tab" data-bs-toggle="tab" data-bs-target="#global" type="button" role="tab">
+                        <i class="fas fa-eye me-2"></i>Vision globale
                     </button>
                 </li>
             </ul>
@@ -630,17 +702,113 @@
                     <div id="paginationContainerTresorerie" class="mt-3"></div>
                 </div>
 
+                <!-- Onglet Vision Globale -->
+                <div class="tab-pane fade" id="global" role="tabpanel">
+                    <!-- Filtres -->
+                    <!-- Dans l'onglet Vision Globale, ajoutez ceci avant la ligne avec les filtres -->
+                    <div class="d-flex justify-content-end mb-3">
+                        <button id="exportPdfGlobal" class="btn btn-primary">
+                            <i class="fas fa-file-pdf me-2"></i>Exporter en PDF
+                        </button>
+                    </div>
+                    <div class="row mb-3 align-items-end">
+                        <div class="col-md-5">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                <input type="text" class="form-control" id="searchInputGlobal" placeholder="Rechercher...">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="typeDateFilterGlobal" class="form-label mb-1">Type de date :</label>
+                            <select class="form-select" id="typeDateFilterGlobal">
+                                <option value="dateReception">Date de réception</option>
+                                <option value="dateRelance">Date de relance</option>
+                                <option value="dateTransmission">Date de transmission</option>
+                                <option value="dateComptabilisation">Date de comptabilisation</option>
+                                <option value="datePreparation">Date de préparation</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label for="dateExacteFilterGlobal" class="form-label mb-1">Date exacte :</label>
+                            <input type="date" class="form-control" id="dateExacteFilterGlobal">
+                        </div>
+                        <div class="col-md-2">
+                            <button id="resetFiltersGlobal" class="btn btn-outline-secondary w-100">
+                                <i class="fas fa-times"></i> Réinitialiser
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive" style="overflow-x: auto;">
+                        <table class="table table-hover detail-table" id="tableGlobal" style="min-width: 1800px;">
+                            <thead>
+                            <tr>
+                                <!-- En-têtes de la section Réception (BO) -->
+                                <th colspan="12" class="text-center bg-light">Réception</th>
+                                <!-- En-têtes de la section Comptabilité -->
+                                <th colspan="5" class="text-center bg-light">Comptabilité</th>
+                                <!-- En-têtes de la section Trésorerie -->
+                                <th colspan="6" class="text-center bg-light">Trésorerie</th>
+                            </tr>
+                            <tr>
+                                <!-- Colonnes de Réception (BO) -->
+                                <th data-sort="numeroBC" class="sortable">N° de BC <i class="fas fa-sort"></i></th>
+                                <th data-sort="dateReception" class="sortable">Date réception <i class="fas fa-sort"></i></th>
+                                <th data-sort="raisonSocialeFournisseur" class="sortable">Fournisseur <i class="fas fa-sort"></i></th>
+                                <th data-sort="raisonSocialeGBM" class="sortable">Société GBM <i class="fas fa-sort"></i></th>
+                                <th data-sort="directionGBM" class="sortable">Direction <i class="fas fa-sort"></i></th>
+                                <th data-sort="souscripteur" class="sortable">Souscripteur <i class="fas fa-sort"></i></th>
+                                <th data-sort="typeDocument" class="sortable">Type doc. <i class="fas fa-sort"></i></th>
+                                <th data-sort="dateRelanceBR" class="sortable">Date relance <i class="fas fa-sort"></i></th>
+                                <th data-sort="typeRelance" class="sortable">Type relance <i class="fas fa-sort"></i></th>
+                                <th data-sort="dossierComplet" class="sortable">Dossier complet <i class="fas fa-sort"></i></th>
+                                <th data-sort="dateTransmissionBO" class="sortable">Date transmission <i class="fas fa-sort"></i></th>
+                                <th data-sort="personnesCollectrice" class="sortable">Collecteur <i class="fas fa-sort"></i></th>
+
+                                <!-- Colonnes de Comptabilité -->
+                                <th data-sort="dateComptabilisation" class="sortable">Date compta. <i class="fas fa-sort"></i></th>
+                                <th data-sort="dateTransmissionCompta" class="sortable">Date trans. compta <i class="fas fa-sort"></i></th>
+                                <th data-sort="personneCollectriceCompta" class="sortable">Collecteur compta <i class="fas fa-sort"></i></th>
+                                <th data-sort="commentaireCompta" class="sortable">Commentaire <i class="fas fa-sort"></i></th>
+                                <th>Fichier joint</th>
+
+                                <!-- Colonnes de Trésorerie -->
+                                <th data-sort="datePreparation" class="sortable">Date préparation <i class="fas fa-sort"></i></th>
+                                <th data-sort="modeReglement" class="sortable">Mode règlement <i class="fas fa-sort"></i></th>
+                                <th data-sort="numeroCheque" class="sortable">N° chèque <i class="fas fa-sort"></i></th>
+                                <th data-sort="dateTransmissionRegl" class="sortable">Date trans. règl. <i class="fas fa-sort"></i></th>
+                                <th data-sort="commentaireRegl" class="sortable">Commentaire <i class="fas fa-sort"></i></th>
+                                <th>Fichier joint</th>
+                            </tr>
+                            </thead>
+                            <tbody id="globalBody">
+                            <tr id="loadingRowGlobal">
+                                <td colspan="23" class="text-center">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Chargement...</span>
+                                    </div>
+                                    <p>Chargement des données...</p>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="paginationContainerGlobal" class="mt-3"></div>
+                </div>
 
             </div>
         </div>
     </div>
 </div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"></script>
-<script src="/static/js/dashboard.js"></script>
 <script src="/static/js/auth.js"></script>
+<script src="/static/js/dashboard.js"></script>
 <script src="/static/js/tresorerie-dashboard.js"></script>
+<script src="/static/js/export.js"></script>
 <!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"></script>
 
