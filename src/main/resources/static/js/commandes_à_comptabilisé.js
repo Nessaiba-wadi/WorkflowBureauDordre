@@ -236,7 +236,7 @@ document.addEventListener('DOMContentLoaded', function() {
                    class="btn btn-sm btn-outline-secondary" 
                    target="_blank" 
                    title="Voir le fichier joint">
-                    <i class="fas fa-file-pdf"></i> Voir fichier
+                    <i class="fas fa-file-pdf"></i>
                 </a>
             `;
             }

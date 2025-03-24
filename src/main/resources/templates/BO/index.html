@@ -364,6 +364,11 @@
         </a>
       </li>
       <li class="sidebar-item">
+        <a class="sidebar-link" href="Suivi_Remises.html">
+          <i class="fas fa-hand-holding-usd me-2"></i>Suivi Remises & Chèques
+        </a>
+      </li>
+      <li class="sidebar-item">
         <a class="sidebar-link" href="parametres.html">
           <i class="fas fa-cog me-2"></i>Paramètres
         </a>
@@ -453,8 +458,7 @@
         </div>
       </div>
     </div>
-    <!-- afficher les insertions ici -->
-    <!-- Zone d'onglets pour les différentes vues -->
+
     <div class="workflow-container">
       <ul class="nav nav-tabs mb-4" id="workflowTabs" role="tablist">
         <li class="nav-item" role="presentation">
@@ -474,19 +478,18 @@
           </button>
         </li>
       </ul>
-
+      <!-- Modification du bouton d'export (ou ajout s'il n'existe pas) -->
+      <div class="d-flex justify-content-end mb-3">
+        <button class="btn btn-primary exporter-pdf">
+          <i class="fas fa-file-pdf me-2"></i>Exporter en PDF
+        </button>
+      </div>
       <!-- Contenu des onglets -->
       <div class="tab-content" id="workflowTabsContent">
 
         <!-- Onglet Réception -->
         <div class="tab-pane fade show active" id="reception" role="tabpanel">
 
-          <!-- Ajoutez ce bouton dans votre fichier HTML, par exemple dans la section BO -->
-          <div class="text-end mb-3">
-            <button id="exportPdfButton" class="btn btn-primary">
-              <i class="fas fa-file-pdf me-2"></i> Exporter en PDF
-            </button>
-          </div>
 
           <!-- Filtres -->
           <div class="row mb-3 align-items-end">
@@ -665,6 +668,10 @@
   </div>
 </div>
 
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"></script>
 <script src="/static/js/auth.js"></script>
@@ -672,7 +679,6 @@
 <script src="/static/js/infos.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script src="/static/js/export.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </body>
 </html>
