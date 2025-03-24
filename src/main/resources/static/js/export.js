@@ -49,10 +49,12 @@ function exportTableToPDF() {
         { header: 'Type relance', dataKey: 'typeRelance' },
         { header: 'Dossier', dataKey: 'dossierComplet' },
         { header: 'Date trans. BO', dataKey: 'dateTransmissionBO' },
+        { header: 'Collecteur BO', dataKey: 'personneCollectriceBO' },
 
         // Comptabilité
         { header: 'Date compta.', dataKey: 'dateComptabilisation' },
         { header: 'Date trans. compta', dataKey: 'dateTransmissionCompta' },
+        { header: 'Collecteur compta', dataKey: 'personneCollectriceCompta' },
         { header: 'Commentaire', dataKey: 'commentaireCompta' },
 
         // Trésorerie
@@ -78,9 +80,11 @@ function exportTableToPDF() {
             dossierComplet: item.dossierComplet === true ? 'Complet' :
                 item.dossierComplet === false ? 'Incomplet' : '-',
             dateTransmissionBO: formatDateForPDF(item.dateTransmissionBO),
+            personneCollectriceBO: (item.personneCollectriceBO || '-').substring(0, 15),
 
             dateComptabilisation: formatDateForPDF(item.dateComptabilisation),
             dateTransmissionCompta: formatDateForPDF(item.dateTransmissionCompta),
+            personneCollectriceCompta: (item.personneCollectriceCompta || '-').substring(0, 15),
             commentaireCompta: (item.commentaireCompta || '-').substring(0, 15),
 
             datePreparation: formatDateForPDF(item.datePreparation),
@@ -91,10 +95,47 @@ function exportTableToPDF() {
         };
     });
 
+    // Définir les en-têtes pour les secteurs (BO, Comptabilité, Trésorerie)
+    const headers = [
+        [
+            {
+                content: 'Réception (BO)',
+                colSpan: 12,
+                styles: {
+                    fillColor: [41, 128, 185],
+                    textColor: 255,
+                    fontStyle: 'bold',
+                    halign: 'center'
+                }
+            },
+            {
+                content: 'Comptabilité',
+                colSpan: 4,
+                styles: {
+                    fillColor: [46, 204, 113],
+                    textColor: 255,
+                    fontStyle: 'bold',
+                    halign: 'center'
+                }
+            },
+            {
+                content: 'Trésorerie',
+                colSpan: 5,
+                styles: {
+                    fillColor: [155, 89, 182],
+                    textColor: 255,
+                    fontStyle: 'bold',
+                    halign: 'center'
+                }
+            }
+        ],
+        columns.map(column => column.header)
+    ];
+
     // Ajouter le tableau au document PDF
     doc.autoTable({
         startY: 50,
-        head: [columns.map(column => column.header)],
+        head: headers,
         body: tableData.map(item => columns.map(column => item[column.dataKey])),
         theme: 'grid',
         styles: {
@@ -107,7 +148,7 @@ function exportTableToPDF() {
             0: { cellWidth: 20 }, // N° BC
             1: { cellWidth: 18 }, // Date réception
             2: { cellWidth: 25 }, // Fournisseur
-            3: { cellWidth: 25 }, // Société GBM
+            3: { cellWidth: 22 }, // Société GBM
             4: { cellWidth: 20 }, // Direction
             5: { cellWidth: 20 }, // Souscripteur
             6: { cellWidth: 15 }, // Type doc
@@ -115,16 +156,18 @@ function exportTableToPDF() {
             8: { cellWidth: 15 }, // Type relance
             9: { cellWidth: 15 }, // Dossier
             10: { cellWidth: 18 }, // Date trans. BO
+            11: { cellWidth: 18 }, // Collecteur BO
 
-            11: { cellWidth: 18 }, // Date compta
-            12: { cellWidth: 18 }, // Date trans. compta
-            13: { cellWidth: 25 }, // Commentaire compta
+            12: { cellWidth: 18 }, // Date compta
+            13: { cellWidth: 18 }, // Date trans. compta
+            14: { cellWidth: 18 }, // Collecteur compta
+            15: { cellWidth: 22 }, // Commentaire compta
 
-            14: { cellWidth: 18 }, // Date préparation
-            15: { cellWidth: 15 }, // Mode règlement
-            16: { cellWidth: 15 }, // N° chèque
-            17: { cellWidth: 18 }, // Date trans. règl
-            18: { cellWidth: 25 }  // Commentaire règl
+            16: { cellWidth: 18 }, // Date préparation
+            17: { cellWidth: 15 }, // Mode règlement
+            18: { cellWidth: 15 }, // N° chèque
+            19: { cellWidth: 18 }, // Date trans. règl
+            20: { cellWidth: 22 }  // Commentaire règl
         },
         headStyles: {
             fillColor: [41, 128, 185],
