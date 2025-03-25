@@ -244,13 +244,93 @@ function afficherToast(titre, message, type = 'info') {
     });
 }
 
-// Ajouter l'écouteur d'événement pour le bouton d'exportation
+// l'écouteur d'événement pour les boutons d'exportation
 document.addEventListener('DOMContentLoaded', function() {
-    // Vérifier si le bouton existe
-    const exportButton = document.getElementById('exportPdfGlobal');
-    if (exportButton) {
-        exportButton.addEventListener('click', function() {
-            exportTableToPDF();
-        });
+    // Écouteur pour le bouton PDF
+    const exportPdfButton = document.getElementById('exportPdfGlobal');
+    if (exportPdfButton) {
+        exportPdfButton.addEventListener('click', exportTableToPDF);
     }
+
+    // écouteur pour le bouton Excel
+    const exportExcelButton = document.getElementById('exportExcelGlobal');
+    if (exportExcelButton) {
+        exportExcelButton.addEventListener('click', exportTableToExcel);
+    }
+    document.getElementById('exportExcelGlobal').addEventListener('click', exportTableToExcel);
+    document.getElementById('exportPdfGlobal').addEventListener('click', exportTableToPDF);
 });
+
+
+/**
+ * Fonction pour exporter les données au format Excel
+ */
+function exportTableToExcel() {
+    // Déterminer quelles données exporter (filtrées ou toutes)
+    const dataToExport = filteredGlobalData.length > 0 ? filteredGlobalData : allGlobalData;
+
+    // Créer un nouveau classeur Excel
+    const wb = XLSX.utils.book_new();
+
+    // Préparer les données pour Excel
+    const excelData = dataToExport.map(item => {
+        return {
+            // Réception
+            'N° BC': item.numeroBC || '',
+            'Date réception': formatDateForExcel(item.dateReception),
+            'Fournisseur': item.raisonSocialeFournisseur || '',
+            'Société GBM': item.raisonSocialeGBM || '',
+            'Direction': item.directionGBM || '',
+            'Souscripteur': item.souscripteur || '',
+            'Type doc.': item.typeDocument || '',
+            'Date relance': formatDateForExcel(item.dateRelanceBR),
+            'Type relance': item.typeRelance || '',
+            'Dossier complet': item.dossierComplet === true ? 'Complet' :
+                item.dossierComplet === false ? 'Incomplet' : '',
+            'Date transmission BO': formatDateForExcel(item.dateTransmissionBO),
+            'Collecteur BO': item.personneCollectriceBO || '',
+
+            // Comptabilité
+            'Date comptabilisation': formatDateForExcel(item.dateComptabilisation),
+            'Date transmission compta': formatDateForExcel(item.dateTransmissionCompta),
+            'Collecteur compta': item.personneCollectriceCompta || '',
+            'Commentaire compta': item.commentaireCompta || '',
+
+            // Trésorerie
+            'Date préparation': formatDateForExcel(item.datePreparation),
+            'Mode règlement': item.modeReglement || '',
+            'N° chèque': item.numeroCheque || '',
+            'Date transmission règlement': formatDateForExcel(item.dateTransmissionRegl),
+            'Commentaire règlement': item.commentaireRegl || ''
+        };
+    });
+
+    // Créer une feuille de calcul à partir des données
+    const ws = XLSX.utils.json_to_sheet(excelData);
+
+    // Ajouter la feuille au classeur
+    XLSX.utils.book_append_sheet(wb, ws, "Suivi GBM");
+
+    // Générer le fichier Excel
+    const dateStr = new Date().toISOString().split('T')[0];
+    XLSX.writeFile(wb, `Suivi_GBM_${dateStr}.xlsx`);
+
+    // Afficher un message de confirmation
+    afficherToast('Exportation Excel réussie', 'Le fichier Excel a été généré avec succès.', 'success');
+}
+
+/**
+ * Formatte les dates pour Excel (format ISO)
+ */
+function formatDateForExcel(dateString) {
+    if (!dateString) return '';
+
+    try {
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return '';
+
+        return date.toISOString().split('T')[0]; // Format YYYY-MM-DD
+    } catch (e) {
+        return '';
+    }
+}
