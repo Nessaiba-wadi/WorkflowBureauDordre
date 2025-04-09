@@ -192,49 +192,21 @@ public class UtilisateurService {
         return utilisateur;
     }
 
-    //modifier un utilisateur
-    public Utilisateur modifierUtilisateur(Integer id, Utilisateur utilisateurModifie) {
-        // Récupérer l'utilisateur existant
-        Utilisateur utilisateurExistant = utilisateurRepository.findById(id)
-                .orElseThrow(() -> new UtilisateurNonTrouveException("Utilisateur non trouvé avec l'ID : " + id));
-
-        // Vérifier et mettre à jour le nom si fourni
-        if (utilisateurModifie.getNom() != null) {
-            if (!NAME_PATTERN.matcher(utilisateurModifie.getNom()).matches()) {
-                throw new NomPrenomInvalideException("Le nom ne doit contenir que des lettres.");
-            }
-            utilisateurExistant.setNom(utilisateurModifie.getNom());
+    // Méthode pour modifier un utilisateur
+    public Utilisateur modifierUtilisateur(Integer id, Utilisateur utilisateur) throws UtilisateurNonTrouveException,
+            NomPrenomInvalideException,
+            FormatEmailInvalideException,
+            RoleNonTrouveException {
+        // Vérifier si l'utilisateur existe
+        if (!utilisateurRepository.existsById(id)) {
+            throw new UtilisateurNonTrouveException("Utilisateur non trouvé avec l'ID : " + id);
         }
 
-        // Vérifier et mettre à jour le prénom si fourni
-        if (utilisateurModifie.getPrenom() != null) {
-            if (!NAME_PATTERN.matcher(utilisateurModifie.getPrenom()).matches()) {
-                throw new NomPrenomInvalideException("Le prénom ne doit contenir que des lettres.");
-            }
-            utilisateurExistant.setPrenom(utilisateurModifie.getPrenom());
-        }
+        // Vérifier les contraintes
+        //validerUtilisateur(utilisateur);
 
-        // Vérifier et mettre à jour l'email si fourni
-        if (utilisateurModifie.getEmail() != null) {
-            if (!EMAIL_PATTERN.matcher(utilisateurModifie.getEmail()).matches()) {
-                throw new FormatEmailInvalideException("Le format de l'e-mail est invalide.");
-            }
-            Utilisateur utilisateurEmail = utilisateurRepository.findByEmail(utilisateurModifie.getEmail());
-            if (utilisateurEmail != null && utilisateurEmail.getIdUtilisateur() != id)     {
-                throw new EmailDejaUtiliseException("L'adresse e-mail est déjà utilisée.");
-            }
-            utilisateurExistant.setEmail(utilisateurModifie.getEmail());
-        }
-
-
-        // Vérifier et mettre à jour le rôle si fourni
-        if (utilisateurModifie.getRole() != null) {
-            Role nouveauRole = roleRepository.findById(utilisateurModifie.getRole().getIdRole())
-                    .orElseThrow(() -> new RoleNonTrouveException("Rôle non trouvé"));
-            utilisateurExistant.setRole(nouveauRole);
-        }
-
-        return utilisateurRepository.save(utilisateurExistant);
+        // Enregistrer les modifications
+        return utilisateurRepository.save(utilisateur);
     }
 
    // modifier le mot de passe

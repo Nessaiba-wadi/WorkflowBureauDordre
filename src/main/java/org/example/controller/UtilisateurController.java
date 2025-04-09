@@ -1,6 +1,7 @@
 package org.example.controller;
 
 import org.antlr.v4.runtime.Token;
+import org.example.dto.UtilisateurDTO;
 import org.example.model.Role;
 import org.example.model.Utilisateur;
 import org.example.service.RoleService;
@@ -8,6 +9,7 @@ import org.example.service.UtilisateurService;
 import org.example.service.UtilisateurService.UtilisateurNonTrouveException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,9 +19,9 @@ import java.util.List;
 import java.util.Map;
 
 
-@CrossOrigin(origins = {"http://127.0.0.1:8080", "http://localhost:8080"})
 @RestController
 @RequestMapping("/utilisateurs")
+@CrossOrigin(origins = {"http://127.0.0.1:8080", "http://localhost:8080"})
 public class UtilisateurController {
 
         @Autowired
@@ -31,17 +33,34 @@ public class UtilisateurController {
             this.utilisateurService = utilisateurService;
             this.roleService = roleService;
         }
-        @PostMapping
-        public ResponseEntity<?> creerUtilisateur(@RequestBody Utilisateur utilisateur) {
+        @PostMapping(consumes = {MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_FORM_URLENCODED_VALUE})
+        public ResponseEntity<?> creerUtilisateur(@RequestBody(required = false) UtilisateurDTO utilisateurJson,
+                                                  @ModelAttribute(binding = false) UtilisateurDTO utilisateurForm) {
             try {
+                // Utiliser les données JSON ou form selon ce qui est fourni
+                UtilisateurDTO utilisateurDTO = (utilisateurJson != null) ? utilisateurJson : utilisateurForm;
+
                 // Vérifier si le rôle existe
-                if (utilisateur.getRole() == null || utilisateur.getRole().getIdRole() <= 0) {
+                if (utilisateurDTO.getRoleId() <= 0) {
                     return new ResponseEntity<>("Le rôle est requis", HttpStatus.BAD_REQUEST);
                 }
 
-                // Set default status
-                utilisateur.setStatut(true);
+                // Convertir DTO en entité Utilisateur
+                Utilisateur utilisateur = new Utilisateur();
+                utilisateur.setNom(utilisateurDTO.getNom());
+                utilisateur.setPrenom(utilisateurDTO.getPrenom());
+                utilisateur.setEmail(utilisateurDTO.getEmail());
+                utilisateur.setMotDePasse(utilisateurDTO.getMotDePasse());
 
+                // Récupérer le rôle par son ID
+                Role role = roleService.getRoleById(utilisateurDTO.getRoleId());
+                if (role == null) {
+                    return new ResponseEntity<>("Le rôle spécifié n'existe pas", HttpStatus.BAD_REQUEST);
+                }
+                utilisateur.setRole(role);
+
+                // Définir le statut par défaut
+                utilisateur.setStatut(true);
 
                 Utilisateur nouvelUtilisateur = utilisateurService.creerUtilisateur(utilisateur);
                 return new ResponseEntity<>(nouvelUtilisateur, HttpStatus.CREATED);
@@ -56,6 +75,7 @@ public class UtilisateurController {
             } catch (UtilisateurService.MotDePasseTropCourtException e) {
                 return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
             } catch (Exception e) {
+                e.printStackTrace(); // Pour le débogage
                 return new ResponseEntity<>("Une erreur interne est survenue: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
             }
         }
@@ -112,11 +132,36 @@ public class UtilisateurController {
             }
         }
 
-        //Modifier un utilisateur
+        //Modifier un utilisateur avec DTO
         @PutMapping("/modifier-utilisateur/{id}")
-        public ResponseEntity<?> modifierUtilisateur(@PathVariable Integer id, @RequestBody Utilisateur utilisateur) {
+        public ResponseEntity<?> modifierUtilisateur(@PathVariable Integer id, @RequestBody UtilisateurDTO utilisateurDTO) {
             try {
-                Utilisateur utilisateurModifie = utilisateurService.modifierUtilisateur(id, utilisateur);
+                // Vérifier si l'utilisateur existe
+                Utilisateur utilisateurExistant = utilisateurService.getUtilisateurById(id);
+                if (utilisateurExistant == null) {
+                    throw new UtilisateurNonTrouveException("Utilisateur non trouvé avec l'ID : " + id);
+                }
+
+                // Mettre à jour les données de l'utilisateur à partir du DTO
+                utilisateurExistant.setNom(utilisateurDTO.getNom());
+                utilisateurExistant.setPrenom(utilisateurDTO.getPrenom());
+                utilisateurExistant.setEmail(utilisateurDTO.getEmail());
+
+                // Récupérer et assigner le rôle si nécessaire
+                if (utilisateurDTO.getRoleId() > 0) {
+                    Role role = roleService.getRoleById(utilisateurDTO.getRoleId());
+                    if (role == null) {
+                        throw new UtilisateurService.RoleNonTrouveException("Rôle non trouvé avec l'ID : " + utilisateurDTO.getRoleId());
+                    }
+                    utilisateurExistant.setRole(role);
+                }
+
+                // Modifier le mot de passe si fourni
+                if (utilisateurDTO.getMotDePasse() != null && !utilisateurDTO.getMotDePasse().isEmpty()) {
+                    utilisateurExistant.setMotDePasse(utilisateurDTO.getMotDePasse());
+                }
+
+                Utilisateur utilisateurModifie = utilisateurService.modifierUtilisateur(id, utilisateurExistant);
                 return new ResponseEntity<>("Utilisateur modifié avec succès", HttpStatus.OK);
             } catch (UtilisateurNonTrouveException e) {
                 return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
@@ -124,7 +169,7 @@ public class UtilisateurController {
                      UtilisateurService.RoleNonTrouveException e) {
                 return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
             } catch (Exception e) {
-                return new ResponseEntity<>("Une erreur est survenue lors de la modification", HttpStatus.INTERNAL_SERVER_ERROR);
+                return new ResponseEntity<>("Une erreur est survenue lors de la modification: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
             }
         }
 

@@ -67,7 +67,16 @@
             <version>2.0.13</version>
         </dependency>
 
-
+        <!-- Pour le traitement des requêtes multipart -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>commons-fileupload</groupId>
+            <artifactId>commons-fileupload</artifactId>
+            <version>1.5</version>
+        </dependency>
 
         <!-- H2 Database (pour les tests ou le développement) -->
         <dependency>

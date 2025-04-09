@@ -29,16 +29,13 @@ document.addEventListener('DOMContentLoaded', function() {
         const motDePasse = document.getElementById('motDePasse').value;
         const roleId = document.getElementById('role').value;
 
-        // Préparer les données pour l'API
-        // Prepare the user data
+        // Préparer les données pour l'API en utilisant le DTO
         const userData = {
             nom: nom,
             prenom: prenom,
             email: email,
             motDePasse: motDePasse,
-            role: {
-                idRole: parseInt(roleId)
-            }
+            roleId: parseInt(roleId)
         };
 
         // Envoyer les données à l'API

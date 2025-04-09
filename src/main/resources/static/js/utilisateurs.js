@@ -310,9 +310,7 @@ document.addEventListener('DOMContentLoaded', function() {
             nom: document.getElementById('nom').value,
             prenom: document.getElementById('prenom').value,
             email: document.getElementById('email').value,
-            role: {
-                idRole: parseInt(document.getElementById('role').value)
-            }
+            roleId: parseInt(document.getElementById('role').value)
         };
 
         // Ajouter l'ID
@@ -322,7 +320,8 @@ document.addEventListener('DOMContentLoaded', function() {
         fetch(`http://localhost:8082/utilisateurs/modifier-utilisateur/${idUtilisateur}`, {
             method: 'PUT',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Authorization': getAuthToken() // Si vous utilisez l'authentification
             },
             body: JSON.stringify(utilisateurData)
         })
@@ -343,7 +342,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 showToast('Erreur', error.message, 'danger');
             });
     }
-
+// Fonction pour récupérer le token d'authentification si nécessaire
+    function getAuthToken() {
+        return localStorage.getItem('authToken');
+    }
     // Désactiver un utilisateur
     function desactiverUtilisateur() {
         if (!selectedUtilisateurId) return;

@@ -1,5 +1,6 @@
 package org.example.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
@@ -26,15 +27,17 @@ import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
+import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
-@CrossOrigin(origins = {"http://127.0.0.1:8080", "http://localhost:8080"})
 @RestController
 @RequestMapping("/BO/commandes")
+@CrossOrigin(origins = {"http://127.0.0.1:8080", "http://localhost:8080"})
+
 public class CommandeController {
 
     @Autowired
@@ -62,57 +65,50 @@ public class CommandeController {
     };
 
 
-    private boolean isExtensionAutorisee(String nomFichier) {
-        if (nomFichier == null || nomFichier.isEmpty()) {
-            return false;
-        }
-        String extension = "";
-        int lastIndexOfDot = nomFichier.lastIndexOf(".");
-        if (lastIndexOfDot > 0) {
-            extension = nomFichier.substring(lastIndexOfDot).toLowerCase();
-        }
-        for (String ext : EXTENSIONS_AUTORISEES) {
-            if (ext.equals(extension)) {
-                return true;
-            }
-        }
-        return false;
+    private boolean isExtensionAutorisee(String filename) {
+        if (filename == null) return false;
+        String ext = filename.substring(filename.lastIndexOf(".") + 1).toLowerCase();
+        return ext.equals("pdf") || ext.equals("doc") || ext.equals("docx");
     }
 
     private boolean isContentTypeAutorise(String contentType) {
-        if (contentType == null || contentType.isEmpty()) {
-            return false;
-        }
-        for (String type : MIME_TYPES_AUTORISES) {
-            if (type.equals(contentType)) {
-                return true;
-            }
-        }
-        return false;
+        return contentType != null && (
+                contentType.equals("application/pdf") ||
+                        contentType.equals("application/msword") ||
+                        contentType.equals("application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+        );
     }
 
 
     // creer une nouvelle commande
-    @PostMapping("/nouvelle")
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> creerCommande(
-            @ModelAttribute CommandeDTO commandeDTO,
-            @RequestHeader("Authorization") String emailUtilisateur) {
+            @RequestParam("utilisateurId") Integer utilisateurId,
+            @RequestPart("commandeData") String commandeDataStr,
+            @RequestParam("file") MultipartFile file) {
 
         try {
-            // Récupérer l'utilisateur connecté à partir de l'email dans le header
-            Utilisateur utilisateurConnecte = utilisateurService.findByEmail(emailUtilisateur);
+            // Convertir la chaîne JSON en objet CommandeDTO
+            ObjectMapper objectMapper = new ObjectMapper();
+            CommandeDTO commandeDTO = objectMapper.readValue(commandeDataStr, CommandeDTO.class);
+
+            // Récupérer l'utilisateur par ID au lieu de l'email
+            Utilisateur utilisateurConnecte = utilisateurService.getUtilisateurById(utilisateurId);
+
+            // Affecter le fichier au DTO
+            commandeDTO.setFichier(file);
 
             // Gestion du fichier
             String nomFichier = null;
-            if (commandeDTO.getFichier() != null && !commandeDTO.getFichier().isEmpty()) {
+            if (file != null && !file.isEmpty()) {
                 // Vérifier l'extension du fichier
-                if (!isExtensionAutorisee(commandeDTO.getFichier().getOriginalFilename()) ||
-                        !isContentTypeAutorise(commandeDTO.getFichier().getContentType())) {
+                if (!isExtensionAutorisee(file.getOriginalFilename()) ||
+                        !isContentTypeAutorise(file.getContentType())) {
                     return ResponseEntity.badRequest().body(Map.of(
                             "message", "Type de fichier non autorisé. Seuls les fichiers PDF et Word sont acceptés."
                     ));
                 }
-                nomFichier = sauvegarderFichierSecurise(commandeDTO.getFichier());
+                nomFichier = sauvegarderFichierSecurise(file);
             }
 
             // Conversion du DTO en entité Commande
@@ -140,50 +136,33 @@ public class CommandeController {
             reponse.put("message", "Commande créée avec succès");
             reponse.put("idCommande", commandeEnregistree.getIdCommande());
 
-            return ResponseEntity.ok(reponse);
+            return new ResponseEntity<>(reponse, HttpStatus.CREATED);
 
         } catch (Exception e) {
+            e.printStackTrace(); // Pour le débogage
             Map<String, String> erreur = new HashMap<>();
             erreur.put("message", "Erreur lors de la création de la commande : " + e.getMessage());
-            return ResponseEntity.badRequest().body(erreur);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(erreur);
         }
     }
 
 
+    private String sauvegarderFichierSecurise(MultipartFile file) throws IOException {
+        // Générer un nom de fichier unique pour éviter les collisions
+        String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        String originalFilename = file.getOriginalFilename();
+        String extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+        String newFilename = "commande_" + timestamp + extension;
 
-    private String sauvegarderFichierSecurise(MultipartFile fichier) throws IOException {
-        // Extraire l'extension originale
-        String originalFilename = fichier.getOriginalFilename();
-        String extension = "";
-        if (originalFilename != null && originalFilename.contains(".")) {
-            extension = originalFilename.substring(originalFilename.lastIndexOf("."));
-        }
+        // Définir le chemin de sauvegarde (à adapter selon votre configuration)
+        Path uploadDir = Paths.get("uploads/commandes");
+        Files.createDirectories(uploadDir);
 
-        // Créer un nom de fichier crypté unique avec l'extension originale
-        String nomBaseFichier = UUID.randomUUID().toString();
-        String nomFichierCrypte = encrypterNomFichier(nomBaseFichier) + extension;
+        // Sauvegarder le fichier
+        Path destination = uploadDir.resolve(newFilename);
+        Files.copy(file.getInputStream(), destination, StandardCopyOption.REPLACE_EXISTING);
 
-        // Définir le chemin complet avec le sous-dossier 'commandes'
-        String repertoireUpload = uploadDir;
-        if (!repertoireUpload.endsWith("/commandes") && !repertoireUpload.endsWith("\\commandes")) {
-            repertoireUpload = Paths.get(repertoireUpload, "commandes").toString();
-        }
-
-        Path cheminRepertoire = Paths.get(repertoireUpload).toAbsolutePath().normalize();
-
-        // Créer le répertoire s'il n'existe pas
-        Files.createDirectories(cheminRepertoire);
-
-        // Chemin complet du fichier
-        Path cheminCible = cheminRepertoire.resolve(nomFichierCrypte);
-
-        // Copier le fichier
-        Files.copy(fichier.getInputStream(), cheminCible, StandardCopyOption.REPLACE_EXISTING);
-
-        // Retourner le nom du fichier (sans le chemin 'commandes/')
-        // Si vous préférez conserver le sous-répertoire dans la base de données, utilisez:
-        // return "commandes/" + nomFichierCrypte;
-        return nomFichierCrypte;
+        return newFilename;
     }
 
     private String encrypterNomFichier(String nomFichier) {
