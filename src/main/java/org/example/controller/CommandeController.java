@@ -1,6 +1,8 @@
 package org.example.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
@@ -85,22 +87,31 @@ public class CommandeController {
     public ResponseEntity<?> creerCommande(
             @RequestParam("utilisateurId") Integer utilisateurId,
             @RequestPart("commandeData") String commandeDataStr,
-            @RequestParam("file") MultipartFile file) {
+            @RequestParam(value = "file", required = false) MultipartFile file) {
 
         try {
+            log.info("Début création commande: utilisateurId={}, données={}", utilisateurId, commandeDataStr);
+
             // Convertir la chaîne JSON en objet CommandeDTO
             ObjectMapper objectMapper = new ObjectMapper();
+            objectMapper.registerModule(new JavaTimeModule()); // Pour le support de LocalDate
+            objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
             CommandeDTO commandeDTO = objectMapper.readValue(commandeDataStr, CommandeDTO.class);
 
-            // Récupérer l'utilisateur par ID au lieu de l'email
+            // Récupérer l'utilisateur par ID
             Utilisateur utilisateurConnecte = utilisateurService.getUtilisateurById(utilisateurId);
-
-            // Affecter le fichier au DTO
-            commandeDTO.setFichier(file);
+            if (utilisateurConnecte == null) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "message", "Utilisateur non trouvé avec l'ID: " + utilisateurId
+                ));
+            }
 
             // Gestion du fichier
             String nomFichier = null;
             if (file != null && !file.isEmpty()) {
+                log.info("Traitement du fichier: nom={}, type={}, taille={}",
+                        file.getOriginalFilename(), file.getContentType(), file.getSize());
+
                 // Vérifier l'extension du fichier
                 if (!isExtensionAutorisee(file.getOriginalFilename()) ||
                         !isContentTypeAutorise(file.getContentType())) {
@@ -127,6 +138,8 @@ public class CommandeController {
             commande.setFichierJoint(nomFichier);
             commande.setUtilisateur(utilisateurConnecte);
             commande.setDateModification(LocalDateTime.now());
+            commande.setStatus(true);
+            commande.setEtatCommande("enregistré"); // Définir un état par défaut
 
             // Enregistrement de la commande
             Commande commandeEnregistree = commandeService.creerCommande(commande);
@@ -139,14 +152,13 @@ public class CommandeController {
             return new ResponseEntity<>(reponse, HttpStatus.CREATED);
 
         } catch (Exception e) {
-            e.printStackTrace(); // Pour le débogage
+            log.error("Erreur lors de la création de la commande", e);
             Map<String, String> erreur = new HashMap<>();
-            erreur.put("message", "Erreur lors de la création de la commande : " + e.getMessage());
+            erreur.put("message", "Erreur lors de la création de la commande: " + e.getMessage());
+            erreur.put("details", e.toString());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(erreur);
         }
     }
-
-
     private String sauvegarderFichierSecurise(MultipartFile file) throws IOException {
         // Générer un nom de fichier unique pour éviter les collisions
         String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
@@ -154,13 +166,15 @@ public class CommandeController {
         String extension = originalFilename.substring(originalFilename.lastIndexOf("."));
         String newFilename = "commande_" + timestamp + extension;
 
-        // Définir le chemin de sauvegarde (à adapter selon votre configuration)
-        Path uploadDir = Paths.get("uploads/commandes");
-        Files.createDirectories(uploadDir);
+        // Définir le chemin de sauvegarde
+        Path uploadDirPath = Paths.get(uploadDir);
+        Files.createDirectories(uploadDirPath);
 
         // Sauvegarder le fichier
-        Path destination = uploadDir.resolve(newFilename);
+        Path destination = uploadDirPath.resolve(newFilename);
         Files.copy(file.getInputStream(), destination, StandardCopyOption.REPLACE_EXISTING);
+
+        log.info("Fichier sauvegardé: {}", destination.toString());
 
         return newFilename;
     }

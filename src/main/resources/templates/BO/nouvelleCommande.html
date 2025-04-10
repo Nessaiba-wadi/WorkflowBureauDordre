@@ -171,6 +171,106 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/js/all.min.js"></script>
 <script src="/../static/js/dashboard.js"></script>
 <script src="/../static/js/auth.js"></script>
+<script>
 
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('commandeForm');
+
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            // Vérification des champs obligatoires
+            const requiredFields = [
+                'raisonSocialeFournisseur', 'numeroBC', 'directionGBM',
+                'typeDocument', 'dateRelanceBR', 'dateTransmission',
+                'raisonSocialeGBM', 'souscripteur', 'typeRelance'
+            ];
+
+            const missingFields = requiredFields.filter(fieldId =>
+                !document.getElementById(fieldId).value.trim()
+            );
+
+            if (missingFields.length > 0) {
+                alert('Veuillez remplir tous les champs obligatoires.');
+                return;
+            }
+
+            // Récupération des données du formulaire
+            const formData = new FormData();
+            const commandeData = {
+                raisonSocialeFournisseur: document.getElementById('raisonSocialeFournisseur').value,
+                numeroBC: document.getElementById('numeroBC').value,
+                directionGBM: document.getElementById('directionGBM').value,
+                typeDocument: document.getElementById('typeDocument').value,
+                dateRelanceBR: document.getElementById('dateRelanceBR').value,
+                dateTransmission: document.getElementById('dateTransmission').value,
+                raisonSocialeGBM: document.getElementById('raisonSocialeGBM').value,
+                souscripteur: document.getElementById('souscripteur').value,
+                typeRelance: document.getElementById('typeRelance').value,
+                personnesCollectrice: document.getElementById('personnesCollectrice').value,
+                dossierComplet: document.getElementById('dossierComplet').checked,
+                status: true
+            };
+
+            console.log('Données de commande à envoyer:', commandeData);
+
+            // Ajouter les données de la commande au FormData
+            formData.append('commandeData', JSON.stringify(commandeData));
+
+            // Ajouter le fichier
+            const fichierInput = document.getElementById('fichier');
+            if (fichierInput.files.length > 0) {
+                formData.append('file', fichierInput.files[0]);
+            }
+
+            // Récupérer l'ID utilisateur depuis la session (à adapter selon votre système d'authentification)
+            const utilisateurId = getUserIdFromSession() || 1;
+            formData.append('utilisateurId', utilisateurId);
+
+            // Envoi de la requête
+            fetch('http://localhost:8082/BO/commandes', {
+                method: 'POST',
+                body: formData,
+                credentials: 'include'
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(errorData => {
+                            throw new Error(errorData.message || 'Erreur inconnue');
+                        }).catch(e => {
+                            throw new Error(`Erreur HTTP ${response.status}`);
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Réponse du serveur:', data);
+                    alert('Commande créée avec succès!');
+                    window.location.href = '/BO/commandes';
+                })
+                .catch(error => {
+                    console.error('Erreur détaillée:', error);
+                    alert('Erreur lors de la création de la commande: ' + error.message);
+                });
+        });
+
+        // Fonction fictive pour récupérer l'ID utilisateur de la session
+        // À remplacer par votre méthode d'authentification réelle
+        function getUserIdFromSession() {
+            // Récupérer l'ID utilisateur depuis le localStorage, sessionStorage, cookies, etc.
+            const userInfo = localStorage.getItem('userInfo');
+            if (userInfo) {
+                try {
+                    const user = JSON.parse(userInfo);
+                    return user.id;
+                } catch (e) {
+                    console.error('Erreur lors de la récupération de l\'ID utilisateur:', e);
+                }
+            }
+            return null;
+        }
+    });
+
+</script>
 </body>
 </html>
