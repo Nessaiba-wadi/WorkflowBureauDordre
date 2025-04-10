@@ -4,6 +4,7 @@ import org.antlr.v4.runtime.Token;
 import org.example.dto.UtilisateurDTO;
 import org.example.model.Role;
 import org.example.model.Utilisateur;
+import org.example.repository.UtilisateurRepository;
 import org.example.service.RoleService;
 import org.example.service.UtilisateurService;
 import org.example.service.UtilisateurService.UtilisateurNonTrouveException;
@@ -27,7 +28,8 @@ public class UtilisateurController {
         @Autowired
         private final UtilisateurService utilisateurService;
         private final RoleService roleService;
-
+        @Autowired
+        private UtilisateurRepository utilisateurRepository;
         @Autowired
         public UtilisateurController(UtilisateurService utilisateurService, RoleService roleService) {
             this.utilisateurService = utilisateurService;
@@ -311,36 +313,58 @@ public class UtilisateurController {
             }
         }
 
-    @GetMapping("/tous-avec-roles")
-    public ResponseEntity<List<Map<String, Object>>> getAllUtilisateursAvecRoles() {
-        try {
-            List<Utilisateur> utilisateurs = utilisateurService.getAllUtilisateurs();
-            List<Map<String, Object>> utilisateursAvecRoles = new ArrayList<>();
+        @GetMapping("/tous-avec-roles")
+        public ResponseEntity<List<Map<String, Object>>> getAllUtilisateursAvecRoles() {
+            try {
+                List<Utilisateur> utilisateurs = utilisateurService.getAllUtilisateurs();
+                List<Map<String, Object>> utilisateursAvecRoles = new ArrayList<>();
 
-            for (Utilisateur u : utilisateurs) {
-                Map<String, Object> utilisateurMap = new HashMap<>();
-                utilisateurMap.put("idUtilisateur", u.getIdUtilisateur());
-                utilisateurMap.put("nom", u.getNom());
-                utilisateurMap.put("prenom", u.getPrenom());
-                utilisateurMap.put("email", u.getEmail());
-                utilisateurMap.put("statut", u.isStatut());
+                for (Utilisateur u : utilisateurs) {
+                    Map<String, Object> utilisateurMap = new HashMap<>();
+                    utilisateurMap.put("idUtilisateur", u.getIdUtilisateur());
+                    utilisateurMap.put("nom", u.getNom());
+                    utilisateurMap.put("prenom", u.getPrenom());
+                    utilisateurMap.put("email", u.getEmail());
+                    utilisateurMap.put("statut", u.isStatut());
 
-                // Créer un objet pour le rôle
-                if (u.getRole() != null) {
-                    Map<String, Object> roleMap = new HashMap<>();
-                    roleMap.put("idRole", u.getRole().getIdRole());
-                    roleMap.put("nom", u.getRole().getNom());
-                    utilisateurMap.put("role", roleMap);
-                } else {
-                    utilisateurMap.put("role", null);
+                    // Créer un objet pour le rôle
+                    if (u.getRole() != null) {
+                        Map<String, Object> roleMap = new HashMap<>();
+                        roleMap.put("idRole", u.getRole().getIdRole());
+                        roleMap.put("nom", u.getRole().getNom());
+                        utilisateurMap.put("role", roleMap);
+                    } else {
+                        utilisateurMap.put("role", null);
+                    }
+
+                    utilisateursAvecRoles.add(utilisateurMap);
                 }
 
-                utilisateursAvecRoles.add(utilisateurMap);
+                return new ResponseEntity<>(utilisateursAvecRoles, HttpStatus.OK);
+            } catch (Exception e) {
+                return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
             }
-
-            return new ResponseEntity<>(utilisateursAvecRoles, HttpStatus.OK);
-        } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
+
+
+
+    /**
+     * Endpoint pour récupérer les statistiques des utilisateurs actifs par rôle
+     * @return Map contenant le nombre d'utilisateurs actifs par rôle
+     */
+    @GetMapping("/statistiques")
+    public ResponseEntity<Map<String, Integer>> getStatistiquesUtilisateurs() {
+        Map<String, Integer> stats = new HashMap<>();
+
+        // Compter les utilisateurs actifs par rôle
+        int utilisateursBO = utilisateurRepository.countByRoleNomAndStatutTrue("Bureau d'ordre");
+        int utilisateursComptables = utilisateurRepository.countByRoleNomAndStatutTrue("Comptable");
+        int utilisateursTresorerie = utilisateurRepository.countByRoleNomAndStatutTrue("Trésorerie");
+
+        stats.put("utilisateursBO", utilisateursBO);
+        stats.put("utilisateursComptables", utilisateursComptables);
+        stats.put("utilisateursTresorerie", utilisateursTresorerie);
+
+        return ResponseEntity.ok(stats);
     }
-    }
+}

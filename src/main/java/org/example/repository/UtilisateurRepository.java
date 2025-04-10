@@ -14,4 +14,7 @@ public interface UtilisateurRepository extends JpaRepository<Utilisateur, Intege
 
     @Query("SELECT u FROM Utilisateur u WHERE u.role.idRole <> :adminRoleId")
     List<Utilisateur> findAllExceptAdmins(@Param("adminRoleId") int adminRoleId);
+
+    int countByRoleNomAndStatutTrue(String nomRole);
+
 }
