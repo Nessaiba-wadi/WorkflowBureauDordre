@@ -361,6 +361,31 @@
             font-size: 0.875rem;
             margin-top: 0.5rem;
         }
+
+
+        /* Style pour les liens d'export et les icons  */
+        .export-gif-link {
+            display: inline-block;
+            cursor: pointer;
+            transition: transform 0.2s;
+            margin: 0 5px;
+        }
+
+        .export-gif-link:hover {
+            transform: scale(1.1);
+        }
+
+        .export-gif {
+            width: 40px;
+            height: 40px;
+            object-fit: contain;
+        }
+
+        .export-label {
+            font-size: 0.9rem;
+            color: #6c757d;
+            font-weight: 500;
+        }
     </style>
 
 </head>
@@ -722,13 +747,17 @@
 
                 <!-- Onglet Vision Globale -->
                 <div class="tab-pane fade" id="global" role="tabpanel">
-                    <!-- Filtres -->
-                    <!-- Dans l'onglet Vision Globale, ajoutez ceci avant la ligne avec les filtres -->
-                    <div class="d-flex justify-content-end mb-3">
-                        <button id="exportPdfGlobal" class="btn btn-primary">
-                            <i class="fas fa-file-pdf me-2"></i>Exporter en PDF
-                        </button>
+                    <!-- L'exportation des fichiers (pdf, excel) -->
+                    <div class="d-flex justify-content-end mb-3 gap-2 align-items-center">
+                        <span class="export-label me-1">Exporter :</span>
+                        <a id="exportExcelGlobal" class="export-gif-link" title="Exporter en Excel">
+                            <img src="/static/images/xls.gif" alt="Export Excel" class="export-gif">
+                        </a>
+                        <a id="exportPdfGlobal" class="export-gif-link" title="Exporter en PDF">
+                            <img src="/static/images/pdf.gif" alt="Export PDF" class="export-gif">
+                        </a>
                     </div>
+
                     <div class="row mb-3 align-items-end">
                         <div class="col-md-5">
                             <div class="input-group">
@@ -831,6 +860,8 @@
 <!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"></script>
 <script src="/static/js/export.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.3.0/dist/exceljs.min.js"></script>
+<script src="https://unpkg.com/tableexport@5.2.0/dist/js/tableexport.min.js"></script>
 
 
 </body>

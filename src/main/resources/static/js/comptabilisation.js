@@ -171,6 +171,8 @@ function envoyerComptabilisation() {
         }
     };
 
+    console.log("Données envoyées:", JSON.stringify(comptabilisationData));
+
     // Créer un FormData pour l'envoi multipart
     const formData = new FormData();
     formData.append('comptabilisationData', JSON.stringify(comptabilisationData));
@@ -204,6 +206,7 @@ function envoyerComptabilisation() {
             }, 2000);
         })
         .catch(error => {
+            console.error("Erreur lors de l'envoi:", error);
             // Gestion spécifique pour l'erreur de commande déjà comptabilisée
             if (error.message.includes('déjà été comptabilisée')) {
                 afficherToast('Erreur', 'Cette commande a déjà été comptabilisée. Une seule comptabilisation par commande est autorisée.', 'danger');
