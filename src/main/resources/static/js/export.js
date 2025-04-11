@@ -305,53 +305,28 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 /**
- * Fonction pour exporter les données au format Excel
+ * Fonction pour exporter les données au format Excel avec styles
  */
 function exportTableToExcel() {
     // Déterminer quelles données exporter (filtrées ou toutes)
     const dataToExport = filteredGlobalData.length > 0 ? filteredGlobalData : allGlobalData;
 
-    // Créer un nouveau classeur Excel
-    const wb = XLSX.utils.book_new();
+    // Solution alternative : utiliser ExcelJS qui supporte nativement les styles
+    // Cette bibliothèque doit être ajoutée à votre projet
+    // <script src="https://cdn.jsdelivr.net/npm/exceljs@4.3.0/dist/exceljs.min.js"></script>
 
-    // Préparer les données pour Excel
-    const excelData = dataToExport.map(item => {
-        return {
-            // Réception
-            'N° BC': item.numeroBC || '',
-            'Date réception': formatDateForExcel(item.dateReception),
-            'Fournisseur': item.raisonSocialeFournisseur || '',
-            'Société GBM': item.raisonSocialeGBM || '',
-            'Direction': item.directionGBM || '',
-            'Souscripteur': item.souscripteur || '',
-            'Type doc.': item.typeDocument || '',
-            'Date relance': formatDateForExcel(item.dateRelanceBR),
-            'Type relance': item.typeRelance || '',
-            'Dossier complet': item.dossierComplet === true ? 'Complet' :
-                item.dossierComplet === false ? 'Incomplet' : '',
-            'Date transmission BO': formatDateForExcel(item.dateTransmissionBO),
-            'Collecteur BO': item.personneCollectriceBO || '',
+    // Créer un nouveau workbook
+    const workbook = new ExcelJS.Workbook();
+    workbook.creator = 'Suivi GBM';
+    workbook.lastModifiedBy = 'Application GBM';
+    workbook.created = new Date();
+    workbook.modified = new Date();
 
-            // Comptabilité
-            'Date comptabilisation': formatDateForExcel(item.dateComptabilisation),
-            'Date transmission compta': formatDateForExcel(item.dateTransmissionCompta),
-            'Collecteur compta': item.personneCollectriceCompta || '',
-            'Commentaire compta': item.commentaireCompta || '',
-
-            // Trésorerie
-            'Date préparation': formatDateForExcel(item.datePreparation),
-            'Mode règlement': item.modeReglement || '',
-            'N° chèque': item.numeroCheque || '',
-            'Date transmission règlement': formatDateForExcel(item.dateTransmissionRegl),
-            'Commentaire règlement': item.commentaireRegl || ''
-        };
-    });
-
-    // Créer une feuille vide
-    const ws = XLSX.utils.aoa_to_sheet([]);
+    // Ajouter une feuille
+    const worksheet = workbook.addWorksheet('Suivi GBM');
 
     // Définir les largeurs de colonnes
-    ws['!cols'] = [
+    const columnWidths = [
         { width: 15 }, // A: N° BC
         { width: 15 }, // B: Date réception
         { width: 20 }, // C: Fournisseur
@@ -375,94 +350,78 @@ function exportTableToExcel() {
         { width: 25 }  // U: Commentaire règlement
     ];
 
-    // Styles pour les en-têtes et cellules
-    const styleTitle = {
-        font: { bold: true, sz: 16 },
-        alignment: { horizontal: "center", vertical: "center" }
-    };
+    // Appliquer les largeurs de colonnes
+    worksheet.columns = columnWidths;
 
-    const styleSubtitle = {
-        font: { bold: true, sz: 12 },
-        alignment: { horizontal: "left", vertical: "center" }
-    };
+    // Ajouter le titre
+    const titleRow = worksheet.addRow(["Export des données de suivi GBM"]);
+    titleRow.font = { bold: true, size: 16 };
+    worksheet.mergeCells('A1:U1');
+    titleRow.alignment = { horizontal: 'center' };
 
-    const styleReception = {
-        fill: { fgColor: { rgb: "2980B9" } }, // Bleu
-        font: { bold: true, color: { rgb: "FFFFFF" } },
-        alignment: { horizontal: "center", vertical: "center" },
-        border: { top: { style: "thin" }, bottom: { style: "thin" }, left: { style: "thin" }, right: { style: "thin" } }
-    };
+    // Ajouter les informations
+    const dateRow = worksheet.addRow([`Date d'exportation: ${new Date().toLocaleDateString('fr-FR')}`]);
+    dateRow.font = { bold: true, size: 12 };
 
-    const styleComptabilite = {
-        fill: { fgColor: { rgb: "27AE60" } }, // Vert
-        font: { bold: true, color: { rgb: "FFFFFF" } },
-        alignment: { horizontal: "center", vertical: "center" },
-        border: { top: { style: "thin" }, bottom: { style: "thin" }, left: { style: "thin" }, right: { style: "thin" } }
-    };
+    const countRow = worksheet.addRow([`Nombre d'éléments: ${dataToExport.length}`]);
+    countRow.font = { bold: true, size: 12 };
 
-    const styleTresorerie = {
-        fill: { fgColor: { rgb: "9B59B6" } }, // Violet
-        font: { bold: true, color: { rgb: "FFFFFF" } },
-        alignment: { horizontal: "center", vertical: "center" },
-        border: { top: { style: "thin" }, bottom: { style: "thin" }, left: { style: "thin" }, right: { style: "thin" } }
-    };
+    // Ligne vide
+    worksheet.addRow([]);
 
-    // Styles pour les cellules de données
-    const styleData = {
-        alignment: { horizontal: "center", vertical: "center" },
-        border: { top: { style: "thin" }, bottom: { style: "thin" }, left: { style: "thin" }, right: { style: "thin" } }
-    };
+    // Couleurs des sections
+    const colorReception = { argb: 'FF2980B9' }; // Bleu
+    const colorComptabilite = { argb: 'FF27AE60' }; // Vert
+    const colorTresorerie = { argb: 'FF9B59B6' }; // Violet
 
-    const styleDataAlt = {
-        fill: { fgColor: { rgb: "F5F5F5" } },
-        alignment: { horizontal: "center", vertical: "center" },
-        border: { top: { style: "thin" }, bottom: { style: "thin" }, left: { style: "thin" }, right: { style: "thin" } }
-    };
-
-    // Ajouter le titre et les informations
-    XLSX.utils.sheet_add_aoa(ws, [["Export des données de suivi GBM"]], { origin: "A1" });
-    setCellStyle(ws, "A1", styleTitle);
-
-    const date = new Date().toLocaleDateString('fr-FR');
-    XLSX.utils.sheet_add_aoa(ws, [["Date d'exportation: " + date]], { origin: "A2" });
-    setCellStyle(ws, "A2", styleSubtitle);
-
-    XLSX.utils.sheet_add_aoa(ws, [["Nombre d'éléments: " + dataToExport.length]], { origin: "A3" });
-    setCellStyle(ws, "A3", styleSubtitle);
-
-    // Ajouter une ligne vide
-    XLSX.utils.sheet_add_aoa(ws, [[""]], { origin: "A4" });
-
-    // Ajouter les en-têtes de sections à la ligne 5
-    XLSX.utils.sheet_add_aoa(ws, [["Réception (BO)", "", "", "", "", "", "", "", "", "", "", "",
+    // Ajouter les en-têtes de sections
+    const sectionRow = worksheet.addRow([
+        "Réception (BO)", "", "", "", "", "", "", "", "", "", "", "",
         "Comptabilité", "", "", "",
-        "Trésorerie", "", "", "", ""]], { origin: "A5" });
+        "Trésorerie", "", "", "", ""
+    ]);
 
     // Appliquer les styles aux en-têtes de sections
-    for (let i = 0; i < 12; i++) {
-        const col = String.fromCharCode(65 + i); // A à L
-        setCellStyle(ws, col + "5", styleReception);
+    for (let i = 1; i <= 21; i++) {
+        const cell = sectionRow.getCell(i);
+
+        // Définir la couleur selon la section
+        if (i <= 12) {
+            cell.fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: colorReception
+            };
+        } else if (i <= 16) {
+            cell.fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: colorComptabilite
+            };
+        } else {
+            cell.fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: colorTresorerie
+            };
+        }
+
+        cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+        cell.border = {
+            top: { style: 'thin' },
+            left: { style: 'thin' },
+            bottom: { style: 'thin' },
+            right: { style: 'thin' }
+        };
     }
 
-    for (let i = 12; i < 16; i++) {
-        const col = String.fromCharCode(65 + i); // M à P
-        setCellStyle(ws, col + "5", styleComptabilite);
-    }
+    // Fusionner les cellules des en-têtes de sections
+    worksheet.mergeCells('A5:L5'); // Réception
+    worksheet.mergeCells('M5:P5'); // Comptabilité
+    worksheet.mergeCells('Q5:U5'); // Trésorerie
 
-    for (let i = 16; i < 21; i++) {
-        const col = String.fromCharCode(65 + i); // Q à U
-        setCellStyle(ws, col + "5", styleTresorerie);
-    }
-
-    // Fusionner les cellules pour les en-têtes de sections
-    if (!ws['!merges']) ws['!merges'] = [];
-    ws['!merges'].push(
-        { s: { r: 4, c: 0 }, e: { r: 4, c: 11 } }, // Réception
-        { s: { r: 4, c: 12 }, e: { r: 4, c: 15 } }, // Comptabilité
-        { s: { r: 4, c: 16 }, e: { r: 4, c: 20 } }  // Trésorerie
-    );
-
-    // Ajouter les en-têtes de colonnes à la ligne 6
+    // En-têtes de colonnes
     const headers = [
         // Réception
         'N° BC', 'Date réception', 'Fournisseur', 'Société GBM', 'Direction',
@@ -474,101 +433,139 @@ function exportTableToExcel() {
         'Date préparation', 'Mode règlement', 'N° chèque', 'Date transmission règlement', 'Commentaire règlement'
     ];
 
-    XLSX.utils.sheet_add_aoa(ws, [headers], { origin: "A6" });
+    const headerRow = worksheet.addRow(headers);
 
     // Appliquer les styles aux en-têtes de colonnes
-    for (let i = 0; i < headers.length; i++) {
-        const col = String.fromCharCode(65 + i);
-        if (i < 12) {
-            setCellStyle(ws, col + "6", styleReception);
-        } else if (i < 16) {
-            setCellStyle(ws, col + "6", styleComptabilite);
+    for (let i = 1; i <= headers.length; i++) {
+        const cell = headerRow.getCell(i);
+
+        // Définir la couleur selon la section
+        if (i <= 12) {
+            cell.fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: colorReception
+            };
+        } else if (i <= 16) {
+            cell.fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: colorComptabilite
+            };
         } else {
-            setCellStyle(ws, col + "6", styleTresorerie);
+            cell.fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: colorTresorerie
+            };
         }
+
+        cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+        cell.border = {
+            top: { style: 'thin' },
+            left: { style: 'thin' },
+            bottom: { style: 'thin' },
+            right: { style: 'thin' }
+        };
     }
 
-    // Ajouter les données à partir de la ligne 7
-    excelData.forEach((row, rowIndex) => {
-        const rowData = headers.map(header => row[header] || '');
-        XLSX.utils.sheet_add_aoa(ws, [rowData], { origin: "A" + (7 + rowIndex) });
+    // Ajouter les données
+    dataToExport.forEach((item, index) => {
+        const row = worksheet.addRow([
+            // Réception
+            item.numeroBC || '',
+            formatDateForExcel(item.dateReception),
+            item.raisonSocialeFournisseur || '',
+            item.raisonSocialeGBM || '',
+            item.directionGBM || '',
+            item.souscripteur || '',
+            item.typeDocument || '',
+            formatDateForExcel(item.dateRelanceBR),
+            item.typeRelance || '',
+            item.dossierComplet === true ? 'Complet' :
+                item.dossierComplet === false ? 'Incomplet' : '',
+            formatDateForExcel(item.dateTransmissionBO),
+            item.personneCollectriceBO || '',
 
-        // Appliquer les styles aux cellules de données avec alternance de couleur
-        for (let i = 0; i < headers.length; i++) {
-            const col = String.fromCharCode(65 + i);
-            const cellRef = col + (7 + rowIndex);
+            // Comptabilité
+            formatDateForExcel(item.dateComptabilisation),
+            formatDateForExcel(item.dateTransmissionCompta),
+            item.personneCollectriceCompta || '',
+            item.commentaireCompta || '',
 
-            // Style alterné pour les lignes
-            const baseStyle = rowIndex % 2 === 0 ? styleDataAlt : styleData;
+            // Trésorerie
+            formatDateForExcel(item.datePreparation),
+            item.modeReglement || '',
+            item.numeroCheque || '',
+            formatDateForExcel(item.dateTransmissionRegl),
+            item.commentaireRegl || ''
+        ]);
 
-            // Ajouter des bordures colorées selon la section
-            if (i < 12) {
+        // Appliquer les styles aux cellules de données
+        const backgroundColor = index % 2 === 0 ? { argb: 'FFF5F5F5' } : { argb: 'FFFFFFFF' };
+
+        for (let i = 1; i <= headers.length; i++) {
+            const cell = row.getCell(i);
+
+            // Style de base
+            cell.alignment = { horizontal: 'center', vertical: 'middle' };
+            cell.fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: backgroundColor
+            };
+
+            // Bordures colorées selon la section
+            if (i <= 12) {
                 // Réception - bordures bleues
-                setCellStyle(ws, cellRef, {
-                    ...baseStyle,
-                    border: {
-                        top: { style: "thin", color: { rgb: "2980B9" } },
-                        bottom: { style: "thin", color: { rgb: "2980B9" } },
-                        left: { style: "thin", color: { rgb: "2980B9" } },
-                        right: { style: "thin", color: { rgb: "2980B9" } }
-                    }
-                });
-            } else if (i < 16) {
+                cell.border = {
+                    top: { style: 'thin', color: colorReception },
+                    left: { style: 'thin', color: colorReception },
+                    bottom: { style: 'thin', color: colorReception },
+                    right: { style: 'thin', color: colorReception }
+                };
+            } else if (i <= 16) {
                 // Comptabilité - bordures vertes
-                setCellStyle(ws, cellRef, {
-                    ...baseStyle,
-                    border: {
-                        top: { style: "thin", color: { rgb: "27AE60" } },
-                        bottom: { style: "thin", color: { rgb: "27AE60" } },
-                        left: { style: "thin", color: { rgb: "27AE60" } },
-                        right: { style: "thin", color: { rgb: "27AE60" } }
-                    }
-                });
+                cell.border = {
+                    top: { style: 'thin', color: colorComptabilite },
+                    left: { style: 'thin', color: colorComptabilite },
+                    bottom: { style: 'thin', color: colorComptabilite },
+                    right: { style: 'thin', color: colorComptabilite }
+                };
             } else {
                 // Trésorerie - bordures violettes
-                setCellStyle(ws, cellRef, {
-                    ...baseStyle,
-                    border: {
-                        top: { style: "thin", color: { rgb: "9B59B6" } },
-                        bottom: { style: "thin", color: { rgb: "9B59B6" } },
-                        left: { style: "thin", color: { rgb: "9B59B6" } },
-                        right: { style: "thin", color: { rgb: "9B59B6" } }
-                    }
-                });
+                cell.border = {
+                    top: { style: 'thin', color: colorTresorerie },
+                    left: { style: 'thin', color: colorTresorerie },
+                    bottom: { style: 'thin', color: colorTresorerie },
+                    right: { style: 'thin', color: colorTresorerie }
+                };
             }
         }
     });
 
-    // Ajouter la feuille au classeur
-    XLSX.utils.book_append_sheet(wb, ws, "Suivi GBM");
-
     // Générer le fichier Excel
-    const dateStr = new Date().toISOString().split('T')[0];
-    const fileName = `Suivi_GBM_${dateStr}.xlsx`;
-    XLSX.writeFile(wb, fileName, { bookType: 'xlsx', bookSST: false, type: 'binary' });
+    workbook.xlsx.writeBuffer().then(buffer => {
+        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const dateStr = new Date().toISOString().split('T')[0];
+        const fileName = `Suivi_GBM_${dateStr}.xlsx`;
 
-    // Afficher un message de confirmation
-    afficherToast('Exportation Excel réussie', 'Le fichier Excel a été généré avec succès et correspond au style du PDF.', 'success');
+        // Créer un lien pour télécharger le fichier
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        a.click();
+        window.URL.revokeObjectURL(url);
+
+        // Afficher un message de confirmation
+        afficherToast('Exportation Excel réussie', 'Le fichier Excel a été généré avec succès et correspond au style du PDF.', 'success');
+    });
 }
 
 /**
- * Fonction utilitaire pour définir le style d'une cellule
- * @param {Object} sheet - Feuille Excel
- * @param {String} cellRef - Référence de la cellule (ex: "A1")
- * @param {Object} style - Style à appliquer
- */
-function setCellStyle(sheet, cellRef, style) {
-    if (!sheet[cellRef]) {
-        // Si la cellule n'existe pas encore (ce qui est étrange), on la crée
-        sheet[cellRef] = { v: "", t: "s" };
-    }
-
-    // Ajouter ou fusionner le style
-    sheet[cellRef].s = sheet[cellRef].s ? { ...sheet[cellRef].s, ...style } : style;
-}
-
-/**
- * Formatte les dates pour Excel (format ISO)
+ * Formatte les dates pour Excel (format français JJ/MM/AAAA)
  */
 function formatDateForExcel(dateString) {
     if (!dateString) return '';
@@ -581,8 +578,153 @@ function formatDateForExcel(dateString) {
             day: '2-digit',
             month: '2-digit',
             year: 'numeric'
-        }); // Format JJ/MM/AAAA pour une meilleure lisibilité
+        });
     } catch (e) {
         return '';
     }
+}
+
+/**
+ * Alternative si ExcelJS ne peut pas être utilisé : méthode utilisant des tableaux HTML
+ * Cette méthode crée un tableau HTML temporaire avec les styles CSS appropriés,
+ * puis utilise la fonction TableToExcel pour convertir ce tableau en Excel
+ */
+function exportTableToExcelAlternative() {
+    // Déterminer quelles données exporter (filtrées ou toutes)
+    const dataToExport = filteredGlobalData.length > 0 ? filteredGlobalData : allGlobalData;
+
+    // Créer un tableau HTML temporaire avec les styles CSS
+    const tempTable = document.createElement('table');
+    tempTable.id = 'tempExportTable';
+    tempTable.style.display = 'none';
+    document.body.appendChild(tempTable);
+
+    // Appliquer les styles CSS
+    const tableHTML = `
+    <table border="1" style="border-collapse: collapse; width: 100%;">
+        <thead>
+            <tr>
+                <th colspan="21" style="text-align: center; font-size: 18px; font-weight: bold; padding: 10px;">
+                    Export des données de suivi GBM
+                </th>
+            </tr>
+            <tr>
+                <td colspan="21" style="font-size: 12px; font-weight: bold; padding: 5px;">
+                    Date d'exportation: ${new Date().toLocaleDateString('fr-FR')}
+                </td>
+            </tr>
+            <tr>
+                <td colspan="21" style="font-size: 12px; font-weight: bold; padding: 5px;">
+                    Nombre d'éléments: ${dataToExport.length}
+                </td>
+            </tr>
+            <tr><td colspan="21">&nbsp;</td></tr>
+            <tr>
+                <th colspan="12" style="background-color: #2980B9; color: white; padding: 8px; text-align: center; font-weight: bold; border: 1px solid #2980B9;">
+                    Réception (BO)
+                </th>
+                <th colspan="4" style="background-color: #27AE60; color: white; padding: 8px; text-align: center; font-weight: bold; border: 1px solid #27AE60;">
+                    Comptabilité
+                </th>
+                <th colspan="5" style="background-color: #9B59B6; color: white; padding: 8px; text-align: center; font-weight: bold; border: 1px solid #9B59B6;">
+                    Trésorerie
+                </th>
+            </tr>
+            <tr>
+                <!-- Réception -->
+                <th style="background-color: #2980B9; color: white; padding: 8px; text-align: center; font-weight: bold; border: 1px solid #2980B9;">N° BC</th>
+                <th style="background-color: #2980B9; color: white; padding: 8px; text-align: center; font-weight: bold; border: 1px solid #2980B9;">Date réception</th>
+                <th style="background-color: #2980B9; color: white; padding: 8px; text-align: center; font-weight: bold; border: 1px solid #2980B9;">Fournisseur</th>
+                <th style="background-color: #2980B9; color: white; padding: 8px; text-align: center; font-weight: bold; border: 1px solid #2980B9;">Société GBM</th>
+                <th style="background-color: #2980B9; color: white; padding: 8px; text-align: center; font-weight: bold; border: 1px solid #2980B9;">Direction</th>
+                <th style="background-color: #2980B9; color: white; padding: 8px; text-align: center; font-weight: bold; border: 1px solid #2980B9;">Souscripteur</th>
+                <th style="background-color: #2980B9; color: white; padding: 8px; text-align: center; font-weight: bold; border: 1px solid #2980B9;">Type doc.</th>
+                <th style="background-color: #2980B9; color: white; padding: 8px; text-align: center; font-weight: bold; border: 1px solid #2980B9;">Date relance</th>
+                <th style="background-color: #2980B9; color: white; padding: 8px; text-align: center; font-weight: bold; border: 1px solid #2980B9;">Type relance</th>
+                <th style="background-color: #2980B9; color: white; padding: 8px; text-align: center; font-weight: bold; border: 1px solid #2980B9;">Dossier complet</th>
+                <th style="background-color: #2980B9; color: white; padding: 8px; text-align: center; font-weight: bold; border: 1px solid #2980B9;">Date trans. BO</th>
+                <th style="background-color: #2980B9; color: white; padding: 8px; text-align: center; font-weight: bold; border: 1px solid #2980B9;">Collecteur BO</th>
+                
+                <!-- Comptabilité -->
+                <th style="background-color: #27AE60; color: white; padding: 8px; text-align: center; font-weight: bold; border: 1px solid #27AE60;">Date compta.</th>
+                <th style="background-color: #27AE60; color: white; padding: 8px; text-align: center; font-weight: bold; border: 1px solid #27AE60;">Date trans. compta</th>
+                <th style="background-color: #27AE60; color: white; padding: 8px; text-align: center; font-weight: bold; border: 1px solid #27AE60;">Collecteur compta</th>
+                <th style="background-color: #27AE60; color: white; padding: 8px; text-align: center; font-weight: bold; border: 1px solid #27AE60;">Commentaire</th>
+                
+                <!-- Trésorerie -->
+                <th style="background-color: #9B59B6; color: white; padding: 8px; text-align: center; font-weight: bold; border: 1px solid #9B59B6;">Date préparation</th>
+                <th style="background-color: #9B59B6; color: white; padding: 8px; text-align: center; font-weight: bold; border: 1px solid #9B59B6;">Mode règl.</th>
+                <th style="background-color: #9B59B6; color: white; padding: 8px; text-align: center; font-weight: bold; border: 1px solid #9B59B6;">N° chèque</th>
+                <th style="background-color: #9B59B6; color: white; padding: 8px; text-align: center; font-weight: bold; border: 1px solid #9B59B6;">Date trans. règl.</th>
+                <th style="background-color: #9B59B6; color: white; padding: 8px; text-align: center; font-weight: bold; border: 1px solid #9B59B6;">Commentaire</th>
+            </tr>
+        </thead>
+        <tbody>
+            ${dataToExport.map((item, index) => {
+        const rowStyle = index % 2 === 0 ? 'background-color: #F5F5F5;' : 'background-color: #FFFFFF;';
+
+        return `
+                <tr style="${rowStyle}">
+                    <!-- Réception -->
+                    <td style="padding: 5px; text-align: center; border: 1px solid #2980B9;">${item.numeroBC || ''}</td>
+                    <td style="padding: 5px; text-align: center; border: 1px solid #2980B9;">${formatDateForExcel(item.dateReception)}</td>
+                    <td style="padding: 5px; text-align: center; border: 1px solid #2980B9;">${item.raisonSocialeFournisseur || ''}</td>
+                    <td style="padding: 5px; text-align: center; border: 1px solid #2980B9;">${item.raisonSocialeGBM || ''}</td>
+                    <td style="padding: 5px; text-align: center; border: 1px solid #2980B9;">${item.directionGBM || ''}</td>
+                    <td style="padding: 5px; text-align: center; border: 1px solid #2980B9;">${item.souscripteur || ''}</td>
+                    <td style="padding: 5px; text-align: center; border: 1px solid #2980B9;">${item.typeDocument || ''}</td>
+                    <td style="padding: 5px; text-align: center; border: 1px solid #2980B9;">${formatDateForExcel(item.dateRelanceBR)}</td>
+                    <td style="padding: 5px; text-align: center; border: 1px solid #2980B9;">${item.typeRelance || ''}</td>
+                    <td style="padding: 5px; text-align: center; border: 1px solid #2980B9;">${item.dossierComplet === true ? 'Complet' : item.dossierComplet === false ? 'Incomplet' : ''}</td>
+                    <td style="padding: 5px; text-align: center; border: 1px solid #2980B9;">${formatDateForExcel(item.dateTransmissionBO)}</td>
+                    <td style="padding: 5px; text-align: center; border: 1px solid #2980B9;">${item.personneCollectriceBO || ''}</td>
+                    
+                    <!-- Comptabilité -->
+                    <td style="padding: 5px; text-align: center; border: 1px solid #27AE60;">${formatDateForExcel(item.dateComptabilisation)}</td>
+                    <td style="padding: 5px; text-align: center; border: 1px solid #27AE60;">${formatDateForExcel(item.dateTransmissionCompta)}</td>
+                    <td style="padding: 5px; text-align: center; border: 1px solid #27AE60;">${item.personneCollectriceCompta || ''}</td>
+                    <td style="padding: 5px; text-align: center; border: 1px solid #27AE60;">${item.commentaireCompta || ''}</td>
+                    
+                    <!-- Trésorerie -->
+                    <td style="padding: 5px; text-align: center; border: 1px solid #9B59B6;">${formatDateForExcel(item.datePreparation)}</td>
+                    <td style="padding: 5px; text-align: center; border: 1px solid #9B59B6;">${item.modeReglement || ''}</td>
+                    <td style="padding: 5px; text-align: center; border: 1px solid #9B59B6;">${item.numeroCheque || ''}</td>
+                    <td style="padding: 5px; text-align: center; border: 1px solid #9B59B6;">${formatDateForExcel(item.dateTransmissionRegl)}</td>
+                    <td style="padding: 5px; text-align: center; border: 1px solid #9B59B6;">${item.commentaireRegl || ''}</td>
+                </tr>
+                `;
+    }).join('')}
+        </tbody>
+    </table>
+    `;
+
+    tempTable.innerHTML = tableHTML;
+
+    // Utiliser une bibliothèque pour convertir le tableau HTML en Excel (exemple avec TableExport)
+    // Vous devez inclure cette bibliothèque : https://tableexport.v5.travismclarke.com/
+    TableExport(tempTable, {
+        headers: true,
+        footers: true,
+        formats: ['xlsx'],
+        filename: `Suivi_GBM_${new Date().toISOString().split('T')[0]}`,
+        bootstrap: false,
+        exportButtons: false,
+        position: 'bottom',
+        ignoreRows: null,
+        ignoreCols: null,
+        trimWhitespace: true,
+        RTL: false,
+        sheetname: 'Suivi GBM'
+    });
+
+    // Déclencher le téléchargement
+    document.querySelector('.xlsx').click();
+
+    // Nettoyer
+    setTimeout(() => {
+        document.body.removeChild(tempTable);
+    }, 1000);
+
+    // Afficher un message de confirmation
+    afficherToast('Exportation Excel réussie', 'Le fichier Excel a été généré avec succès et correspond au style du PDF.', 'success');
 }
