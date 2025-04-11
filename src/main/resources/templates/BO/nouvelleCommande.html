@@ -84,6 +84,42 @@
 </div>
 
 <div class="content-wrapper">
+    <!-- Toast container -->
+    <div class="toast-container position-fixed top-0 end-0 p-3">
+        <!-- Success Toast -->
+        <div id="successToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header bg-success text-white">
+                <strong class="me-auto"><i class="fas fa-check-circle me-2"></i>Succès</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">
+                Commande créée avec succès!
+            </div>
+        </div>
+
+        <!-- Error Toast -->
+        <div id="errorToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header bg-danger text-white">
+                <strong class="me-auto"><i class="fas fa-exclamation-triangle me-2"></i>Erreur</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body" id="errorToastBody">
+                Une erreur s'est produite.
+            </div>
+        </div>
+
+        <!-- Warning Toast for Required Fields -->
+        <div id="warningToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header bg-warning text-dark">
+                <strong class="me-auto"><i class="fas fa-exclamation-circle me-2"></i>Attention</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body" id="warningToastBody">
+                Veuillez remplir tous les champs obligatoires.
+            </div>
+        </div>
+    </div>
+
     <div class="container-fluid mt-4 px-4">
         <h2 class="mb-4">Nouvelle Commande</h2>
 
@@ -94,31 +130,37 @@
                     <div class="mb-3">
                         <label class="form-label">Raison Sociale Fournisseur *</label>
                         <input type="text" class="form-control" id="raisonSocialeFournisseur" required>
+                        <div class="invalid-feedback">Ce champ est obligatoire</div>
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label">Numéro BC *</label>
                         <input type="text" class="form-control" id="numeroBC" required>
+                        <div class="invalid-feedback" id="numeroBCFeedback">Ce champ est obligatoire</div>
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label">Direction GBM *</label>
                         <input type="text" class="form-control" id="directionGBM" required>
+                        <div class="invalid-feedback">Ce champ est obligatoire</div>
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label">Type Document *</label>
                         <input type="text" class="form-control" id="typeDocument" required>
+                        <div class="invalid-feedback">Ce champ est obligatoire</div>
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label">Date Relance BR *</label>
                         <input type="date" class="form-control" id="dateRelanceBR" required>
+                        <div class="invalid-feedback">Ce champ est obligatoire</div>
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label">Date Transmission *</label>
                         <input type="date" class="form-control" id="dateTransmission" required>
+                        <div class="invalid-feedback">Ce champ est obligatoire</div>
                     </div>
                 </div>
 
@@ -127,11 +169,13 @@
                     <div class="mb-3">
                         <label class="form-label">Raison Sociale GBM *</label>
                         <input type="text" class="form-control" id="raisonSocialeGBM" required>
+                        <div class="invalid-feedback">Ce champ est obligatoire</div>
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label">Souscripteur *</label>
                         <input type="text" class="form-control" id="souscripteur" required>
+                        <div class="invalid-feedback">Ce champ est obligatoire</div>
                     </div>
 
                     <div class="mb-3">
@@ -141,6 +185,7 @@
                             <option value="MAIL">Mail</option>
                             <option value="TELEPHONE">Téléphone</option>
                         </select>
+                        <div class="invalid-feedback">Ce champ est obligatoire</div>
                     </div>
 
                     <div class="mb-3">
@@ -171,13 +216,86 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/js/all.min.js"></script>
 <script src="/../static/js/dashboard.js"></script>
 <script src="/../static/js/auth.js"></script>
-<script>
 
+<script>
     document.addEventListener('DOMContentLoaded', function() {
         const form = document.getElementById('commandeForm');
+        const numeroBCInput = document.getElementById('numeroBC');
 
-        form.addEventListener('submit', function(e) {
+        // Fonction pour afficher les toasts
+        function showToast(toastId, message = null) {
+            const toastElement = document.getElementById(toastId);
+
+            // Si un message est fourni, mettre à jour le contenu du toast
+            if (message && toastId === 'errorToast') {
+                document.getElementById('errorToastBody').textContent = message;
+            } else if (message && toastId === 'warningToast') {
+                document.getElementById('warningToastBody').textContent = message;
+            }
+
+            const toast = new bootstrap.Toast(toastElement, {
+                autohide: true,
+                delay: 5000
+            });
+
+            toast.show();
+        }
+
+        // Vérification locale pour les numéros BC déjà soumis
+        let submittedBCs = new Set();
+
+        // Fonction de validation du BC
+        async function validateBC(numeroBC) {
+            // Vérification locale pour éviter les doublons dans la même session
+            if (submittedBCs.has(numeroBC)) {
+                return Promise.reject('Ce numéro BC a déjà été utilisé dans cette session.');
+            }
+
+            try {
+                // Essayer d'utiliser l'API si elle existe
+                const response = await fetch(`http://localhost:8082/BO/commandes/verifier-bc/${numeroBC}`, {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.exists) {
+                        return Promise.reject('Ce numéro BC existe déjà dans la base de données.');
+                    }
+                }
+
+                // Si l'API n'existe pas ou n'a pas retourné d'erreur, on continue
+                return Promise.resolve();
+
+            } catch (error) {
+                console.warn('Vérification de BC via API non disponible:', error);
+                // Si l'API n'est pas disponible, on continue quand même
+                return Promise.resolve();
+            }
+        }
+
+        // Valider le numéro BC lors de la perte de focus
+        numeroBCInput.addEventListener('blur', async function() {
+            const numeroBC = this.value.trim();
+            if (numeroBC) {
+                try {
+                    await validateBC(numeroBC);
+                    this.classList.remove('is-invalid');
+                    this.classList.add('is-valid');
+                } catch (error) {
+                    this.classList.remove('is-valid');
+                    this.classList.add('is-invalid');
+                    document.getElementById('numeroBCFeedback').textContent = error;
+                }
+            }
+        });
+
+        form.addEventListener('submit', async function(e) {
             e.preventDefault();
+
+            // Réinitialiser les styles de validation
+            form.classList.remove('was-validated');
 
             // Vérification des champs obligatoires
             const requiredFields = [
@@ -186,17 +304,48 @@
                 'raisonSocialeGBM', 'souscripteur', 'typeRelance'
             ];
 
-            const missingFields = requiredFields.filter(fieldId =>
-                !document.getElementById(fieldId).value.trim()
-            );
+            let formValid = true;
 
-            if (missingFields.length > 0) {
-                alert('Veuillez remplir tous les champs obligatoires.');
+            // Vérifier chaque champ requis et appliquer les styles Bootstrap de validation
+            requiredFields.forEach(fieldId => {
+                const field = document.getElementById(fieldId);
+                if (!field.value.trim()) {
+                    field.classList.add('is-invalid');
+                    formValid = false;
+                } else {
+                    if (fieldId !== 'numeroBC' || !field.classList.contains('is-invalid')) {
+                        field.classList.remove('is-invalid');
+                        field.classList.add('is-valid');
+                    } else {
+                        formValid = false;
+                    }
+                }
+            });
+
+            if (!formValid) {
+                showToast('warningToast', 'Veuillez remplir correctement tous les champs obligatoires.');
                 return;
             }
 
-            // Récupération des données du formulaire
+            // Vérification spécifique pour le numéro BC
+            try {
+                const numeroBC = document.getElementById('numeroBC').value;
+                await validateBC(numeroBC);
+
+                // Ajouter le BC à notre ensemble local pour éviter les doublons dans la même session
+                submittedBCs.add(numeroBC);
+
+            } catch (error) {
+                showToast('warningToast', error);
+                document.getElementById('numeroBC').classList.add('is-invalid');
+                document.getElementById('numeroBCFeedback').textContent = error;
+                return;
+            }
+
+            // Construction de l'objet FormData pour l'envoi multipart/form-data
             const formData = new FormData();
+
+            // Récupération des données du formulaire en JSON
             const commandeData = {
                 raisonSocialeFournisseur: document.getElementById('raisonSocialeFournisseur').value,
                 numeroBC: document.getElementById('numeroBC').value,
@@ -214,50 +363,57 @@
 
             console.log('Données de commande à envoyer:', commandeData);
 
-            // Ajouter les données de la commande au FormData
+            // Ajout des données de commande au FormData
             formData.append('commandeData', JSON.stringify(commandeData));
+            formData.append('utilisateurId', getUserIdFromSession() || 1);
 
-            // Ajouter le fichier
+            // Ajout du fichier si présent
             const fichierInput = document.getElementById('fichier');
             if (fichierInput.files.length > 0) {
                 formData.append('file', fichierInput.files[0]);
             }
 
-            // Récupérer l'ID utilisateur depuis la session (à adapter selon votre système d'authentification)
-            const utilisateurId = getUserIdFromSession() || 1;
-            formData.append('utilisateurId', utilisateurId);
-
             // Envoi de la requête
-            fetch('http://localhost:8082/BO/commandes', {
-                method: 'POST',
-                body: formData,
-                credentials: 'include'
-            })
-                .then(response => {
-                    if (!response.ok) {
-                        return response.json().then(errorData => {
-                            throw new Error(errorData.message || 'Erreur inconnue');
-                        }).catch(e => {
-                            throw new Error(`Erreur HTTP ${response.status}`);
-                        });
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    console.log('Réponse du serveur:', data);
-                    alert('Commande créée avec succès!');
-                    window.location.href = '/BO/commandes';
-                })
-                .catch(error => {
-                    console.error('Erreur détaillée:', error);
-                    alert('Erreur lors de la création de la commande: ' + error.message);
+            try {
+                const response = await fetch('http://localhost:8082/BO/commandes', {
+                    method: 'POST',
+                    body: formData, // Utilisation de FormData pour prendre en charge le fichier
+                    credentials: 'include'
                 });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    let errorMessage;
+
+                    try {
+                        const errorJson = JSON.parse(errorText);
+                        errorMessage = errorJson.message || `Erreur ${response.status}`;
+                    } catch (e) {
+                        errorMessage = `Erreur HTTP ${response.status}: ${errorText}`;
+                    }
+
+                    throw new Error(errorMessage);
+                }
+
+                const data = await response.json();
+                console.log('Réponse du serveur:', data);
+
+                // Afficher le toast de succès
+                showToast('successToast');
+
+                // Redirection après un délai pour permettre de voir le toast
+                setTimeout(() => {
+                    window.location.href = 'commandes.html';
+                }, 2000);
+
+            } catch (error) {
+                console.error('Erreur détaillée:', error);
+                showToast('errorToast', 'Erreur lors de la création de la commande: ' + error.message);
+            }
         });
 
-        // Fonction fictive pour récupérer l'ID utilisateur de la session
-        // À remplacer par votre méthode d'authentification réelle
+        // Fonction pour récupérer l'ID utilisateur
         function getUserIdFromSession() {
-            // Récupérer l'ID utilisateur depuis le localStorage, sessionStorage, cookies, etc.
             const userInfo = localStorage.getItem('userInfo');
             if (userInfo) {
                 try {
@@ -267,10 +423,10 @@
                     console.error('Erreur lors de la récupération de l\'ID utilisateur:', e);
                 }
             }
-            return null;
+            return 1; // Valeur par défaut ou rediriger vers la page de connexion
         }
     });
-
 </script>
+
 </body>
 </html>

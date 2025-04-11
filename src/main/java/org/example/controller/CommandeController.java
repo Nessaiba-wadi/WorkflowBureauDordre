@@ -55,7 +55,7 @@ public class CommandeController {
     private ComptabilisationRepository comptabilisationRepository;
 
     @Value("${file.upload-dir:uploads/commandes}")
-    private String uploadDir;
+    private final String uploadDir = "uploads/commandes";
     @Autowired
     private ReglementRepository reglementRepository;
     private static final Logger log = LoggerFactory.getLogger(CommandeController.class);
@@ -166,8 +166,9 @@ public class CommandeController {
         String extension = originalFilename.substring(originalFilename.lastIndexOf("."));
         String newFilename = "commande_" + timestamp + extension;
 
-        // Définir le chemin de sauvegarde
-        Path uploadDirPath = Paths.get(uploadDir);
+        // Définir le chemin de sauvegarde spécifique pour les commandes
+        String uploadPath = "uploads/commandes";
+        Path uploadDirPath = Paths.get(uploadPath);
         Files.createDirectories(uploadDirPath);
 
         // Sauvegarder le fichier
@@ -177,6 +178,19 @@ public class CommandeController {
         log.info("Fichier sauvegardé: {}", destination.toString());
 
         return newFilename;
+    }
+
+
+    @GetMapping("/verifier-bc/{numeroBC}")
+    public ResponseEntity<?> verifierNumeroBC(@PathVariable String numeroBC) {
+        log.info("Vérification de l'unicité du numéro BC: {}", numeroBC);
+
+        boolean exists = commandeRepository.existsByNumeroBC(numeroBC);
+
+        Map<String, Boolean> response = new HashMap<>();
+        response.put("exists", exists);
+
+        return ResponseEntity.ok(response);
     }
 
     private String encrypterNomFichier(String nomFichier) {
